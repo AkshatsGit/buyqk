@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Checks if the user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: Gets the user record from the users collection
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper: Checks if the user has a specific role
+    function hasRole(role) {
+      return isAuth() && getUserData().role == role;
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      allow read: if isAuth();
+      allow write: if isAuth() && (request.auth.uid == userId || hasRole('admin'));
+    }
+
+    // --- Customer Profiles ---
+    match /customers/{customerId} {
+      allow read: if isAuth();
+      allow write: if isAuth() && (request.auth.uid == customerId || hasRole('admin'));
+    }
+
+    // --- Seller Profiles ---
+    match /sellers/{sellerId} {
+      allow read: if isAuth();
+      allow write: if isAuth() && (request.auth.uid == sellerId || hasRole('admin'));
+    }
+
+    // --- Shops Collection ---
+    match /shops/{shopId} {
+      allow read: if true; // Publicly browseable
+      allow write: if hasRole('admin') || (hasRole('seller') && resource.data.sellerId == request.auth.uid);
+      allow create: if hasRole('seller');
+    }
+
+    // --- Products Collection ---
+    match /products/{productId} {
+      allow read: if true; // Publicly viewable catalog
+      allow write: if hasRole('admin') || hasRole('seller');
+    }
+
+    // --- Inventory Collection ---
+    match /inventory/{invId} {
+      allow read: if true;
+      allow write: if hasRole('admin') || (hasRole('seller') && resource.data.shopId == getUserData().shopId);
+      allow create: if hasRole('seller');
+    }
+
+    // --- Orders Collection ---
+    match /orders/{orderId} {
+      allow read: if isAuth() && (
+        resource.data.customerId == request.auth.uid || 
+        resource.data.shopId == getUserData().shopId || 
+        hasRole('admin')
+      );
+      allow create: if hasRole('customer');
+      allow update: if isAuth() && (
+        resource.data.customerId == request.auth.uid || 
+        resource.data.shopId == getUserData().shopId || 
+        hasRole('admin')
+      );
+    }
+
+    // --- Geofence Location Settings ---
+    match /cities/{cityId} {
+      allow read: if true;
+      allow write: if hasRole('admin');
+    }
+    match /areas/{areaId} {
+      allow read: if true;
+      allow write: if hasRole('admin');
+    }
+    match /zones/{zoneId} {
+      allow read: if true;
+      allow write: if hasRole('admin');
+    }
+
+    // --- Platform Configuration ---
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if hasRole('admin');
+    }
+  }
+}

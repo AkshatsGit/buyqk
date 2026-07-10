@@ -42,6 +42,14 @@ class MockDatabase {
 
   constructor() {
     this.initDefaults();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key && e.key.startsWith('gin_')) {
+          const collection = e.key.substring(4);
+          this.notify(collection);
+        }
+      });
+    }
   }
 
   private initDefaults() {
@@ -1083,6 +1091,14 @@ export const adminService = {
     };
     zones.push(newZone);
     mockDb.saveData('zones', zones);
+  },
+
+  getUsers: (): any[] => {
+    return mockDb.getData<any>('users');
+  },
+
+  subscribeToUsers: (callback: (users: any[]) => void) => {
+    return mockDb.subscribe('users', callback);
   }
 };
 

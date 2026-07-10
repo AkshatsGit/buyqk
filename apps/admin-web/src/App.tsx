@@ -46,7 +46,7 @@ export default function App() {
 
 function AdminApp() {
   const [currentUser, setCurrentUser] = useState<any>(auth.getCurrentUser());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'approvals' | 'maps' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'approvals' | 'maps' | 'settings' | 'users'>('dashboard');
 
   const handleGoogleLogin = async () => {
     try {
@@ -70,6 +70,7 @@ function AdminApp() {
   const [cities, setCities] = useState<City[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [settings, setSettings] = useState<PlatformSettings>(adminService.getPlatformSettings());
 
   // Location hierarchy Forms
@@ -116,12 +117,17 @@ function AdminApp() {
       setOrders(allOrders);
     });
 
+    const unsubUsers = (adminService as any).subscribeToUsers((allUsers: any[]) => {
+      setUsers(allUsers);
+    });
+
     refreshAdminData();
 
     return () => {
       unsubUser();
       unsubShops();
       unsubOrders();
+      unsubUsers();
     };
   }, []);
 
@@ -311,6 +317,12 @@ function AdminApp() {
             >
               ⚙️ Platform Parameters
             </button>
+            <button 
+              onClick={() => setActiveTab('users')}
+              className={`px-4 py-2 font-bold text-sm border-b-2 transition-all ${activeTab === 'users' ? 'border-yellow-500 text-yellow-500' : 'border-transparent text-slate-400 hover:text-white'}`}
+            >
+              👥 Registered Users
+            </button>
           </div>
 
           {/* TAB VIEW CONTROLLERS */}
@@ -372,6 +384,10 @@ function AdminApp() {
               setFreeDel={setFreeDelThreshold}
               onSave={handleSaveSettings}
             />
+          )}
+
+          {activeTab === 'users' && (
+            <AdminUsersView users={users} />
           )}
 
         </main>
@@ -858,5 +874,74 @@ const AdminSettingsView: React.FC<AdminSettingsProps> = ({
         </Button>
       </form>
     </Card>
+  );
+};
+
+interface AdminUsersViewProps {
+  users: any[];
+}
+
+const AdminUsersView: React.FC<AdminUsersViewProps> = ({ users }) => {
+  return (
+    <div className="flex flex-col gap-6">
+      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Registered System Users ({users.length})</span>
+
+      <Card hoverEffect={false} className="p-6 overflow-hidden bg-slate-900/40">
+        {users.length === 0 ? (
+          <div className="py-20 text-center text-slate-600 text-sm">
+            No registered users found.
+          </div>
+        ) : (
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left text-sm text-slate-300 font-sans border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-widest text-[10px] font-bold">
+                  <th className="py-3 px-4">Name</th>
+                  <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-4">Phone Number</th>
+                  <th className="py-3 px-4">System Role</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Joined Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {users.map((u, i) => (
+                  <tr key={u.uid || i} className="hover:bg-slate-900/30 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-xs font-bold font-mono">
+                        {u.name?.charAt(0).toUpperCase()}
+                      </div>
+                      {u.name}
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-xs">{u.email}</td>
+                    <td className="py-3.5 px-4 font-mono text-xs">{u.phoneNumber || 'N/A'}</td>
+                    <td className="py-3.5 px-4">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                        u.role === 'admin' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                        u.role === 'seller' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
+                        'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      }`}>
+                        {u.role?.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        u.status === 'active' || u.status === 'approved' ? 'bg-green-500/10 text-green-400' :
+                        'bg-amber-500/10 text-amber-400'
+                      }`}>
+                        ● {u.status || 'active'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-slate-500">
+                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
   );
 };

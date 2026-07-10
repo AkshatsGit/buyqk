@@ -484,7 +484,7 @@ export const auth = {
     if (currentUserListener) currentUserListener(user);
     return user;
   },
-  signInWithGoogle: async () => {
+  signInWithGoogle: async (defaultRole: 'customer' | 'seller' | 'admin' = 'customer') => {
     if (isFirebaseConfigured() && firebaseAuth) {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(firebaseAuth, provider);
@@ -492,39 +492,57 @@ export const auth = {
       
       const users = mockDb.getData<any>('users');
       let localUser = users.find(u => u.email === fbUser.email);
+      
+      const finalRole = fbUser.email === 'akshat.srivastava098@gmail.com' ? 'admin' : defaultRole;
+      
       if (!localUser) {
         localUser = {
           uid: fbUser.uid,
           name: fbUser.displayName || 'Google User',
           email: fbUser.email || '',
           phoneNumber: fbUser.phoneNumber || '',
-          role: fbUser.email === 'akshat.srivastava098@gmail.com' ? 'admin' : 'customer',
+          role: finalRole,
           status: 'active',
           createdAt: new Date().toISOString()
         };
         users.push(localUser);
         mockDb.saveData('users', users);
 
-        const wallets = JSON.parse(localStorage.getItem('gin_wallet') || '{}');
-        if (!wallets[fbUser.uid]) {
-          wallets[fbUser.uid] = [
-            { id: 'tx_init', amount: 500, type: 'credit', description: 'Google Signup Bonus', createdAt: new Date().toISOString() }
-          ];
-          localStorage.setItem('gin_wallet', JSON.stringify(wallets));
-        }
+        if (finalRole === 'seller') {
+          const sellers = mockDb.getData<any>('sellers');
+          if (!sellers.find((s: any) => s.uid === fbUser.uid)) {
+            sellers.push({
+              uid: fbUser.uid,
+              name: localUser.name,
+              email: localUser.email,
+              phoneNumber: localUser.phoneNumber || '+919999911111',
+              status: 'pending',
+              createdAt: localUser.createdAt
+            });
+            mockDb.saveData('sellers', sellers);
+          }
+        } else {
+          const wallets = JSON.parse(localStorage.getItem('gin_wallet') || '{}');
+          if (!wallets[fbUser.uid]) {
+            wallets[fbUser.uid] = [
+              { id: 'tx_init', amount: 500, type: 'credit', description: 'Google Signup Bonus', createdAt: new Date().toISOString() }
+            ];
+            localStorage.setItem('gin_wallet', JSON.stringify(wallets));
+          }
 
-        const customers = mockDb.getData<any>('customers');
-        if (!customers.find((c: any) => c.uid === fbUser.uid)) {
-          customers.push({
-            uid: fbUser.uid,
-            name: localUser.name,
-            email: localUser.email,
-            phoneNumber: localUser.phoneNumber,
-            walletBalance: 500,
-            rewardPoints: 50,
-            createdAt: localUser.createdAt
-          });
-          mockDb.saveData('customers', customers);
+          const customers = mockDb.getData<any>('customers');
+          if (!customers.find((c: any) => c.uid === fbUser.uid)) {
+            customers.push({
+              uid: fbUser.uid,
+              name: localUser.name,
+              email: localUser.email,
+              phoneNumber: localUser.phoneNumber || '+919999911111',
+              walletBalance: 500,
+              rewardPoints: 50,
+              createdAt: localUser.createdAt
+            });
+            mockDb.saveData('customers', customers);
+          }
         }
       } else {
         if (fbUser.email === 'akshat.srivastava098@gmail.com' && localUser.role !== 'admin') {
@@ -538,32 +556,78 @@ export const auth = {
       return localUser;
     } else {
       // Mock Google Popup Simulator
-      const mockEmail = 'akshat.srivastava098@gmail.com';
-      const mockName = 'Akshat Srivastava';
+      let mockEmail = '';
+      let mockName = '';
+      let finalRole: 'customer' | 'seller' | 'admin' = defaultRole;
+
+      if (defaultRole === 'admin') {
+        mockEmail = 'akshat.srivastava098@gmail.com';
+        mockName = 'Akshat Srivastava';
+        finalRole = 'admin';
+      } else if (defaultRole === 'seller') {
+        mockEmail = 'seller_test@buyqk.com';
+        mockName = 'Test Seller';
+      } else {
+        mockEmail = 'customer_test@buyqk.com';
+        mockName = 'Test Customer';
+      }
       
       const users = mockDb.getData<any>('users');
       let localUser = users.find(u => u.email === mockEmail);
       if (!localUser) {
         localUser = {
-          uid: 'akshat_admin',
+          uid: 'u_google_' + finalRole + '_' + Math.random().toString(36).substr(2, 5),
           name: mockName,
           email: mockEmail,
           phoneNumber: '+919999911111',
-          role: 'admin',
+          role: finalRole,
           status: 'active',
           createdAt: new Date().toISOString()
         };
         users.push(localUser);
         mockDb.saveData('users', users);
+
+        if (finalRole === 'seller') {
+          const sellers = mockDb.getData<any>('sellers');
+          sellers.push({
+            uid: localUser.uid,
+            name: localUser.name,
+            email: localUser.email,
+            phoneNumber: localUser.phoneNumber,
+            status: 'pending',
+            createdAt: localUser.createdAt
+          });
+          mockDb.saveData('sellers', sellers);
+        } else if (finalRole === 'customer') {
+          const wallets = JSON.parse(localStorage.getItem('gin_wallet') || '{}');
+          wallets[localUser.uid] = [
+            { id: 'tx_init', amount: 500, type: 'credit', description: 'Google Signin Bonus', createdAt: new Date().toISOString() }
+          ];
+          localStorage.setItem('gin_wallet', JSON.stringify(wallets));
+
+          const customers = mockDb.getData<any>('customers');
+          customers.push({
+            uid: localUser.uid,
+            name: localUser.name,
+            email: localUser.email,
+            phoneNumber: localUser.phoneNumber,
+            walletBalance: 500,
+            rewardPoints: 50,
+            createdAt: localUser.createdAt
+          });
+          mockDb.saveData('customers', customers);
+        }
       } else {
-        localUser.role = 'admin';
-        mockDb.saveData('users', users);
+        if (finalRole === 'admin') {
+          localUser.role = 'admin';
+          mockDb.saveData('users', users);
+        }
       }
 
       const wallets = JSON.parse(localStorage.getItem('gin_wallet') || '{}');
       if (!wallets[localUser.uid]) {
         wallets[localUser.uid] = [
-          { id: 'tx_init', amount: 500, type: 'credit', description: 'Google Simulator Admin', createdAt: new Date().toISOString() }
+          { id: 'tx_init', amount: 500, type: 'credit', description: 'Google Simulator Signin', createdAt: new Date().toISOString() }
         ];
         localStorage.setItem('gin_wallet', JSON.stringify(wallets));
       }
@@ -647,6 +711,19 @@ export const shopService = {
       sellers[sellerIdx].status = 'pending';
       sellers[sellerIdx].pan = data.pan;
       sellers[sellerIdx].gst = data.gst;
+      mockDb.saveData('sellers', sellers);
+    } else {
+      sellers.push({
+        uid: sellerId,
+        name: currentAuthUser?.name || 'Onboarded Seller',
+        email: currentAuthUser?.email || '',
+        phoneNumber: currentAuthUser?.phoneNumber || '',
+        shopId: newShop.id,
+        status: 'pending',
+        pan: data.pan,
+        gst: data.gst,
+        createdAt: new Date().toISOString()
+      });
       mockDb.saveData('sellers', sellers);
     }
 

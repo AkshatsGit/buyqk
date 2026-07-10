@@ -51,7 +51,7 @@ function SellerApp() {
 
   const handleGoogleLogin = async () => {
     try {
-      const user = await auth.signInWithGoogle();
+      const user = await auth.signInWithGoogle('seller');
       showToast(`Welcome back, ${user.name}!`, "success");
     } catch (err: any) {
       showToast(err.message, "error");

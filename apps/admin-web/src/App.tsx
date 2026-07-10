@@ -50,7 +50,7 @@ function AdminApp() {
 
   const handleGoogleLogin = async () => {
     try {
-      const user = await auth.signInWithGoogle();
+      const user = await auth.signInWithGoogle('admin');
       if (user.email !== 'akshat.srivastava098@gmail.com') {
         await auth.signOut();
         throw new Error("Access Denied. Only akshat.srivastava098@gmail.com is authorized to access the Admin Panel.");

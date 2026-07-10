@@ -51,6 +51,10 @@ function AdminApp() {
   const handleGoogleLogin = async () => {
     try {
       const user = await auth.signInWithGoogle();
+      if (user.email !== 'akshat.srivastava098@gmail.com') {
+        await auth.signOut();
+        throw new Error("Access Denied. Only akshat.srivastava098@gmail.com is authorized to access the Admin Panel.");
+      }
       user.role = 'admin';
       localStorage.setItem('gin_current_user', JSON.stringify(user));
       setCurrentUser(user);
@@ -124,9 +128,8 @@ function AdminApp() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // In Mock mode, check if email is admin, otherwise restrict
-      if (!authEmail.includes('admin') && authEmail !== 'test@test.com') {
-        throw new Error("Access Denied. Only administrator emails are permitted.");
+      if (authEmail !== 'akshat.srivastava098@gmail.com') {
+        throw new Error("Access Denied. Only akshat.srivastava098@gmail.com is authorized to access the Admin Panel.");
       }
       const u = await auth.signIn({ email: authEmail, password: authPassword });
       // Elevate role to admin for session

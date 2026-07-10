@@ -68,6 +68,7 @@ class MockDatabase {
         { uid: 'u_sellerB', name: 'Vikram Seller', email: 'sellerB@buyqk.com', phoneNumber: '+919777777777', role: 'seller', status: 'approved', createdAt: new Date().toISOString() },
         { uid: 'u_sellerC', name: 'Anita Seller', email: 'sellerC@buyqk.com', phoneNumber: '+919666666666', role: 'seller', status: 'approved', createdAt: new Date().toISOString() },
         { uid: 'u_admin', name: 'Super Admin', email: 'admin@buyqk.com', phoneNumber: '+919555555555', role: 'admin', status: 'active', createdAt: new Date().toISOString() },
+        { uid: 'akshat_admin', name: 'Akshat Srivastava', email: 'akshat.srivastava098@gmail.com', phoneNumber: '+919999999999', role: 'admin', status: 'active', createdAt: new Date().toISOString() },
         { uid: 'u_test', name: 'Test Account', email: 'test@test.com', phoneNumber: '+919999988888', role: 'customer', status: 'active', createdAt: new Date().toISOString() }
       ]));
     }
@@ -489,7 +490,7 @@ export const auth = {
           name: fbUser.displayName || 'Google User',
           email: fbUser.email || '',
           phoneNumber: fbUser.phoneNumber || '',
-          role: 'customer',
+          role: fbUser.email === 'akshat.srivastava098@gmail.com' ? 'admin' : 'customer',
           status: 'active',
           createdAt: new Date().toISOString()
         };
@@ -517,6 +518,11 @@ export const auth = {
           });
           mockDb.saveData('customers', customers);
         }
+      } else {
+        if (fbUser.email === 'akshat.srivastava098@gmail.com' && localUser.role !== 'admin') {
+          localUser.role = 'admin';
+          mockDb.saveData('users', users);
+        }
       }
       currentAuthUser = localUser;
       localStorage.setItem('gin_current_user', JSON.stringify(localUser));
@@ -524,44 +530,40 @@ export const auth = {
       return localUser;
     } else {
       // Mock Google Popup Simulator
-      const mockEmail = `google_${Math.random().toString(36).substr(2, 5)}@gmail.com`;
-      const mockName = 'Google Simulator';
+      const mockEmail = 'akshat.srivastava098@gmail.com';
+      const mockName = 'Akshat Srivastava';
       
       const users = mockDb.getData<any>('users');
-      const newUser = {
-        uid: 'u_google_' + Math.random().toString(36).substr(2, 6),
-        name: mockName,
-        email: mockEmail,
-        phoneNumber: '+919999911111',
-        role: 'customer',
-        status: 'active',
-        createdAt: new Date().toISOString()
-      };
-      users.push(newUser);
-      mockDb.saveData('users', users);
+      let localUser = users.find(u => u.email === mockEmail);
+      if (!localUser) {
+        localUser = {
+          uid: 'akshat_admin',
+          name: mockName,
+          email: mockEmail,
+          phoneNumber: '+919999911111',
+          role: 'admin',
+          status: 'active',
+          createdAt: new Date().toISOString()
+        };
+        users.push(localUser);
+        mockDb.saveData('users', users);
+      } else {
+        localUser.role = 'admin';
+        mockDb.saveData('users', users);
+      }
 
       const wallets = JSON.parse(localStorage.getItem('gin_wallet') || '{}');
-      wallets[newUser.uid] = [
-        { id: 'tx_init', amount: 500, type: 'credit', description: 'Google Signup Bonus', createdAt: new Date().toISOString() }
-      ];
-      localStorage.setItem('gin_wallet', JSON.stringify(wallets));
+      if (!wallets[localUser.uid]) {
+        wallets[localUser.uid] = [
+          { id: 'tx_init', amount: 500, type: 'credit', description: 'Google Simulator Admin', createdAt: new Date().toISOString() }
+        ];
+        localStorage.setItem('gin_wallet', JSON.stringify(wallets));
+      }
 
-      const customers = mockDb.getData<any>('customers');
-      customers.push({
-        uid: newUser.uid,
-        name: mockName,
-        email: mockEmail,
-        phoneNumber: '+919999911111',
-        walletBalance: 500,
-        rewardPoints: 50,
-        createdAt: newUser.createdAt
-      });
-      mockDb.saveData('customers', customers);
-
-      currentAuthUser = newUser;
-      localStorage.setItem('gin_current_user', JSON.stringify(newUser));
-      if (currentUserListener) currentUserListener(newUser);
-      return newUser;
+      currentAuthUser = localUser;
+      localStorage.setItem('gin_current_user', JSON.stringify(localUser));
+      if (currentUserListener) currentUserListener(localUser);
+      return localUser;
     }
   },
   signOut: async () => {

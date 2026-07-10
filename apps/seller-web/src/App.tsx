@@ -118,14 +118,20 @@ function SellerApp() {
     });
 
     const unsubShops = shopService.subscribeToShops(() => {
-      if (currentUser) {
-        loadSellerData(currentUser.uid, currentUser.shopId);
+      const liveUser = auth.getCurrentUser();
+      if (liveUser) {
+        loadSellerData(liveUser.uid, liveUser.shopId);
       }
     });
 
     const unsubOrders = orderService.subscribeToOrders(() => {
-      if (myShop) {
-        setMyOrders(orderService.getOrdersForSeller(myShop.id));
+      const liveUser = auth.getCurrentUser();
+      if (liveUser) {
+        const shops = shopService.getShops();
+        const shop = shops.find(s => s.sellerId === liveUser.uid || s.id === liveUser.shopId);
+        if (shop) {
+          setMyOrders(orderService.getOrdersForSeller(shop.id));
+        }
       }
     });
 
@@ -139,7 +145,7 @@ function SellerApp() {
       unsubOrders();
       unsubProducts();
     };
-  }, [currentUser?.uid, myShop?.id]);
+  }, []);
 
   const loadSellerData = (uid: string, shopId?: string) => {
     const sellers = JSON.parse(localStorage.getItem('gin_sellers') || '[]');
@@ -207,10 +213,6 @@ function SellerApp() {
 
   const handleOnboarding = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!logoBase64 || !bannerBase64) {
-      showToast("Shop Logo and Banner images must be compiled.", "error");
-      return;
-    }
     try {
       await shopService.createShop(currentUser.uid, {
         shopName,
@@ -226,9 +228,9 @@ function SellerApp() {
         closingTime,
         pan,
         gst,
-        categories: selectedCats,
-        logoBase64,
-        bannerBase64
+        categories: selectedCats.length > 0 ? selectedCats : ['cat_groceries'],
+        logoBase64: logoBase64 || '',
+        bannerBase64: bannerBase64 || ''
       });
       showToast("Shop profile registered! Submitting to Admin Review log.", "success");
       setIsOnboardingOpen(false);

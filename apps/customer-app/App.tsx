@@ -16,6 +16,7 @@ import {
   auth, 
   shopService, 
   productService, 
+  inventoryService,
   orderService, 
   walletService, 
   geminiService,

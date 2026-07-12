@@ -468,10 +468,11 @@ export const auth = {
     if (form.email === 'test@test.com') {
       if (typeof window !== 'undefined') {
         const port = window.location.port;
-        if (port === '3001') {
+        const host = window.location.hostname;
+        if (port === '3001' || host.includes('seller')) {
           user.role = 'seller';
           user.shopId = 'shop_gupta';
-        } else if (port === '3002') {
+        } else if (port === '3002' || host.includes('admin')) {
           user.role = 'admin';
         } else {
           user.role = 'customer';

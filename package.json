@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "dev:store": "node packages/store-server/index.js",
     "dev:customer": "npm run dev --workspace=apps/customer-web",
     "dev:seller": "npm run dev --workspace=apps/seller-web",
     "dev:admin": "npm run dev --workspace=apps/admin-web",

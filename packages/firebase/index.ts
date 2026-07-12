@@ -36,37 +36,39 @@ if (isFirebaseConfigured()) {
   firebaseAuth = getAuth(firebaseApp);
 }
 
-// In-memory/localStorage reactive state with BroadcastChannel for real-time cross-tab/cross-subdomain sync.
-// BroadcastChannel works across all same-site contexts (seller.localhost, admin.localhost, localhost share
-// the same registrable domain so they CAN sync via BroadcastChannel).
+const STORE_URL = 'http://localhost:3099';
+
+/**
+ * MockDatabase — shared across all three apps via HTTP store server.
+ *
+ * Architecture:
+ *   - getData()    → reads from localStorage cache (synchronous, fast)
+ *   - saveData()   → writes to localStorage + POSTs to store server (async, non-blocking)
+ *   - subscribe()  → opens SSE connection to store server for real-time push updates
+ *
+ * The store server runs on port 3099 and has full CORS headers, so all origins
+ * (localhost:3000, localhost:3001, localhost:3002, seller.localhost, admin.localhost)
+ * can read and write without any cross-origin restrictions.
+ */
 class MockDatabase {
   private listeners: { [key: string]: Function[] } = {};
-  private channel: BroadcastChannel | null = null;
+  private sseConnections: { [key: string]: EventSource } = {};
+  private serverAvailable = false;
 
   constructor() {
     this.initDefaults();
     if (typeof window !== 'undefined') {
-      // Storage event fires for same-origin tabs only (same port).
-      // BroadcastChannel fires for ALL pages with the same channel name, including cross-port subdomains.
-      try {
-        this.channel = new BroadcastChannel('buyqk_db_sync');
-        this.channel.onmessage = (e) => {
-          const { key, data } = e.data || {};
-          if (key && data !== undefined) {
-            // Write into this origin's localStorage silently (no re-broadcast)
-            localStorage.setItem(`gin_${key}`, JSON.stringify(data));
-            this.notify(key);
-          }
-        };
-      } catch (_) {
-        // BroadcastChannel not available (e.g. SSR or old browsers) – fall back to polling
-        setInterval(() => {
-          const cols = ['shops','users','sellers','customers','products','inventory','orders','order_groups','settings','cities','areas','zones'];
-          cols.forEach(k => this.notify(k));
-        }, 3000);
-      }
+      // Try to ping the store server
+      this.pingServer().then(ok => {
+        this.serverAvailable = ok;
+        if (ok) {
+          // Pull latest data from server into localStorage cache for all collections
+          const cols = ['users','shops','sellers','customers','products','inventory','orders','order_groups','settings','cities','areas','zones','wallet'];
+          Promise.all(cols.map(col => this.pullFromServer(col)));
+        }
+      });
 
-      // Still listen to storage for same-origin tab updates (opened in the same port)
+      // Also listen to storage events for same-origin tab updates (same port)
       window.addEventListener('storage', (e) => {
         if (e.key && e.key.startsWith('gin_')) {
           this.notify(e.key.substring(4));
@@ -75,7 +77,54 @@ class MockDatabase {
     }
   }
 
+  private async pingServer(): Promise<boolean> {
+    try {
+      const r = await fetch(`${STORE_URL}/api/shops`, { signal: AbortSignal.timeout(800) });
+      return r.ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  private async pullFromServer(collection: string): Promise<void> {
+    try {
+      const r = await fetch(`${STORE_URL}/api/${collection}`);
+      if (!r.ok) return;
+      const data = await r.json();
+      if (Array.isArray(data) && data.length > 0) {
+        localStorage.setItem(`gin_${collection}`, JSON.stringify(data));
+        this.notify(collection);
+      }
+    } catch (_) { /* server not running — fall through to localStorage */ }
+  }
+
+  private openSSE(collection: string): void {
+    if (this.sseConnections[collection]) return; // already open
+    if (typeof EventSource === 'undefined') return;
+
+    try {
+      const es = new EventSource(`${STORE_URL}/sse/${collection}`);
+      es.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (Array.isArray(data)) {
+            localStorage.setItem(`gin_${collection}`, JSON.stringify(data));
+            this.notify(collection);
+          }
+        } catch (_) {}
+      };
+      es.onerror = () => {
+        es.close();
+        delete this.sseConnections[collection];
+        // Retry after 5s
+        setTimeout(() => this.openSSE(collection), 5000);
+      };
+      this.sseConnections[collection] = es;
+    } catch (_) {}
+  }
+
   private initDefaults() {
+
     if (typeof window !== 'undefined' && !localStorage.getItem('gin_db_version_4')) {
       localStorage.removeItem('gin_users');
       localStorage.removeItem('gin_shops');
@@ -287,12 +336,16 @@ class MockDatabase {
   }
 
   public saveData<T>(collection: string, data: T[]) {
+    // 1. Write to localStorage immediately (keeps existing sync code happy)
     localStorage.setItem(`gin_${collection}`, JSON.stringify(data));
+    // 2. Notify local subscribers
     this.notify(collection);
-    // Broadcast to all other tabs/subdomains (admin, seller, customer) via BroadcastChannel
-    try {
-      this.channel?.postMessage({ key: collection, data });
-    } catch (_) { /* ignore */ }
+    // 3. POST to shared store server (non-blocking, best-effort)
+    fetch(`${STORE_URL}/api/${collection}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).catch(() => { /* store server not running — degraded to localStorage-only */ });
   }
 
   public subscribe(collection: string, callback: Function): () => void {
@@ -300,8 +353,10 @@ class MockDatabase {
       this.listeners[collection] = [];
     }
     this.listeners[collection].push(callback);
-    // Initial call
+    // Initial call with cached data
     callback(this.getData(collection));
+    // Open SSE subscription for real-time cross-origin push updates
+    this.openSSE(collection);
     return () => {
       this.listeners[collection] = this.listeners[collection].filter(cb => cb !== callback);
     };

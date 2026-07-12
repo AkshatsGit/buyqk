@@ -434,11 +434,11 @@ function MainApp() {
         /* AUTH PORTAL */
         <main className="flex-1 flex items-center justify-center p-6 bg-slate-950/40">
           <Card className="w-full max-w-md p-8" hoverEffect={false}>
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold tracking-tight text-white uppercase font-sans">
-                {authMode === 'login' ? 'Welcome to buyQk' : 'Join the dark store network'}
+            <div className="text-center mb-8 flex flex-col items-center gap-3">
+              <img src="/assets/logopng.png" className="w-24 h-24 object-contain shadow-xl shadow-yellow-500/5 hover:scale-105 transition-all duration-300" alt="buyQk Logo" />
+              <h2 className="text-xl font-bold tracking-tight text-white uppercase font-sans">
+                {authMode === 'login' ? 'Customer Log In' : 'Join buyQk'}
               </h2>
-              <p className="text-slate-400 text-sm mt-1">Universal Local Supply Network</p>
             </div>
 
             <form onSubmit={handleAuth} className="flex flex-col gap-4">

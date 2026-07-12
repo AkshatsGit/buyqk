@@ -33,10 +33,16 @@ function broadcast(collection) {
 }
 
 const server = http.createServer((req, res) => {
-  // CORS — allow all origins (needed for cross-port dev)
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS — dynamically match origin to avoid credentials / wildcards issues
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);

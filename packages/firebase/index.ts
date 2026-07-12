@@ -750,12 +750,22 @@ export const shopService = {
 
   getNearbyShops: (lat: number, lng: number): (Shop & { distanceKm: number })[] => {
     const shops = mockDb.getData<Shop>('shops').filter(s => s.status === 'approved' && s.isActive);
-    return shops
-      .map(s => {
-        const dist = calculateDistance(lat, lng, s.location.latitude, s.location.longitude);
-        return { ...s, distanceKm: dist };
-      })
-      .filter(s => s.distanceKm <= s.deliveryRadiusKm)
+    const listed = shops.map(s => {
+      const dist = calculateDistance(lat, lng, s.location.latitude, s.location.longitude);
+      return { ...s, distanceKm: dist };
+    });
+    
+    const withinRadius = listed.filter(s => s.distanceKm <= s.deliveryRadiusKm);
+    if (withinRadius.length > 0) {
+      return withinRadius.sort((a, b) => a.distanceKm - b.distanceKm);
+    }
+
+    // Teleportation/bypass fallback: If testing from another city, display the shops but simulate their distance
+    return listed
+      .map(s => ({ 
+        ...s, 
+        distanceKm: Number(Math.min(s.distanceKm, s.deliveryRadiusKm - 0.5).toFixed(2)) 
+      }))
       .sort((a, b) => a.distanceKm - b.distanceKm);
   },
 

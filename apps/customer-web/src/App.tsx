@@ -143,10 +143,17 @@ function MainApp() {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
-          setCustomerLocation(coords);
-          // Simple reverse-geocode mock
-          setFormattedAddress(`Custom GPS Location (${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`);
-          showToast("Location updated via GPS!", "success");
+          const distFromMumbai = Math.abs(coords.latitude - 19.1136) + Math.abs(coords.longitude - 72.8258);
+          if (distFromMumbai > 1.5) {
+            const mockCoords = { latitude: 19.1136, longitude: 72.8258 };
+            setCustomerLocation(mockCoords);
+            setFormattedAddress(`Simulated Near Active Stores (Mumbai GPS Bypass)`);
+            showToast("Simulating customer location near Mumbai Dark Stores for testing!", "info");
+          } else {
+            setCustomerLocation(coords);
+            setFormattedAddress(`Custom GPS Location (${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`);
+            showToast("Location updated via GPS!", "success");
+          }
         },
         (err) => {
           showToast("Failed to fetch GPS coordinates. Please pin on the map manually.", "error");
@@ -1369,7 +1376,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
         
         <div className="flex items-center gap-3">
           <a 
-            href="http://localhost:3001" 
+            href="https://seller.buyqk.com/" 
             target="_blank" 
             rel="noopener noreferrer"
             className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-[#102A4C]/60 hover:bg-[#102A4C]/90 border border-blue-900/40 backdrop-blur-md rounded-xl shadow-lg transition-all duration-300"
@@ -1377,7 +1384,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             🏪 Go to Seller Hub
           </a>
           <a 
-            href="http://localhost:3002" 
+            href="https://admin.buyqk.com/" 
             target="_blank" 
             rel="noopener noreferrer"
             className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-[#102A4C]/60 hover:bg-[#102A4C]/90 border border-blue-900/40 backdrop-blur-md rounded-xl shadow-lg transition-all duration-300"

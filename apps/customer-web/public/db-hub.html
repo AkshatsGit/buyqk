@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>buyQk Database Coordination Hub</title>
+</head>
+<body>
+  <script>
+    const connections = [];
+
+    window.addEventListener('message', (event) => {
+      const { action, key, data, payload } = event.data || {};
+      if (!action) return;
+
+      // Add connection to the sync list if it isn't already tracked
+      if (!connections.some(c => c.source === event.source)) {
+        connections.push({ source: event.source, origin: event.origin });
+      }
+
+      if (action === 'GET_ALL') {
+        const result = {};
+        const keys = ['users', 'shops', 'sellers', 'customers', 'products', 'inventory', 'orders', 'order_groups', 'settings', 'cities', 'areas', 'zones'];
+        keys.forEach(k => {
+          const val = localStorage.getItem('gin_' + k);
+          if (val) {
+            result[k] = JSON.parse(val);
+          }
+        });
+        event.source.postMessage({ action: 'SYNC_ALL', payload: result }, event.origin);
+      } else if (action === 'SAVE') {
+        localStorage.setItem('gin_' + key, JSON.stringify(data));
+        // Broadcast updates to all other active frames
+        connections.forEach(conn => {
+          if (conn.source !== event.source) {
+            try {
+              conn.source.postMessage({ action: 'UPDATE', key, data }, conn.origin);
+            } catch (e) {
+              // Clean up stale frames
+              const idx = connections.indexOf(conn);
+              if (idx !== -1) connections.splice(idx, 1);
+            }
+          }
+        });
+      }
+    });
+
+    // Notify caller that hub is ready
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ action: 'HUB_READY' }, '*');
+    }
+  </script>
+</body>
+</html>

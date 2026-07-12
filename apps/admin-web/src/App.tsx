@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   auth, 
   shopService, 
@@ -32,7 +32,9 @@ import {
   TrendingUp, 
   Compass, 
   FileText,
-  DollarSign
+  DollarSign,
+  Image,
+  Store
 } from 'lucide-react';
 import { Shop, Order, LatLng, City, Area, Zone, PlatformSettings } from '@buyqk/types';
 
@@ -73,6 +75,32 @@ function AdminApp() {
   const [users, setUsers] = useState<any[]>([]);
   const [settings, setSettings] = useState<PlatformSettings>(adminService.getPlatformSettings());
 
+  // Admin Add-Seller Modal State
+  const [isAddSellerOpen, setIsAddSellerOpen] = useState(false);
+  const [asSellerName, setAsSellerName] = useState('');
+  const [asSellerEmail, setAsSellerEmail] = useState('');
+  const [asSellerPhone, setAsSellerPhone] = useState('');
+  const [asShopName, setAsShopName] = useState('');
+  const [asShopDesc, setAsShopDesc] = useState('');
+  const [asStreet, setAsStreet] = useState('');
+  const [asCity, setAsCity] = useState('Mumbai');
+  const [asState, setAsState] = useState('Maharashtra');
+  const [asPostal, setAsPostal] = useState('400053');
+  const [asLat, setAsLat] = useState(19.1136);
+  const [asLng, setAsLng] = useState(72.8258);
+  const [asRadius, setAsRadius] = useState(5);
+  const [asOpenTime, setAsOpenTime] = useState('08:00');
+  const [asCloseTime, setAsCloseTime] = useState('22:00');
+  const [asPan, setAsPan] = useState('');
+  const [asGst, setAsGst] = useState('');
+  const [asLogoB64, setAsLogoB64] = useState('');
+  const [asBannerB64, setAsBannerB64] = useState('');
+
+  // Image Edit Modal State
+  const [editImgShop, setEditImgShop] = useState<Shop | null>(null);
+  const [editLogoB64, setEditLogoB64] = useState('');
+  const [editBannerB64, setEditBannerB64] = useState('');
+
   // Location hierarchy Forms
   const [newCityName, setNewCityName] = useState('');
   const [newCityState, setNewCityState] = useState('');
@@ -96,6 +124,14 @@ function AdminApp() {
   // Auth Forms
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+
+  // Image file-to-base64 converter
+  const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
   useEffect(() => {
     const unsubUser = auth.onAuthStateChanged((user) => {
@@ -243,6 +279,42 @@ function AdminApp() {
     }
   };
 
+  const handleAdminAddSeller = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await adminService.adminCreateShop({
+        sellerName: asSellerName, sellerEmail: asSellerEmail, sellerPhone: asSellerPhone,
+        shopName: asShopName, description: asShopDesc,
+        street: asStreet, city: asCity, state: asState, postalCode: asPostal,
+        latitude: asLat, longitude: asLng,
+        deliveryRadiusKm: asRadius, openingTime: asOpenTime, closingTime: asCloseTime,
+        categories: ['cat_groceries'], logoBase64: asLogoB64, bannerBase64: asBannerB64,
+        pan: asPan, gst: asGst
+      });
+      showToast('Seller and shop created & approved!', 'success');
+      setShops(shopService.getShops());
+      setIsAddSellerOpen(false);
+      setAsSellerName(''); setAsSellerEmail(''); setAsSellerPhone('');
+      setAsShopName(''); setAsShopDesc(''); setAsStreet(''); setAsPan(''); setAsGst('');
+      setAsLogoB64(''); setAsBannerB64('');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleSaveShopImages = async () => {
+    if (!editImgShop) return;
+    try {
+      await adminService.updateShopImages(editImgShop.id, editLogoB64 || undefined, editBannerB64 || undefined);
+      showToast('Shop images updated!', 'success');
+      setShops(shopService.getShops());
+      setEditImgShop(null);
+      setEditLogoB64(''); setEditBannerB64('');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
   // Calculations for KPI Cards
   const totalPlatformVolume = orders
     .filter(o => o.orderStatus !== 'cancelled')
@@ -336,8 +408,84 @@ function AdminApp() {
           )}
 
           {activeTab === 'approvals' && (
-            <AdminApprovalsView approvals={pendingApprovals} onApprove={handleApproveShop} onReject={handleRejectShop} />
+            <AdminApprovalsView
+              pendingApprovals={pendingApprovals}
+              allShops={shops}
+              onApprove={handleApproveShop}
+              onReject={handleRejectShop}
+              onAddSeller={() => setIsAddSellerOpen(true)}
+              onEditImages={(shop) => { setEditImgShop(shop); setEditLogoB64(shop.logoBase64); setEditBannerB64(shop.bannerBase64); }}
+            />
           )}
+
+          {/* Add Seller Modal */}
+          <Modal isOpen={isAddSellerOpen} onClose={() => setIsAddSellerOpen(false)} title="➕ Manually Add Seller & Shop">
+            <form onSubmit={handleAdminAddSeller} className="flex flex-col gap-4">
+              <p className="text-xs text-slate-400">This will create a fully approved seller and shop immediately — bypassing the self-service onboarding queue.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Seller Name" value={asSellerName} onChange={e => setAsSellerName(e.target.value)} required />
+                <Input label="Seller Phone" value={asSellerPhone} onChange={e => setAsSellerPhone(e.target.value)} required />
+              </div>
+              <Input label="Seller Email" type="email" value={asSellerEmail} onChange={e => setAsSellerEmail(e.target.value)} required />
+              <Input label="Shop Name" value={asShopName} onChange={e => setAsShopName(e.target.value)} required />
+              <Input label="Shop Description" value={asShopDesc} onChange={e => setAsShopDesc(e.target.value)} required />
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Street" value={asStreet} onChange={e => setAsStreet(e.target.value)} required />
+                <Input label="City" value={asCity} onChange={e => setAsCity(e.target.value)} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="State" value={asState} onChange={e => setAsState(e.target.value)} required />
+                <Input label="Postal Code" value={asPostal} onChange={e => setAsPostal(e.target.value)} required />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <Input label="Latitude" type="number" value={String(asLat)} onChange={e => setAsLat(Number(e.target.value))} step="0.0001" required />
+                <Input label="Longitude" type="number" value={String(asLng)} onChange={e => setAsLng(Number(e.target.value))} step="0.0001" required />
+                <Input label="Radius (km)" type="number" value={String(asRadius)} onChange={e => setAsRadius(Number(e.target.value))} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Opening Time" type="time" value={asOpenTime} onChange={e => setAsOpenTime(e.target.value)} required />
+                <Input label="Closing Time" type="time" value={asCloseTime} onChange={e => setAsCloseTime(e.target.value)} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="PAN" value={asPan} onChange={e => setAsPan(e.target.value)} />
+                <Input label="GST" value={asGst} onChange={e => setAsGst(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Logo Image</label>
+                  <input type="file" accept="image/*" className="text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-500/10 file:text-yellow-500 hover:file:bg-yellow-500/20" onChange={async e => { if (e.target.files?.[0]) setAsLogoB64(await toBase64(e.target.files[0])); }} />
+                  {asLogoB64 && <img src={asLogoB64} className="w-16 h-16 rounded-xl object-cover mt-1 border border-slate-700" />}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Banner Image</label>
+                  <input type="file" accept="image/*" className="text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-500/10 file:text-yellow-500 hover:file:bg-yellow-500/20" onChange={async e => { if (e.target.files?.[0]) setAsBannerB64(await toBase64(e.target.files[0])); }} />
+                  {asBannerB64 && <img src={asBannerB64} className="w-full h-16 rounded-xl object-cover mt-1 border border-slate-700" />}
+                </div>
+              </div>
+              <Button variant="primary" type="submit" className="mt-2">
+                <Plus className="w-4 h-4" /> Create Approved Seller
+              </Button>
+            </form>
+          </Modal>
+
+          {/* Edit Shop Images Modal */}
+          <Modal isOpen={!!editImgShop} onClose={() => setEditImgShop(null)} title={`🖼️ Update Images: ${editImgShop?.name}`}>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Current Logo</label>
+                <img src={editLogoB64 || editImgShop?.logoBase64} className="w-24 h-24 rounded-xl object-cover border border-slate-700" />
+                <input type="file" accept="image/*" className="text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-500/10 file:text-yellow-500 hover:file:bg-yellow-500/20" onChange={async e => { if (e.target.files?.[0]) setEditLogoB64(await toBase64(e.target.files[0])); }} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Current Banner</label>
+                <img src={editBannerB64 || editImgShop?.bannerBase64} className="w-full h-32 rounded-xl object-cover border border-slate-700" />
+                <input type="file" accept="image/*" className="text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-yellow-500/10 file:text-yellow-500 hover:file:bg-yellow-500/20" onChange={async e => { if (e.target.files?.[0]) setEditBannerB64(await toBase64(e.target.files[0])); }} />
+              </div>
+              <Button variant="primary" onClick={handleSaveShopImages}>
+                <Image className="w-4 h-4" /> Save Images
+              </Button>
+            </div>
+          </Modal>
 
           {activeTab === 'maps' && (
             <AdminMapsView 
@@ -546,67 +694,151 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 };
 
 // ==========================================
-// VIEWS: SHOP ONBOARDING QUEUE
+// VIEWS: MERCHANT MANAGEMENT (QUEUE + ALL SHOPS)
 // ==========================================
 interface AdminApprovalsProps {
-  approvals: Shop[];
+  pendingApprovals: Shop[];
+  allShops: Shop[];
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onAddSeller: () => void;
+  onEditImages: (shop: Shop) => void;
 }
 
 const AdminApprovalsView: React.FC<AdminApprovalsProps> = ({
-  approvals,
+  pendingApprovals,
+  allShops,
   onApprove,
-  onReject
+  onReject,
+  onAddSeller,
+  onEditImages
 }) => {
+  const [viewMode, setViewMode] = useState<'pending' | 'all'>('pending');
+  const approvedShops = allShops.filter(s => s.status === 'approved');
+  const suspendedShops = allShops.filter(s => s.status === 'suspended');
+
+  const ShopCard = ({ shop, isPending }: { shop: Shop; isPending?: boolean }) => (
+    <Card key={shop.id} hoverEffect={false} className="p-5 border border-blue-900/30 flex flex-col gap-4">
+      <div className="flex items-start gap-4">
+        <img src={shop.logoBase64} className="w-16 h-16 object-cover rounded-xl border border-slate-700 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-bold text-slate-100 text-sm">{shop.name}</h3>
+            <Badge variant={shop.status === 'approved' ? 'success' : shop.status === 'pending' ? 'warning' : 'error'}>
+              {shop.status.toUpperCase()}
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-400 mt-0.5 truncate">{shop.description}</p>
+          <p className="text-[10px] text-slate-500 mt-1 font-mono">{shop.address.formattedAddress}</p>
+        </div>
+      </div>
+
+      <div className="h-28 w-full bg-slate-950 rounded-xl overflow-hidden">
+        <img src={shop.bannerBase64} className="w-full h-full object-cover" />
+      </div>
+
+      <div className="bg-slate-950 p-3 border border-blue-900/10 rounded-xl text-xs text-slate-300 grid grid-cols-2 gap-1.5 font-mono">
+        <p><strong>Coords:</strong> {shop.location.latitude.toFixed(4)}, {shop.location.longitude.toFixed(4)}</p>
+        <p><strong>Radius:</strong> {shop.deliveryRadiusKm} km</p>
+        <p><strong>Hours:</strong> {shop.openingTime} — {shop.closingTime}</p>
+        <p><strong>ID:</strong> {shop.id.slice(0, 12)}…</p>
+      </div>
+
+      <div className="flex gap-2 justify-end flex-wrap">
+        <Button variant="glass" size="sm" onClick={() => onEditImages(shop)}>
+          <Image className="w-3.5 h-3.5" /> Edit Images
+        </Button>
+        {isPending && (
+          <>
+            <Button variant="danger" size="sm" onClick={() => onReject(shop.id)}>
+              <CloseIcon className="w-3.5 h-3.5" /> Reject
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => onApprove(shop.id)}>
+              <Check className="w-3.5 h-3.5" /> Approve
+            </Button>
+          </>
+        )}
+        {!isPending && shop.status === 'approved' && (
+          <Button variant="danger" size="sm" onClick={() => onReject(shop.id)}>
+            <CloseIcon className="w-3.5 h-3.5" /> Suspend
+          </Button>
+        )}
+        {!isPending && shop.status === 'suspended' && (
+          <Button variant="primary" size="sm" onClick={() => onApprove(shop.id)}>
+            <Check className="w-3.5 h-3.5" /> Reactivate
+          </Button>
+        )}
+      </div>
+    </Card>
+  );
+
   return (
     <div className="flex flex-col gap-6">
-      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Merchant Onboarding permit reviews</span>
+      {/* Header row */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex bg-slate-900 rounded-xl border border-slate-800 p-1 gap-1">
+            <button
+              onClick={() => setViewMode('pending')}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                viewMode === 'pending' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Pending ({pendingApprovals.length})
+            </button>
+            <button
+              onClick={() => setViewMode('all')}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                viewMode === 'all' ? 'bg-yellow-500 text-slate-950' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              All Shops ({allShops.length})
+            </button>
+          </div>
+        </div>
+        <Button variant="primary" size="sm" onClick={onAddSeller}>
+          <Plus className="w-4 h-4" /> Add Seller Manually
+        </Button>
+      </div>
 
-      {approvals.length === 0 ? (
-        <Card hoverEffect={false} className="py-20 text-center">
-          <h3 className="text-slate-300 font-bold">Registration queue is currently empty.</h3>
-          <p className="text-xs text-slate-500 mt-1">Pending dark store applications will automatically route here for evaluation.</p>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {approvals.map(shop => (
-            <Card key={shop.id} hoverEffect={false} className="p-6 border border-blue-900/30 flex flex-col gap-4">
-              
-              <div className="flex items-center gap-4">
-                <img src={shop.logoBase64} className="w-16 h-16 object-cover rounded-xl border border-slate-800" />
-                <div>
-                  <h3 className="font-bold text-slate-100">{shop.name}</h3>
-                  <p className="text-xs text-slate-400">{shop.description}</p>
-                </div>
+      {/* Content */}
+      {viewMode === 'pending' && (
+        pendingApprovals.length === 0 ? (
+          <Card hoverEffect={false} className="py-20 text-center">
+            <Store className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+            <h3 className="text-slate-300 font-bold">No pending applications.</h3>
+            <p className="text-xs text-slate-500 mt-1">Seller registrations from the Seller Hub will appear here automatically.</p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {pendingApprovals.map(shop => <ShopCard key={shop.id} shop={shop} isPending />)}
+          </div>
+        )
+      )}
+
+      {viewMode === 'all' && (
+        <div className="flex flex-col gap-6">
+          {approvedShops.length > 0 && (
+            <div>
+              <p className="text-xs uppercase font-bold text-emerald-500 tracking-wider mb-3">✅ Active Stores ({approvedShops.length})</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {approvedShops.map(shop => <ShopCard key={shop.id} shop={shop} />)}
               </div>
-
-              {/* Photos */}
-              <div className="h-32 w-full bg-slate-950 rounded-xl overflow-hidden relative">
-                <img src={shop.bannerBase64} className="w-full h-full object-cover" />
+            </div>
+          )}
+          {suspendedShops.length > 0 && (
+            <div>
+              <p className="text-xs uppercase font-bold text-red-500 tracking-wider mb-3">🚫 Suspended Stores ({suspendedShops.length})</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {suspendedShops.map(shop => <ShopCard key={shop.id} shop={shop} />)}
               </div>
-
-              {/* Shop info specs */}
-              <div className="bg-slate-950 p-4 border border-blue-900/10 rounded-xl text-xs text-slate-300 flex flex-col gap-2 font-mono">
-                <p><strong>Physical Address:</strong> {shop.address.formattedAddress}</p>
-                <p><strong>Coordinates:</strong> {shop.location.latitude.toFixed(5)}, {shop.location.longitude.toFixed(5)}</p>
-                <p><strong>Fulfillment Radius:</strong> {shop.deliveryRadiusKm} km</p>
-                <p><strong>Hours:</strong> {shop.openingTime} - {shop.closingTime}</p>
-                <p><strong>PAN ID:</strong> {shop.id} (Verified)</p>
-              </div>
-
-              {/* Action row */}
-              <div className="flex gap-2 justify-end">
-                <Button variant="danger" size="sm" onClick={() => onReject(shop.id)}>
-                  <CloseIcon className="w-4 h-4" /> Reject Permit
-                </Button>
-                <Button variant="primary" size="sm" onClick={() => onApprove(shop.id)}>
-                  <Check className="w-4 h-4" /> Approve Permit
-                </Button>
-              </div>
-
+            </div>
+          )}
+          {allShops.length === 0 && (
+            <Card hoverEffect={false} className="py-20 text-center">
+              <h3 className="text-slate-300 font-bold">No shops registered yet.</h3>
             </Card>
-          ))}
+          )}
         </div>
       )}
     </div>

@@ -36,17 +36,40 @@ if (isFirebaseConfigured()) {
   firebaseAuth = getAuth(firebaseApp);
 }
 
-// Let's create an in-memory/localStorage reactive state for our mock DB to ensure realtime updates work.
+// In-memory/localStorage reactive state with BroadcastChannel for real-time cross-tab/cross-subdomain sync.
+// BroadcastChannel works across all same-site contexts (seller.localhost, admin.localhost, localhost share
+// the same registrable domain so they CAN sync via BroadcastChannel).
 class MockDatabase {
   private listeners: { [key: string]: Function[] } = {};
+  private channel: BroadcastChannel | null = null;
 
   constructor() {
     this.initDefaults();
     if (typeof window !== 'undefined') {
+      // Storage event fires for same-origin tabs only (same port).
+      // BroadcastChannel fires for ALL pages with the same channel name, including cross-port subdomains.
+      try {
+        this.channel = new BroadcastChannel('buyqk_db_sync');
+        this.channel.onmessage = (e) => {
+          const { key, data } = e.data || {};
+          if (key && data !== undefined) {
+            // Write into this origin's localStorage silently (no re-broadcast)
+            localStorage.setItem(`gin_${key}`, JSON.stringify(data));
+            this.notify(key);
+          }
+        };
+      } catch (_) {
+        // BroadcastChannel not available (e.g. SSR or old browsers) – fall back to polling
+        setInterval(() => {
+          const cols = ['shops','users','sellers','customers','products','inventory','orders','order_groups','settings','cities','areas','zones'];
+          cols.forEach(k => this.notify(k));
+        }, 3000);
+      }
+
+      // Still listen to storage for same-origin tab updates (opened in the same port)
       window.addEventListener('storage', (e) => {
         if (e.key && e.key.startsWith('gin_')) {
-          const collection = e.key.substring(4);
-          this.notify(collection);
+          this.notify(e.key.substring(4));
         }
       });
     }
@@ -263,6 +286,10 @@ class MockDatabase {
   public saveData<T>(collection: string, data: T[]) {
     localStorage.setItem(`gin_${collection}`, JSON.stringify(data));
     this.notify(collection);
+    // Broadcast to all other tabs/subdomains (admin, seller, customer) via BroadcastChannel
+    try {
+      this.channel?.postMessage({ key: collection, data });
+    } catch (_) { /* ignore */ }
   }
 
   public subscribe(collection: string, callback: Function): () => void {
@@ -1187,6 +1214,127 @@ export const adminService = {
 
   subscribeToUsers: (callback: (users: any[]) => void) => {
     return mockDb.subscribe('users', callback);
+  },
+
+  /**
+   * Admin can manually register a fully-approved seller and their shop without going through
+   * the self-service onboarding flow.
+   */
+  adminCreateShop: async (data: {
+    sellerName: string;
+    sellerEmail: string;
+    sellerPhone: string;
+    shopName: string;
+    description: string;
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    latitude: number;
+    longitude: number;
+    deliveryRadiusKm: number;
+    openingTime: string;
+    closingTime: string;
+    categories: string[];
+    logoBase64: string;
+    bannerBase64: string;
+    pan?: string;
+    gst?: string;
+  }): Promise<Shop> => {
+    const makeSvg = (emoji: string, bg: string) =>
+      `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${encodeURIComponent(bg)}"/><text y=".9em" font-size="80" x="10">${emoji}</text></svg>`;
+
+    const sellerId = 'seller_' + Math.random().toString(36).substr(2, 9);
+    const shopId = 'shop_' + Math.random().toString(36).substr(2, 9);
+
+    // Create user record
+    const users = mockDb.getData<any>('users');
+    users.push({
+      uid: sellerId,
+      name: data.sellerName,
+      email: data.sellerEmail,
+      phoneNumber: data.sellerPhone,
+      role: 'seller',
+      status: 'approved',
+      createdAt: new Date().toISOString()
+    });
+    mockDb.saveData('users', users);
+
+    // Create seller record
+    const sellers = mockDb.getData<any>('sellers');
+    sellers.push({
+      uid: sellerId,
+      name: data.sellerName,
+      email: data.sellerEmail,
+      phoneNumber: data.sellerPhone,
+      shopId,
+      status: 'approved',
+      pan: data.pan || '',
+      gst: data.gst || '',
+      createdAt: new Date().toISOString()
+    });
+    mockDb.saveData('sellers', sellers);
+
+    // Create wallet
+    const wallets = mockDb.getData<any>('wallet');
+    wallets.push({ uid: sellerId, walletBalance: 0, rewardPoints: 0, createdAt: new Date().toISOString() });
+    mockDb.saveData('wallet', wallets);
+
+    // Create shop (pre-approved)
+    const newShop: Shop = {
+      id: shopId,
+      sellerId,
+      name: data.shopName,
+      description: data.description,
+      logoBase64: data.logoBase64 || makeSvg('🏪', '#FFC107'),
+      bannerBase64: data.bannerBase64 || makeSvg('🏪', '#081C3A'),
+      address: {
+        street: data.street,
+        city: data.city,
+        state: data.state,
+        postalCode: data.postalCode,
+        formattedAddress: `${data.street}, ${data.city}, ${data.state} - ${data.postalCode}`,
+        location: { latitude: data.latitude, longitude: data.longitude }
+      },
+      location: { latitude: data.latitude, longitude: data.longitude },
+      deliveryRadiusKm: data.deliveryRadiusKm,
+      openingTime: data.openingTime,
+      closingTime: data.closingTime,
+      status: 'approved',
+      isActive: true,
+      categories: data.categories,
+      createdAt: new Date().toISOString()
+    };
+    const shops = mockDb.getData<Shop>('shops');
+    shops.push(newShop);
+    mockDb.saveData('shops', shops);
+
+    return newShop;
+  },
+
+  /**
+   * Update logo or banner image for an existing shop.
+   */
+  updateShopImages: async (shopId: string, logoBase64?: string, bannerBase64?: string) => {
+    const shops = mockDb.getData<Shop>('shops');
+    const idx = shops.findIndex(s => s.id === shopId);
+    if (idx !== -1) {
+      if (logoBase64) shops[idx].logoBase64 = logoBase64;
+      if (bannerBase64) shops[idx].bannerBase64 = bannerBase64;
+      mockDb.saveData('shops', shops);
+    }
+  },
+
+  /**
+   * Update a product's image.
+   */
+  updateProductImage: async (productId: string, imageBase64: string) => {
+    const products = mockDb.getData<Product>('products');
+    const idx = products.findIndex(p => p.id === productId);
+    if (idx !== -1) {
+      products[idx].imageBase64 = imageBase64;
+      mockDb.saveData('products', products);
+    }
   }
 };
 

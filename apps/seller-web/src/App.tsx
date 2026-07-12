@@ -359,7 +359,7 @@ function SellerApp() {
 
       {/* Body grids */}
       {currentUser ? (
-        sellerProfile?.status === 'pending' && !myShop ? (
+        !myShop ? (
           /* ONBOARDING CALL TO ACTION */
           <main className="flex-1 flex flex-col items-center justify-center p-8 max-w-lg mx-auto text-center gap-6">
             <div className="w-16 h-16 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
@@ -375,7 +375,7 @@ function SellerApp() {
               Register Store Profile
             </Button>
           </main>
-        ) : sellerProfile?.status === 'pending' && myShop ? (
+        ) : myShop.status === 'pending' ? (
           /* ONBOARDING PENDING APPROVAL */
           <main className="flex-1 flex flex-col items-center justify-center p-8 max-w-lg mx-auto text-center gap-4">
             <Clock className="w-12 h-12 text-yellow-500 animate-spin" />

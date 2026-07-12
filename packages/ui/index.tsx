@@ -8,11 +8,7 @@ import { LatLng } from '@buyqk/types';
 // ==========================================
 export const BuyQkLogo: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => {
   return (
-    <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M50 5L90 28.1V71.9L50 95L10 71.9V28.1L50 5Z" fill="#102A4C" stroke="#FFC107" strokeWidth="6" />
-      <path d="M50 20L80 37.3V62.7L50 80L20 62.7V37.3L50 20Z" fill="#FFC107" fillOpacity="0.15" />
-      <path d="M50 25L33 52H48L42 75L67 43H52L58 25H50Z" fill="#FFC107" />
-    </svg>
+    <img src="/assets/logopng.png" className={className} alt="buyQk Logo" />
   );
 };
 

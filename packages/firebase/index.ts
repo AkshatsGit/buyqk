@@ -280,7 +280,10 @@ class MockDatabase {
 
   public getData<T>(collection: string): T[] {
     const data = localStorage.getItem(`gin_${collection}`);
-    return data ? JSON.parse(data) : [];
+    if (!data) return [];
+    const parsed = JSON.parse(data);
+    // Guard: if stored value somehow became a non-array (object/null), return [] so .push() never crashes
+    return Array.isArray(parsed) ? parsed : [];
   }
 
   public saveData<T>(collection: string, data: T[]) {

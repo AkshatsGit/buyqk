@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   auth, 
   shopService, 
-  productService, 
   adminService, 
-  orderService 
+  orderService,
+  geoService,
+  DEFAULT_PLATFORM_SETTINGS
 } from '@buyqk/firebase';
 import { 
   Button, 
@@ -57,9 +58,7 @@ function AdminApp() {
         await auth.signOut();
         throw new Error("Access Denied. Only akshat.srivastava098@gmail.com is authorized to access the Admin Panel.");
       }
-      user.role = 'admin';
-      localStorage.setItem('gin_current_user', JSON.stringify(user));
-      setCurrentUser(user);
+      setCurrentUser({ ...user, role: 'admin' });
       showToast(`Welcome Superuser, ${user.name}!`, "success");
     } catch (err: any) {
       showToast(err.message, "error");
@@ -73,7 +72,7 @@ function AdminApp() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [settings, setSettings] = useState<PlatformSettings>(adminService.getPlatformSettings());
+  const [settings, setSettings] = useState<PlatformSettings>(DEFAULT_PLATFORM_SETTINGS);
 
   // Admin Add-Seller Modal State
   const [isAddSellerOpen, setIsAddSellerOpen] = useState(false);
@@ -138,32 +137,40 @@ function AdminApp() {
       setCurrentUser(user);
     });
 
-    const refreshAdminData = () => {
-      setShops(shopService.getShops());
-      setCities(JSON.parse(localStorage.getItem('gin_cities') || '[]'));
-      setAreas(JSON.parse(localStorage.getItem('gin_areas') || '[]'));
-      setZones(JSON.parse(localStorage.getItem('gin_zones') || '[]'));
-    };
-
-    const unsubShops = shopService.subscribeToShops(() => {
-      refreshAdminData();
+    const unsubShops = shopService.subscribeToShops((allShops) => {
+      setShops(allShops);
     });
 
-    const unsubOrders = orderService.subscribeToOrders((allOrders) => {
+    const unsubOrders = orderService.subscribeToAllOrders((allOrders) => {
       setOrders(allOrders);
     });
 
-    const unsubUsers = (adminService as any).subscribeToUsers((allUsers: any[]) => {
+    const unsubUsers = adminService.subscribeToUsers((allUsers: any[]) => {
       setUsers(allUsers);
     });
 
-    refreshAdminData();
+    const unsubCities = geoService.subscribeToCities(setCities);
+    const unsubAreas = geoService.subscribeToAreas(setAreas);
+    const unsubZones = geoService.subscribeToZones(setZones);
+
+    // Load settings from Firestore
+    adminService.getPlatformSettings().then((s) => {
+      setSettings(s);
+      setCommPercent(String(s.commissionPercent));
+      setBaseDel(String(s.baseDeliveryCharge));
+      setDelPerKm(String(s.deliveryChargePerKm));
+      setPlatFee(String(s.platformFee));
+      setFreeDelThreshold(String(s.freeDeliveryThreshold));
+    });
 
     return () => {
       unsubUser();
       unsubShops();
       unsubOrders();
       unsubUsers();
+      unsubCities();
+      unsubAreas();
+      unsubZones();
     };
   }, []);
 
@@ -174,10 +181,7 @@ function AdminApp() {
         throw new Error("Access Denied. Only akshat.srivastava098@gmail.com is authorized to access the Admin Panel.");
       }
       const u = await auth.signIn({ email: authEmail, password: authPassword });
-      // Elevate role to admin for session
-      const adminUser = { ...u, role: 'admin' };
-      localStorage.setItem('gin_current_user', JSON.stringify(adminUser));
-      setCurrentUser(adminUser);
+      setCurrentUser({ ...u, role: 'admin' });
       showToast("Access Granted: Super Admin Node loaded.", "success");
     } catch (err: any) {
       showToast(err.message, "error");
@@ -189,9 +193,7 @@ function AdminApp() {
     try {
       await adminService.createCity(newCityName, newCityState, newCityCountry);
       showToast(`City ${newCityName} registered.`, "success");
-      setNewCityName('');
-      setNewCityState('');
-      setCities(JSON.parse(localStorage.getItem('gin_cities') || '[]'));
+      setNewCityName(''); setNewCityState('');
     } catch (err: any) {
       showToast(err.message, "error");
     }
@@ -199,15 +201,11 @@ function AdminApp() {
 
   const handleCreateArea = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCityIdForArea) {
-      showToast("Select target City.", "error");
-      return;
-    }
+    if (!selectedCityIdForArea) { showToast("Select target City.", "error"); return; }
     try {
       await adminService.createArea(newAreaName, selectedCityIdForArea);
       showToast(`Area ${newAreaName} registered under City.`, "success");
       setNewAreaName('');
-      setAreas(JSON.parse(localStorage.getItem('gin_areas') || '[]'));
     } catch (err: any) {
       showToast(err.message, "error");
     }
@@ -233,9 +231,7 @@ function AdminApp() {
     try {
       await adminService.createZone(newZoneName, selectedAreaForZone, selectedCityForZone, zonePoints);
       showToast(`Geofenced Zone ${newZoneName} active!`, "success");
-      setNewZoneName('');
-      setZonePoints([]);
-      setZones(JSON.parse(localStorage.getItem('gin_zones') || '[]'));
+      setNewZoneName(''); setZonePoints([]);
     } catch (err: any) {
       showToast(err.message, "error");
     }
@@ -262,21 +258,15 @@ function AdminApp() {
   const handleApproveShop = async (shopId: string) => {
     try {
       await shopService.approveShop(shopId);
-      showToast("Shop permit approved. Store linked to active dark store tables.", "success");
-      setShops(shopService.getShops());
-    } catch (err: any) {
-      showToast(err.message, "error");
-    }
+      showToast("Shop approved — live on Customer panel now!", "success");
+    } catch (err: any) { showToast(err.message, "error"); }
   };
 
   const handleRejectShop = async (shopId: string) => {
     try {
       await shopService.rejectShop(shopId);
-      showToast("Shop permit rejected and store suspended.", "info");
-      setShops(shopService.getShops());
-    } catch (err: any) {
-      showToast(err.message, "error");
-    }
+      showToast("Shop suspended.", "info");
+    } catch (err: any) { showToast(err.message, "error"); }
   };
 
   const handleAdminAddSeller = async (e: React.FormEvent) => {
@@ -291,15 +281,12 @@ function AdminApp() {
         categories: ['cat_groceries'], logoBase64: asLogoB64, bannerBase64: asBannerB64,
         pan: asPan, gst: asGst
       });
-      showToast('Seller and shop created & approved!', 'success');
-      setShops(shopService.getShops());
+      showToast('Seller & shop created and approved — live immediately!', 'success');
       setIsAddSellerOpen(false);
       setAsSellerName(''); setAsSellerEmail(''); setAsSellerPhone('');
       setAsShopName(''); setAsShopDesc(''); setAsStreet(''); setAsPan(''); setAsGst('');
       setAsLogoB64(''); setAsBannerB64('');
-    } catch (err: any) {
-      showToast(err.message, 'error');
-    }
+    } catch (err: any) { showToast(err.message, 'error'); }
   };
 
   const handleSaveShopImages = async () => {
@@ -307,22 +294,19 @@ function AdminApp() {
     try {
       await adminService.updateShopImages(editImgShop.id, editLogoB64 || undefined, editBannerB64 || undefined);
       showToast('Shop images updated!', 'success');
-      setShops(shopService.getShops());
       setEditImgShop(null);
       setEditLogoB64(''); setEditBannerB64('');
-    } catch (err: any) {
-      showToast(err.message, 'error');
-    }
+    } catch (err: any) { showToast(err.message, 'error'); }
   };
 
   // Calculations for KPI Cards
   const totalPlatformVolume = orders
-    .filter(o => o.orderStatus !== 'cancelled')
-    .reduce((acc, curr) => acc + curr.total, 0);
+    .filter((o: any) => o.status !== 'cancelled')
+    .reduce((acc: number, curr: any) => acc + (curr.total || 0), 0);
 
   const platformEarnings = orders
-    .filter(o => o.orderStatus !== 'cancelled' && o.paymentStatus === 'paid')
-    .reduce((acc, curr) => acc + (curr.subtotal * (settings.commissionPercent / 100)) + curr.platformFee, 0);
+    .filter((o: any) => o.status !== 'cancelled' && o.paymentStatus === 'paid')
+    .reduce((acc: number, curr: any) => acc + ((curr.subtotal || 0) * (settings.commissionPercent / 100)) + (curr.platformFee || 0), 0);
 
   const pendingApprovals = shops.filter(s => s.status === 'pending');
 

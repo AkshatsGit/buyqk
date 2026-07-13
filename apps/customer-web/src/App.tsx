@@ -97,20 +97,24 @@ function MainApp() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Subscribe to reactive database logs
+  const [allShops, setAllShops] = useState<Shop[]>([]);
+
   useEffect(() => {
     const unsubUser = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
     });
 
-    const unsubShops = shopService.subscribeToShops(() => {
-      // Refresh nearby stores
-      refreshShops();
+    // Live Firestore subscription for shops
+    const unsubShops = shopService.subscribeToShops((liveShops) => {
+      setAllShops(liveShops);
+      const nearby = shopService.getNearbyShops(customerLocation.latitude, customerLocation.longitude, liveShops);
+      setShops(nearby);
     });
 
-    const unsubOrders = orderService.subscribeToOrders((allOrders) => {
-      if (currentUser?.uid) {
-        setOrders(allOrders.filter(o => o.customerId === currentUser.uid));
-      }
+    // Live orders for current user
+    const uid = currentUser?.uid || null;
+    const unsubOrders = orderService.subscribeToOrders(uid, (allOrders) => {
+      setOrders(uid ? allOrders.filter((o: any) => o.customerId === uid) : []);
     });
 
     let unsubWallet = () => {};
@@ -132,8 +136,7 @@ function MainApp() {
   }, [currentUser?.uid, customerLocation]);
 
   const refreshShops = () => {
-    const nearby = shopService.getNearbyShops(customerLocation.latitude, customerLocation.longitude);
-    // Cast to original type
+    const nearby = shopService.getNearbyShops(customerLocation.latitude, customerLocation.longitude, allShops);
     setShops(nearby);
   };
 
@@ -248,7 +251,8 @@ function MainApp() {
           formattedAddress: formattedAddress,
           location: customerLocation
         },
-        paymentMethod
+        paymentMethod,
+        allShops
       );
       showToast(`Order Placed Successfully! (Ref: ${parentId})`, "success");
       setCart([]);
@@ -259,12 +263,13 @@ function MainApp() {
     }
   };
 
+
   const totalCartCost = cart.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
 
   // View specific shop products
-  const handleOpenShop = (shop: Shop) => {
+  const handleOpenShop = async (shop: Shop) => {
     setSelectedShop(shop);
-    const inv = inventoryService.getInventoryByShop(shop.id);
+    const inv = await inventoryService.getInventoryByShop(shop.id);
     setShopInventory(inv);
   };
 
@@ -947,11 +952,10 @@ const AIAssistantView: React.FC<AIAssistantProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await geminiService.askGeminiAssistant(userText, customerLocation);
+      const responseText = await geminiService.askGeminiAssistant(userText, customerLocation);
       setMessages(prev => [...prev, { 
         sender: 'assistant', 
-        text: response.answer, 
-        products: response.products 
+        text: responseText
       }]);
     } catch (err) {
       setMessages(prev => [...prev, { 
@@ -1198,7 +1202,6 @@ const WalletView: React.FC<{ uid: string }> = ({ uid }) => {
   useEffect(() => {
     const unsub = walletService.subscribeToWallet(uid, (bal) => {
       setBalance(bal);
-      setTxs(walletService.getWalletTransactions(uid));
     });
     return () => unsub();
   }, [uid]);

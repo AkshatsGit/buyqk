@@ -3,9 +3,10 @@ import {
   auth, 
   shopService, 
   productService, 
-  inventoryService, 
+  inventoryService,
   orderService 
 } from '@buyqk/firebase';
+
 import { 
   Button, 
   Card, 
@@ -110,28 +111,36 @@ function SellerApp() {
   const brandsList = productService.getBrands();
 
   useEffect(() => {
+    let unsubShopOrders: (() => void) | null = null;
+    let unsubInventory: (() => void) | null = null;
+
     const unsubUser = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
-      if (user) {
-        loadSellerData(user.uid, user.shopId);
-      }
     });
 
-    const unsubShops = shopService.subscribeToShops(() => {
+    // Subscribe to ALL shops — find the one belonging to this seller
+    const unsubShops = shopService.subscribeToShops((allShops) => {
       const liveUser = auth.getCurrentUser();
-      if (liveUser) {
-        loadSellerData(liveUser.uid, liveUser.shopId);
-      }
-    });
+      if (!liveUser) return;
+      const shop = allShops.find((s: any) => s.sellerId === liveUser.uid || s.id === liveUser.shopId);
+      setMyShop(shop || null);
 
-    const unsubOrders = orderService.subscribeToOrders(() => {
-      const liveUser = auth.getCurrentUser();
-      if (liveUser) {
-        const shops = shopService.getShops();
-        const shop = shops.find(s => s.sellerId === liveUser.uid || s.id === liveUser.shopId);
-        if (shop) {
-          setMyOrders(orderService.getOrdersForSeller(shop.id));
-        }
+      if (shop) {
+        // Subscribe to orders for this shop
+        if (unsubShopOrders) unsubShopOrders();
+        unsubShopOrders = orderService.subscribeToShopOrders(shop.id, (orders) => {
+          setMyOrders(orders);
+        });
+        // Subscribe to inventory for this shop
+        if (unsubInventory) unsubInventory();
+        unsubInventory = inventoryService.subscribeToInventory(shop.id, (invItems) => {
+          productService.getProducts().then((products) => {
+            setMyInventory(invItems.map(item => ({
+              ...item,
+              product: products.find(p => p.id === item.productId)
+            })));
+          });
+        });
       }
     });
 
@@ -142,25 +151,11 @@ function SellerApp() {
     return () => {
       unsubUser();
       unsubShops();
-      unsubOrders();
       unsubProducts();
+      if (unsubShopOrders) unsubShopOrders();
+      if (unsubInventory) unsubInventory();
     };
   }, []);
-
-  const loadSellerData = (uid: string, shopId?: string) => {
-    const sellers = JSON.parse(localStorage.getItem('gin_sellers') || '[]');
-    const profile = sellers.find((s: any) => s.uid === uid);
-    setSellerProfile(profile);
-
-    const shops = shopService.getShops();
-    // Get shop linked to this seller
-    const shop = shops.find(s => s.sellerId === uid || s.id === shopId);
-    if (shop) {
-      setMyShop(shop);
-      setMyOrders(orderService.getOrdersForSeller(shop.id));
-      setMyInventory(inventoryService.getInventoryByShop(shop.id));
-    }
-  };
 
   // Helper to compress & convert file upload to base64 text
   const handleImageUpload = (file: File, callback: (base64: string) => void) => {
@@ -265,8 +260,8 @@ function SellerApp() {
         Number(prodPrice)
       );
 
-      showToast("Product added & stocked locally!", "success");
-      setMyInventory(inventoryService.getInventoryByShop(myShop.id));
+      showToast("Product added & stocked!", "success");
+      // Inventory will update via subscription automatically
       setIsAddProductOpen(false);
 
       // Clean form
@@ -286,7 +281,7 @@ function SellerApp() {
     try {
       await inventoryService.updateInventory(myShop.id, productId, stock, price);
       showToast("Inventory stock details updated.", "success");
-      setMyInventory(inventoryService.getInventoryByShop(myShop.id));
+      // Inventory will update via subscription automatically
     } catch (err: any) {
       showToast(err.message, "error");
     }
@@ -296,7 +291,7 @@ function SellerApp() {
     try {
       await orderService.updateOrderStatus(orderId, nextStatus);
       showToast(`Order status updated to: ${nextStatus.toUpperCase()}`, "success");
-      setMyOrders(orderService.getOrdersForSeller(myShop!.id));
+      // Orders will update via subscription automatically
     } catch (err: any) {
       showToast(err.message, "error");
     }

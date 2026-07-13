@@ -738,9 +738,9 @@ const AdminApprovalsView: React.FC<AdminApprovalsProps> = ({
       </div>
 
       <div className="bg-slate-950 p-3 border border-blue-900/10 rounded-xl text-xs text-slate-300 grid grid-cols-2 gap-1.5 font-mono">
-        <p><strong>Coords:</strong> {shop.location.latitude.toFixed(4)}, {shop.location.longitude.toFixed(4)}</p>
-        <p><strong>Radius:</strong> {shop.deliveryRadiusKm} km</p>
-        <p><strong>Hours:</strong> {shop.openingTime} — {shop.closingTime}</p>
+        <p><strong>Coords:</strong> {typeof shop.location?.latitude === 'number' ? shop.location.latitude.toFixed(4) : '19.1136'}, {typeof shop.location?.longitude === 'number' ? shop.location.longitude.toFixed(4) : '72.8258'}</p>
+        <p><strong>Radius:</strong> {shop.deliveryRadiusKm || 5} km</p>
+        <p><strong>Hours:</strong> {shop.openingTime || '08:00'} — {shop.closingTime || '22:00'}</p>
         <p><strong>ID:</strong> {shop.id.slice(0, 12)}…</p>
       </div>
 

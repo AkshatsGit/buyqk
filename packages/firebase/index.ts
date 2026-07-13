@@ -36,7 +36,16 @@ if (isFirebaseConfigured()) {
   firebaseAuth = getAuth(firebaseApp);
 }
 
-const STORE_URL = 'http://localhost:3099';
+const getStoreUrl = (): string => {
+  if (typeof window !== 'undefined' && window.location) {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    return `${protocol}//${hostname}:3099`;
+  }
+  return 'http://localhost:3099';
+};
+
+const STORE_URL = getStoreUrl();
 
 /**
  * MockDatabase — shared across all three apps via HTTP store server.
@@ -837,21 +846,28 @@ export const shopService = {
   getNearbyShops: (lat: number, lng: number): (Shop & { distanceKm: number })[] => {
     const shops = mockDb.getData<Shop>('shops').filter(s => s.status === 'approved' && s.isActive);
     const listed = shops.map(s => {
-      const dist = calculateDistance(lat, lng, s.location.latitude, s.location.longitude);
+      const shopLat = s.location?.latitude ?? s.address?.location?.latitude ?? 19.1136;
+      const shopLng = s.location?.longitude ?? s.address?.location?.longitude ?? 72.8258;
+      const dist = calculateDistance(lat, lng, shopLat, shopLng);
       return { ...s, distanceKm: dist };
     });
     
-    const withinRadius = listed.filter(s => s.distanceKm <= s.deliveryRadiusKm);
+    const getRadius = (s: Shop) => typeof s.deliveryRadiusKm === 'number' && s.deliveryRadiusKm > 0 ? s.deliveryRadiusKm : 5;
+
+    const withinRadius = listed.filter(s => s.distanceKm <= getRadius(s));
     if (withinRadius.length > 0) {
       return withinRadius.sort((a, b) => a.distanceKm - b.distanceKm);
     }
 
     // Teleportation/bypass fallback: If testing from another city, display the shops but simulate their distance
     return listed
-      .map(s => ({ 
-        ...s, 
-        distanceKm: Number(Math.min(s.distanceKm, s.deliveryRadiusKm - 0.5).toFixed(2)) 
-      }))
+      .map(s => {
+        const radius = getRadius(s);
+        return { 
+          ...s, 
+          distanceKm: Number(Math.min(s.distanceKm, radius - 0.5).toFixed(2)) 
+        };
+      })
       .sort((a, b) => a.distanceKm - b.distanceKm);
   },
 

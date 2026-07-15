@@ -891,7 +891,35 @@ export const adminService = {
   updateShopDetails: async (shopId: string, data: any): Promise<void> => {
     await shopService.updateShopDetails(shopId, data);
   },
+
+  updateUserRole: async (userId: string, newRole: string): Promise<void> => {
+    await updateDoc(doc(db, 'users', userId), { role: newRole });
+  },
+
+  adminCreateHRUser: async (data: { name: string; email: string; phoneNumber?: string; password?: string }): Promise<void> => {
+    const userPass = data.password || 'HR' + Math.random().toString(36).substring(2, 9) + '!';
+    const tempName = 'sec_' + Math.random().toString(36).substring(2, 9);
+    const secApp = initializeApp(firebaseConfig, tempName);
+    const secAuth = getAuth(secApp);
+    const cred = await createUserWithEmailAndPassword(secAuth, data.email, userPass);
+    const uid = cred.user.uid;
+    
+    await setDoc(doc(db, 'users', uid), {
+      name: data.name,
+      email: data.email,
+      phoneNumber: data.phoneNumber || '',
+      role: 'hr',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      tempPasswordCreated: userPass
+    });
+    
+    await firebaseSignOut(secAuth);
+    await deleteApp(secApp);
+  },
 };
+
+
 
 // ==========================================
 // GEOGRAPHY SERVICE

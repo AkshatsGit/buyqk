@@ -1297,9 +1297,52 @@ interface AdminUsersViewProps {
 }
 
 const AdminUsersView: React.FC<AdminUsersViewProps> = ({ users }) => {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [hrName, setHrName] = useState('');
+  const [hrEmail, setHrEmail] = useState('');
+  const [hrPhone, setHrPhone] = useState('');
+  const [hrPassword, setHrPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleCreateHR = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hrEmail || !hrPassword || !hrName) {
+      showToast("Please fill in Name, Email and Password fields.", "error");
+      return;
+    }
+    setLoading(true);
+    try {
+      await adminService.adminCreateHRUser({
+        name: hrName,
+        email: hrEmail,
+        phoneNumber: hrPhone,
+        password: hrPassword
+      });
+      showToast("HR Account successfully created!", "success");
+      setShowCreateModal(false);
+      setHrName('');
+      setHrEmail('');
+      setHrPhone('');
+      setHrPassword('');
+    } catch (err: any) {
+      showToast(err.message || "Failed to create HR account.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Registered System Users ({users.length})</span>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Registered System Users ({users.length})</span>
+        <Button 
+          variant="primary" 
+          onClick={() => setShowCreateModal(true)}
+          className="text-xs py-2 px-4 flex items-center justify-center gap-1.5 font-sans"
+        >
+          👤 Create HR Account Credentials
+        </Button>
+      </div>
 
       <Card hoverEffect={false} className="p-6 overflow-hidden bg-slate-900/40">
         {users.length === 0 ? (
@@ -1323,21 +1366,36 @@ const AdminUsersView: React.FC<AdminUsersViewProps> = ({ users }) => {
                 {users.map((u, i) => (
                   <tr key={u.uid || i} className="hover:bg-slate-900/30 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-xs font-bold font-mono">
+                       <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 text-xs font-bold font-mono">
                         {u.name?.charAt(0).toUpperCase()}
                       </div>
-                      {u.name}
+                      <div className="flex flex-col">
+                        <span>{u.name}</span>
+                        {u.tempPasswordCreated && (
+                          <span className="text-[10px] text-yellow-500 font-mono">PWD: {u.tempPasswordCreated}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4 font-mono text-xs">{u.email}</td>
                     <td className="py-3.5 px-4 font-mono text-xs">{u.phoneNumber || 'N/A'}</td>
                     <td className="py-3.5 px-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                        u.role === 'admin' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
-                        u.role === 'seller' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
-                        'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                      }`}>
-                        {u.role?.toUpperCase()}
-                      </span>
+                      <select 
+                        value={u.role || 'customer'} 
+                        onChange={async (e) => {
+                          try {
+                            await adminService.updateUserRole(u.uid, e.target.value);
+                            showToast(`Updated ${u.name}'s role to ${e.target.value.toUpperCase()}`, "success");
+                          } catch (err: any) {
+                            showToast("Failed to edit user role: " + err.message, "error");
+                          }
+                        }}
+                        className="bg-slate-950/80 text-xs text-white border border-blue-900/40 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-yellow-500/60 transition-all font-sans"
+                      >
+                        <option value="customer">CUSTOMER</option>
+                        <option value="seller">SELLER</option>
+                        <option value="hr">HR MANAGER</option>
+                        <option value="admin">ADMIN</option>
+                      </select>
                     </td>
                     <td className="py-3.5 px-4">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -1357,6 +1415,49 @@ const AdminUsersView: React.FC<AdminUsersViewProps> = ({ users }) => {
           </div>
         )}
       </Card>
+
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="👤 Create System HR Credentials">
+        <form onSubmit={handleCreateHR} className="flex flex-col gap-4 p-1 font-sans">
+          <p className="text-xs text-slate-400 leading-relaxed mb-1">
+            Standard user credential initialization. The system will register this email in Firebase Auth and assign the "hr" role immediately.
+          </p>
+          <Input 
+            label="Name" 
+            type="text" 
+            placeholder="HR Officer Name" 
+            value={hrName} 
+            onChange={e=>setHrName(e.target.value)} 
+            required 
+          />
+          <Input 
+            label="Email Address / User ID" 
+            type="email" 
+            placeholder="hr@buyqk.com" 
+            value={hrEmail} 
+            onChange={e=>setHrEmail(e.target.value)} 
+            required 
+          />
+          <Input 
+            label="Phone Number" 
+            type="text" 
+            placeholder="+91 98765 43210" 
+            value={hrPhone} 
+            onChange={e=>setHrPhone(e.target.value)} 
+          />
+          <Input 
+            label="Password string" 
+            type="password" 
+            placeholder="••••••••" 
+            value={hrPassword} 
+            onChange={e=>setHrPassword(e.target.value)} 
+            required 
+          />
+
+          <Button variant="primary" type="submit" disabled={loading} className="w-full py-3 mt-4">
+            {loading ? 'Creating Auth Record...' : 'Generate and Save Credentials'}
+          </Button>
+        </form>
+      </Modal>
     </div>
   );
 };

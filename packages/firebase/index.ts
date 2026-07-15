@@ -191,9 +191,18 @@ const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'unde
 async function hydrateUser(fbUser: any, role: string = 'customer', extra: any = {}): Promise<any> {
   const ref = doc(db, 'users', fbUser.uid);
   const snap = await getDoc(ref);
+  const isSuperAdmin = fbUser.email === 'akshat.srivastava098@gmail.com';
+  const targetRole = isSuperAdmin ? 'admin' : role;
+
   if (snap.exists()) {
-    if (Object.keys(extra).length > 0) {
-      await setDoc(ref, extra, { merge: true });
+    const currentData = snap.data() || {};
+    const needsRoleUpdate = isSuperAdmin && currentData.role !== 'admin';
+    const payload = {
+      ...extra,
+      ...(needsRoleUpdate ? { role: 'admin' } : {})
+    };
+    if (needsRoleUpdate || Object.keys(extra).length > 0) {
+      await setDoc(ref, payload, { merge: true });
       const updatedSnap = await getDoc(ref);
       return normalizeDoc({ uid: fbUser.uid, ...updatedSnap.data() });
     }
@@ -203,7 +212,7 @@ async function hydrateUser(fbUser: any, role: string = 'customer', extra: any = 
     name: fbUser.displayName || extra.name || 'User',
     email: fbUser.email || extra.email || '',
     phoneNumber: fbUser.phoneNumber || extra.phoneNumber || '',
-    role,
+    role: targetRole,
     status: 'active',
     createdAt: new Date().toISOString(),
     ...extra,
@@ -249,9 +258,13 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
           return;
         }
 
-        currentAuthUser = normalizeDoc({ uid: fbUser.uid, ...data });
+        const normalized = normalizeDoc({ uid: fbUser.uid, ...data });
+        if (fbUser.email === 'akshat.srivastava098@gmail.com') {
+          normalized.role = 'admin';
+        }
+        currentAuthUser = normalized;
       } else {
-        currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: 'customer', name: fbUser.displayName || '' };
+        currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: fbUser.email === 'akshat.srivastava098@gmail.com' ? 'admin' : 'customer', name: fbUser.displayName || '' };
       }
       if (currentUserListener) currentUserListener(currentAuthUser);
     });
@@ -316,7 +329,8 @@ export const auth = {
       localStorage.setItem('buyqk_session_id', newSessionId);
     }
     const cred = await signInWithEmailAndPassword(firebaseAuth, form.email, form.password);
-    const user = await hydrateUser(cred.user, 'customer', { currentSessionId: newSessionId });
+    const targetRole = form.email === 'akshat.srivastava098@gmail.com' ? 'admin' : 'customer';
+    const user = await hydrateUser(cred.user, targetRole, { currentSessionId: newSessionId });
     currentAuthUser = user;
     if (currentUserListener) currentUserListener(user);
     return user;

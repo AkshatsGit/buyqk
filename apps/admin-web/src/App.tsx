@@ -177,6 +177,9 @@ function AdminApp() {
 
   useEffect(() => {
     const unsubUser = auth.onAuthStateChanged((user) => {
+      if (user && user.email === 'akshat.srivastava098@gmail.com') {
+        user.role = 'admin';
+      }
       setCurrentUser(user);
     });
 

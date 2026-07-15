@@ -60,6 +60,23 @@ export default function App() {
 function AdminApp() {
   const [currentUser, setCurrentUser] = useState<any>(auth.getCurrentUser());
   const [statesList, setStatesList] = useState<string[]>(INDIAN_STATES);
+  const [ghostClicks, setGhostClicks] = useState(0);
+
+  const handleGhostClick = () => {
+    const nextClicks = ghostClicks + 1;
+    if (nextClicks >= 3) {
+      setGhostClicks(0);
+      const targetUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3004'
+        : 'https://hr.buyqk.com';
+      window.location.href = targetUrl;
+    } else {
+      setGhostClicks(nextClicks);
+      setTimeout(() => {
+        setGhostClicks(c => c > 0 ? c - 1 : 0);
+      }, 5000);
+    }
+  };
 
   useEffect(() => {
     fetch("https://countriesnow.space/api/v0.1/countries/states", {
@@ -397,18 +414,33 @@ function AdminApp() {
           </div>
         </div>
 
-        {currentUser && currentUser.role === 'admin' && (
-          <div className="flex items-center gap-3">
-            <Badge variant="error">SUPERUSER SESSION</Badge>
-            <button 
-              onClick={() => auth.signOut()}
-              className="p-2.5 rounded-xl bg-slate-900 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-blue-900/20 transition-all"
-              title="Logout"
-            >
-              <LogOutIcon />
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {currentUser && currentUser.role === 'admin' && (
+            <>
+              <Badge variant="error">SUPERUSER SESSION</Badge>
+              <button 
+                onClick={() => auth.signOut()}
+                className="p-2.5 rounded-xl bg-slate-900 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-blue-900/20 transition-all"
+                title="Logout"
+              >
+                <LogOutIcon />
+              </button>
+            </>
+          )}
+
+          {/* Secret Ghost HR Trigger (3 clicks path to HR Portal) */}
+          <button 
+            onClick={handleGhostClick}
+            className="w-9 h-9 rounded-xl hover:bg-slate-900/40 flex items-center justify-center border border-transparent hover:border-blue-900/20 transition-all select-none active:scale-95"
+            title="System Security Node"
+          >
+            <img 
+              src="/assets/logoimg.png" 
+              alt="Node" 
+              className="w-4 h-4 opacity-15 hover:opacity-40 transition-opacity select-none pointer-events-none filter grayscale brightness-50"
+            />
+          </button>
+        </div>
       </header>
 
       {/* Main Body Grid */}

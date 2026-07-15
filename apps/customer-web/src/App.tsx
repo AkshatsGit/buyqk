@@ -7,6 +7,8 @@ import {
   orderService, 
   walletService, 
   geminiService,
+  adminService,
+  resolveAddressFromLatLng,
   calculateDistance 
 } from '@buyqk/firebase';
 import { 
@@ -39,7 +41,7 @@ import {
   TrendingUp,
   MessageSquare
 } from 'lucide-react';
-import { Shop, Product, InventoryItem, CartItem, Order, LatLng, Address, Category } from '@buyqk/types';
+import { Shop, Product, InventoryItem, CartItem, Order, LatLng, Address, Category, PlatformSettings } from '@buyqk/types';
 
 export default function App() {
   return (
@@ -53,6 +55,7 @@ function MainApp() {
   // Navigation & Session State
   const [currentUser, setCurrentUser] = useState<any>(auth.getCurrentUser());
   const [activeTab, setActiveTab] = useState<'shops' | 'ai-assistant' | 'orders' | 'wallet'>('shops');
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [view, setView] = useState<'landing' | 'app'>('landing');
 
@@ -103,6 +106,8 @@ function MainApp() {
     const unsubUser = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
     });
+
+    adminService.getPlatformSettings().then(setPlatformSettings).catch(console.error);
 
     // Live Firestore subscription for shops
     const unsubShops = shopService.subscribeToShops((liveShops) => {
@@ -418,6 +423,7 @@ function MainApp() {
                 gpsTrigger={handleGPSPermission}
                 lat={customerLocation.latitude}
                 lng={customerLocation.longitude}
+                tileProvider={platformSettings?.mapProvider}
               />
             )
           )}
@@ -537,9 +543,16 @@ function MainApp() {
             zoom={14}
             marker={customerLocation}
             markerDraggable={true}
-            onMarkerDragEnd={(latlng) => {
+            tileProvider={platformSettings?.mapProvider}
+            onMarkerDragEnd={async (latlng) => {
               setCustomerLocation(latlng);
-              setFormattedAddress(`Custom Map Location (${latlng.latitude.toFixed(4)}, ${latlng.longitude.toFixed(4)})`);
+              setFormattedAddress("Locating area...");
+              try {
+                const addr = await resolveAddressFromLatLng(latlng.latitude, latlng.longitude, platformSettings || undefined);
+                setFormattedAddress(addr);
+              } catch (err) {
+                setFormattedAddress(`Custom Map Location (${latlng.latitude.toFixed(4)}, ${latlng.longitude.toFixed(4)})`);
+              }
             }}
           />
 
@@ -669,6 +682,7 @@ interface ShopsListProps {
   gpsTrigger: () => void;
   lat: number;
   lng: number;
+  tileProvider?: 'openstreetmap' | 'google';
 }
 
 const ShopsListView: React.FC<ShopsListProps> = ({
@@ -682,7 +696,8 @@ const ShopsListView: React.FC<ShopsListProps> = ({
   onLocClick,
   gpsTrigger,
   lat,
-  lng
+  lng,
+  tileProvider
 }) => {
   return (
     <div className="flex flex-col gap-6">
@@ -792,6 +807,7 @@ const ShopsListView: React.FC<ShopsListProps> = ({
           <LeafletMap 
             center={{ latitude: lat, longitude: lng }}
             zoom={13}
+            tileProvider={tileProvider}
             shops={shops.map(s => ({
               id: s.id,
               name: s.name,

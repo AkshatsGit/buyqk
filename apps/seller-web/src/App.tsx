@@ -37,6 +37,15 @@ import {
 } from 'lucide-react';
 import { Shop, Product, InventoryItem, Order, LatLng } from '@buyqk/types';
 
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", 
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", 
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", 
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", 
+  "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", 
+  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
+
 export default function App() {
   return (
     <ToastProvider>
@@ -47,6 +56,23 @@ export default function App() {
 
 function SellerApp() {
   const [currentUser, setCurrentUser] = useState<any>(auth.getCurrentUser());
+  const [statesList, setStatesList] = useState<string[]>(INDIAN_STATES);
+
+  useEffect(() => {
+    fetch("https://countriesnow.space/api/v0.1/countries/states", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: "India" })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data?.data?.states) {
+          const names = data.data.states.map((s: any) => s.name);
+          if (names.length > 0) setStatesList(names);
+        }
+      })
+      .catch(err => console.log("Failed to fetch dynamic states:", err));
+  }, []);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'inventory' | 'settings'>('dashboard');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
@@ -539,7 +565,20 @@ function SellerApp() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Input label="State" placeholder="Maharashtra" value={state} onChange={e=>setState(e.target.value)} required />
+            <div className="w-full flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">State</label>
+              <select
+                value={state}
+                onChange={e => setState(e.target.value)}
+                required
+                className="bg-slate-900/60 border border-blue-900/30 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500/60 focus:ring-1 focus:ring-yellow-500/60 transition-all duration-200 text-sm font-sans"
+              >
+                <option value="" className="bg-[#081C3A]">Select State</option>
+                {statesList.map(st => (
+                  <option key={st} value={st} className="bg-[#081C3A]">{st}</option>
+                ))}
+              </select>
+            </div>
             <Input label="Postal Code" placeholder="400053" value={postalCode} onChange={e=>setPostalCode(e.target.value)} required />
           </div>
 

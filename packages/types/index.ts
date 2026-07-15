@@ -231,4 +231,6 @@ export interface PlatformSettings {
   deliveryChargePerKm: number;
   platformFee: number;
   freeDeliveryThreshold: number;
+  mapProvider?: 'openstreetmap' | 'google';
+  googleMapsApiKey?: string;
 }

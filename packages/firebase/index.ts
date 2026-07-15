@@ -104,6 +104,8 @@ const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   deliveryChargePerKm: 10,
   platformFee: 5,
   freeDeliveryThreshold: 499,
+  mapProvider: 'openstreetmap',
+  googleMapsApiKey: '',
 };
 
 // ==========================================
@@ -141,6 +143,40 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
     Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   return Number((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(2));
+}
+
+export async function resolveAddressFromLatLng(lat: number, lng: number, settings?: PlatformSettings): Promise<string> {
+  const provider = settings?.mapProvider || 'openstreetmap';
+  const apiKey = settings?.googleMapsApiKey;
+
+  if (provider === 'google' && apiKey) {
+    try {
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`);
+      const data = await res.json();
+      if (data?.results?.[0]?.formatted_address) {
+        return data.results[0].formatted_address;
+      }
+    } catch (err) {
+      console.error("Google Geocoding failed, falling back to openstreetmap:", err);
+    }
+  }
+
+  // OpenStreetMap Nominatim Free Geocoder (fallback or primary)
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+      headers: {
+        'Accept-Language': 'en'
+      }
+    });
+    const data = await res.json();
+    if (data?.display_name) {
+      return data.display_name;
+    }
+  } catch (err) {
+    console.error("Nominatim Geocoding failed:", err);
+  }
+
+  return `Custom Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 }
 
 // ==========================================

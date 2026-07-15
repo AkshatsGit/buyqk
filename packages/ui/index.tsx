@@ -241,6 +241,7 @@ interface LeafletMapProps {
   shops?: { id: string; name: string; location: LatLng; address: string }[];
   onShopClick?: (shopId: string) => void;
   className?: string;
+  tileProvider?: 'openstreetmap' | 'google';
 }
 
 export const LeafletMap: React.FC<LeafletMapProps> = ({
@@ -253,7 +254,8 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
   polygonCoordinates,
   shops = [],
   onShopClick,
-  className = "h-[400px] w-full rounded-2xl overflow-hidden border border-blue-900/30 shadow-inner relative"
+  className = "h-[400px] w-full rounded-2xl overflow-hidden border border-blue-900/30 shadow-inner relative",
+  tileProvider = 'openstreetmap'
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapInstanceRef = useRef<any>(null);
@@ -296,9 +298,13 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
     const map = L.map(mapRef.current).setView([center.latitude, center.longitude], zoom);
     leafletMapInstanceRef.current = map;
 
-    // Standard OpenStreetMap Tile Layer (Dark Mode visual tuning style)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // Dynamic Tile Selection: standard OSM Voyager or Google Maps Road Layout
+    const tileUrl = tileProvider === 'google'
+      ? 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+
+    L.tileLayer(tileUrl, {
+      attribution: tileProvider === 'google' ? '&copy; Google Maps' : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
     // Map Click Listener
@@ -314,7 +320,7 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
         leafletMapInstanceRef.current = null;
       }
     };
-  }, [isLeafletLoaded]);
+  }, [isLeafletLoaded, tileProvider]);
 
   // Update center when it changes
   useEffect(() => {

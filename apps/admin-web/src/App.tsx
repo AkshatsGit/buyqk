@@ -40,6 +40,15 @@ import {
 } from 'lucide-react';
 import { Shop, Order, LatLng, City, Area, Zone, PlatformSettings } from '@buyqk/types';
 
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", 
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", 
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", 
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", 
+  "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", 
+  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+];
+
 export default function App() {
   return (
     <ToastProvider>
@@ -50,6 +59,23 @@ export default function App() {
 
 function AdminApp() {
   const [currentUser, setCurrentUser] = useState<any>(auth.getCurrentUser());
+  const [statesList, setStatesList] = useState<string[]>(INDIAN_STATES);
+
+  useEffect(() => {
+    fetch("https://countriesnow.space/api/v0.1/countries/states", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: "India" })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data?.data?.states) {
+          const names = data.data.states.map((s: any) => s.name);
+          if (names.length > 0) setStatesList(names);
+        }
+      })
+      .catch(err => console.log("Failed to fetch states from API:", err));
+  }, []);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'approvals' | 'maps' | 'settings' | 'users'>('dashboard');
 
   const handleGoogleLogin = async () => {
@@ -134,6 +160,8 @@ function AdminApp() {
   const [delPerKm, setDelPerKm] = useState(String(settings.deliveryChargePerKm));
   const [platFee, setPlatFee] = useState(String(settings.platformFee));
   const [freeDelThreshold, setFreeDelThreshold] = useState(String(settings.freeDeliveryThreshold));
+  const [mapProvider, setMapProvider] = useState<'openstreetmap' | 'google'>('openstreetmap');
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
 
   // Auth Forms
   const [authEmail, setAuthEmail] = useState('');
@@ -176,6 +204,8 @@ function AdminApp() {
       setDelPerKm(String(s.deliveryChargePerKm));
       setPlatFee(String(s.platformFee));
       setFreeDelThreshold(String(s.freeDeliveryThreshold));
+      setMapProvider(s.mapProvider || 'openstreetmap');
+      setGoogleMapsApiKey(s.googleMapsApiKey || '');
     });
 
     return () => {
@@ -259,7 +289,9 @@ function AdminApp() {
       baseDeliveryCharge: Number(baseDel),
       deliveryChargePerKm: Number(delPerKm),
       platformFee: Number(platFee),
-      freeDeliveryThreshold: Number(freeDelThreshold)
+      freeDeliveryThreshold: Number(freeDelThreshold),
+      mapProvider,
+      googleMapsApiKey
     };
     try {
       await adminService.updatePlatformSettings(newSets);
@@ -470,7 +502,20 @@ function AdminApp() {
                 <Input label="City" value={asCity} onChange={e => setAsCity(e.target.value)} required />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Input label="State" value={asState} onChange={e => setAsState(e.target.value)} required />
+                <div className="w-full flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">State</label>
+                  <select
+                    value={asState}
+                    onChange={e => setAsState(e.target.value)}
+                    required
+                    className="bg-slate-900/60 border border-blue-900/30 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500/60 focus:ring-1 focus:ring-yellow-500/60 transition-all duration-200 text-sm font-sans"
+                  >
+                    <option value="" className="bg-[#081C3A]">Select State</option>
+                    {statesList.map(st => (
+                      <option key={st} value={st} className="bg-[#081C3A]">{st}</option>
+                    ))}
+                  </select>
+                </div>
                 <Input label="Postal Code" value={asPostal} onChange={e => setAsPostal(e.target.value)} required />
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -533,7 +578,20 @@ function AdminApp() {
                 <Input label="City" value={editCity} onChange={e => setEditCity(e.target.value)} required />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Input label="State" value={editState} onChange={e => setEditState(e.target.value)} required />
+                <div className="w-full flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">State</label>
+                  <select
+                    value={editState}
+                    onChange={e => setEditState(e.target.value)}
+                    required
+                    className="bg-slate-900/60 border border-blue-900/30 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500/60 focus:ring-1 focus:ring-yellow-500/60 transition-all duration-200 text-sm font-sans"
+                  >
+                    <option value="" className="bg-[#081C3A]">Select State</option>
+                    {statesList.map(st => (
+                      <option key={st} value={st} className="bg-[#081C3A]">{st}</option>
+                    ))}
+                  </select>
+                </div>
                 <Input label="Postal Code" value={editPostal} onChange={e => setEditPostal(e.target.value)} required />
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -579,6 +637,7 @@ function AdminApp() {
               points={zonePoints}
               clearPoints={() => setZonePoints([])}
               onMapClick={handleMapClick}
+              statesList={statesList}
             />
           )}
 
@@ -594,6 +653,10 @@ function AdminApp() {
               setPlatFee={setPlatFee}
               freeDel={freeDelThreshold}
               setFreeDel={setFreeDelThreshold}
+              mapProvider={mapProvider}
+              setMapProvider={setMapProvider}
+              googleMapsApiKey={googleMapsApiKey}
+              setGoogleMapsApiKey={setGoogleMapsApiKey}
               onSave={handleSaveSettings}
             />
           )}
@@ -944,6 +1007,7 @@ interface AdminMapsProps {
   points: LatLng[];
   clearPoints: () => void;
   onMapClick: (latlng: LatLng) => void;
+  statesList: string[];
 }
 
 const AdminMapsView: React.FC<AdminMapsProps> = ({
@@ -972,7 +1036,8 @@ const AdminMapsView: React.FC<AdminMapsProps> = ({
   setZoneName,
   points,
   clearPoints,
-  onMapClick
+  onMapClick,
+  statesList
 }) => {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
@@ -985,7 +1050,20 @@ const AdminMapsView: React.FC<AdminMapsProps> = ({
           <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">1. Register City</span>
           <form onSubmit={onCitySubmit} className="flex flex-col gap-3">
             <Input label="City Name" placeholder="e.g. Mumbai" value={cityName} onChange={e=>setCityName(e.target.value)} required />
-            <Input label="State" placeholder="e.g. Maharashtra" value={cityState} onChange={e=>setCityState(e.target.value)} required />
+            <div className="w-full flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-300 uppercase">State</label>
+              <select
+                value={cityState}
+                onChange={e => setCityState(e.target.value)}
+                required
+                className="bg-slate-900/60 border border-blue-900/30 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500/60 focus:ring-1 focus:ring-yellow-500/60 transition-all duration-200 text-sm font-sans"
+              >
+                <option value="" className="bg-[#081C3A]">Select State</option>
+                {statesList.map(st => (
+                  <option key={st} value={st} className="bg-[#081C3A]">{st}</option>
+                ))}
+              </select>
+            </div>
             <Button variant="primary" type="submit" className="w-full py-2.5">Add City</Button>
           </form>
         </Card>
@@ -1110,6 +1188,10 @@ interface AdminSettingsProps {
   setPlatFee: (v: string) => void;
   freeDel: string;
   setFreeDel: (v: string) => void;
+  mapProvider: 'openstreetmap' | 'google';
+  setMapProvider: (v: 'openstreetmap' | 'google') => void;
+  googleMapsApiKey: string;
+  setGoogleMapsApiKey: (v: string) => void;
   onSave: (e: React.FormEvent) => void;
 }
 
@@ -1124,6 +1206,10 @@ const AdminSettingsView: React.FC<AdminSettingsProps> = ({
   setPlatFee,
   freeDel,
   setFreeDel,
+  mapProvider,
+  setMapProvider,
+  googleMapsApiKey,
+  setGoogleMapsApiKey,
   onSave
 }) => {
   return (
@@ -1169,6 +1255,34 @@ const AdminSettingsView: React.FC<AdminSettingsProps> = ({
           onChange={e=>setFreeDel(e.target.value)} 
           required 
         />
+
+        <div className="border-t border-slate-700/60 my-2 pt-4 flex flex-col gap-4">
+          <h4 className="text-sm font-bold text-slate-200">Map & Geocoding Configurations</h4>
+          
+          <div className="w-full flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Map Tile & Geocoding Provider</label>
+            <select
+              value={mapProvider}
+              onChange={e => setMapProvider(e.target.value as any)}
+              required
+              className="bg-slate-900/60 border border-blue-900/30 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500/60 focus:ring-1 focus:ring-yellow-500/60 transition-all duration-200 text-sm font-sans"
+            >
+              <option value="openstreetmap" className="bg-[#081C3A]">OpenStreetMap (100% Free, Default)</option>
+              <option value="google" className="bg-[#081C3A]">Google Maps API (Includes Free Tier / key-based)</option>
+            </select>
+          </div>
+
+          {mapProvider === 'google' && (
+            <Input 
+              label="Google Maps API Credentials Key" 
+              type="text" 
+              placeholder="AIzaSy..." 
+              value={googleMapsApiKey} 
+              onChange={e=>setGoogleMapsApiKey(e.target.value)} 
+              required={mapProvider === 'google'}
+            />
+          )}
+        </div>
 
         <Button variant="primary" type="submit" className="w-full py-3 mt-4">
           Save Configuration Params

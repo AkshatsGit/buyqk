@@ -298,7 +298,7 @@ function MainApp() {
       <header className="sticky top-0 z-40 bg-navy-900/80 backdrop-blur-xl border-b border-blue-900/30 px-4 py-3 lg:px-8 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setSelectedShop(null); setActiveTab('shops'); }}>
-            <BuyQkLogo className="w-10 h-10 shadow-lg shadow-yellow-500/10 active:scale-95 transition-all" />
+            <BuyQkLogo className="w-10 h-10 active:scale-95 transition-all" />
             <div className="hidden sm:block">
               <span className="text-xl font-bold tracking-tight text-white font-sans flex items-center gap-1.5">
                 buyQk <span className="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">Client</span>
@@ -423,7 +423,7 @@ function MainApp() {
           )}
 
           {activeTab === 'ai-assistant' && (
-            <AIAssistantView customerLocation={customerLocation} onAddToCart={addToCart} />
+            <AIAssistantView customerLocation={customerLocation} onAddToCart={addToCart} allShops={allShops} />
           )}
 
           {activeTab === 'orders' && (
@@ -440,7 +440,7 @@ function MainApp() {
         <main className="flex-1 flex items-center justify-center p-6 bg-slate-950/40">
           <Card className="w-full max-w-md p-8" hoverEffect={false}>
             <div className="text-center mb-8 flex flex-col items-center gap-3">
-              <img src="/assets/logopng.png" className="w-24 h-24 object-contain shadow-xl shadow-yellow-500/5 hover:scale-105 transition-all duration-300" alt="buyQk Logo" />
+              <img src="/assets/logopng.png" className="w-24 h-24 object-contain hover:scale-105 transition-all duration-300" alt="buyQk Logo" />
               <h2 className="text-xl font-bold tracking-tight text-white uppercase font-sans">
                 {authMode === 'login' ? 'Customer Log In' : 'Join buyQk'}
               </h2>
@@ -927,11 +927,15 @@ const ShopDetailsView: React.FC<ShopDetailsProps> = ({
 interface AIAssistantProps {
   customerLocation: LatLng;
   onAddToCart: (p: Product, s: Shop, price: number) => void;
+  allShops: Shop[];
 }
+
+const stopWords = new Set(['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them', 'their', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now', 'wanna', 'want', 'order', 'need', 'buy', 'find', 'get', 'give']);
 
 const AIAssistantView: React.FC<AIAssistantProps> = ({
   customerLocation,
-  onAddToCart
+  onAddToCart,
+  allShops
 }) => {
   const [messages, setMessages] = useState<{ sender: 'user' | 'assistant'; text: string; products?: any[] }[]>([
     { 
@@ -952,12 +956,80 @@ const AIAssistantView: React.FC<AIAssistantProps> = ({
     setIsLoading(true);
 
     try {
-      const responseText = await geminiService.askGeminiAssistant(userText, customerLocation);
+      // 1. Find nearby shops
+      const nearbyShops = shopService.getNearbyShops(customerLocation.latitude, customerLocation.longitude, allShops);
+      
+      // 2. Fetch inventories for nearby shops in parallel
+      const matches: any[] = [];
+      const inventoryPromises = nearbyShops.map(async (shop) => {
+        try {
+          const inv = await inventoryService.getInventoryByShop(shop.id);
+          return { shop, inv };
+        } catch {
+          return { shop, inv: [] };
+        }
+      });
+      const results = await Promise.all(inventoryPromises);
+      
+      // 3. Tokenize query for keywords
+      const queryTokens = userText.toLowerCase()
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "")
+        .split(/\s+/)
+        .filter(t => t.length > 1 && !stopWords.has(t));
+      
+      results.forEach(({ shop, inv }) => {
+        inv.forEach((item: any) => {
+          if (!item.product) return;
+          const name = (item.product.name || '').toLowerCase();
+          const desc = (item.product.description || '').toLowerCase();
+          const cat = (item.product.category || '').toLowerCase();
+          
+          const isMatch = queryTokens.length === 0 || queryTokens.some(token => 
+            name.includes(token) || desc.includes(token) || cat.includes(token)
+          );
+          
+          if (isMatch && item.stock > 0) {
+            matches.push({
+              id: item.id || `${shop.id}-${item.product.id}`,
+              product: item.product,
+              shop,
+              price: item.price || 0,
+              stock: item.stock || 0
+            });
+          }
+        });
+      });
+
+      // 4. Sort matches: lowest price first
+      matches.sort((a, b) => a.price - b.price);
+
+      // If no local matching items are found, immediately output fallback text
+      if (matches.length === 0) {
+        setMessages(prev => [...prev, { 
+          sender: 'assistant', 
+          text: "Unfortunately, no matching items found :( your feedback will be taken to onboard the sellers widely." 
+        }]);
+        setIsLoading(false);
+        return;
+      }
+
+      // 5. Construct a contextual prompt for Gemini with nearby inventories
+      let promptText = `User is located at GPS (${customerLocation.latitude}, ${customerLocation.longitude}).\n`;
+      promptText += `User query: "${userText}"\n\n`;
+      promptText += `Here are the matching products in stock at nearby dark stores (sorted from lowest price first):\n`;
+      matches.slice(0, 5).forEach((match, index) => {
+        promptText += `${index + 1}. "${match.product.name}" at "${match.shop.name}" for ₹${match.price}. Description: ${match.product.description || 'N/A'}. Stock status: ${match.stock} available.\n`;
+      });
+      promptText += `\nPlease write a concise, conversational reply summarizing these options. Highlight the lowest-priced option: "${matches[0].product.name}" at "${matches[0].shop.name}" for ₹${matches[0].price}. Be friendly and encourage putting it in their cart.`;
+
+      const responseText = await geminiService.askGeminiAssistant(promptText, customerLocation);
       setMessages(prev => [...prev, { 
         sender: 'assistant', 
-        text: responseText
+        text: responseText,
+        products: matches
       }]);
     } catch (err) {
+      console.error("AI Assistant Flow snags:", err);
       setMessages(prev => [...prev, { 
         sender: 'assistant', 
         text: "I am sorry, I hit a snag checking nearby stock tables. Could you ask again in a moment?" 
@@ -1371,7 +1443,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
       {/* Top Navbar */}
       <nav className="sticky top-0 z-50 bg-[#081C3A]/60 backdrop-blur-xl border-b border-blue-900/20 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <BuyQkLogo className="w-10 h-10 shadow-lg shadow-yellow-500/10" />
+          <BuyQkLogo className="w-10 h-10" />
           <span className="text-xl font-bold tracking-tight text-white font-sans flex items-center gap-1.5">
             buyQk
           </span>

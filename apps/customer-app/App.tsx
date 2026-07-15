@@ -53,32 +53,44 @@ export default function App() {
   const [chatInput, setChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
 
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+
   useEffect(() => {
     const unsubUser = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
-      if (user) {
-        setOrders(orderService.getOrdersForCustomer(user.uid));
-      }
     });
 
-    const unsubShops = shopService.subscribeToShops(() => {
-      // Pull stores nearby
-      const nearby = shopService.getNearbyShops(customerLocation.latitude, customerLocation.longitude);
+    const unsubShops = shopService.subscribeToShops((allShops) => {
+      const nearby = shopService.getNearbyShops(customerLocation.latitude, customerLocation.longitude, allShops);
       setShops(nearby);
-    });
-
-    const unsubOrders = orderService.subscribeToOrders((allOrders) => {
-      if (currentUser?.uid) {
-        setOrders(allOrders.filter(o => o.customerId === currentUser.uid));
-      }
     });
 
     return () => {
       unsubUser();
       unsubShops();
-      unsubOrders();
     };
-  }, [currentUser?.uid]);
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setOrders([]);
+      setWalletBalance(0);
+      return;
+    }
+
+    const unsubOrders = orderService.subscribeToOrders(currentUser.uid, (allOrders) => {
+      setOrders(allOrders);
+    });
+
+    const unsubWallet = walletService.subscribeToWallet(currentUser.uid, (balance) => {
+      setWalletBalance(balance);
+    });
+
+    return () => {
+      unsubOrders();
+      unsubWallet();
+    };
+  }, [currentUser]);
 
   const handleAuth = async () => {
     try {
@@ -104,9 +116,14 @@ export default function App() {
     setCart([]);
   };
 
-  const handleOpenShop = (shop: Shop) => {
+  const handleOpenShop = async (shop: Shop) => {
     setSelectedShop(shop);
-    setShopInventory(inventoryService.getInventoryByShop(shop.id));
+    try {
+      const inv = await inventoryService.getInventoryByShop(shop.id);
+      setShopInventory(inv);
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    }
   };
 
   const addToCart = (product: Product, shop: Shop, price: number) => {
@@ -150,7 +167,8 @@ export default function App() {
           formattedAddress: addressString,
           location: customerLocation
         },
-        'wallet'
+        'wallet',
+        shops
       );
       Alert.alert("Checkout Success", "Split orders placed via Wallet!");
       setCart([]);
@@ -169,7 +187,7 @@ export default function App() {
 
     try {
       const response = await geminiService.askGeminiAssistant(q, customerLocation);
-      setChatMessages(prev => [...prev, { sender: 'assistant', text: response.answer }]);
+      setChatMessages(prev => [...prev, { sender: 'assistant', text: response }]);
     } catch (err: any) {
       setChatMessages(prev => [...prev, { sender: 'assistant', text: "Failed to consult RAG indices." }]);
     } finally {
@@ -300,7 +318,7 @@ export default function App() {
               <Text style={styles.sectionTitle}>My Mobile Wallet</Text>
               <View style={styles.walletCard}>
                 <Text style={styles.walletLabel}>Available Credits Balance</Text>
-                <Text style={styles.walletBalance}>₹{walletService.getWalletBalance(currentUser.uid)}</Text>
+                <Text style={styles.walletBalance}>₹{walletBalance}</Text>
               </View>
               {cart.length > 0 && (
                 <TouchableOpacity onPress={handleCheckout} style={styles.checkoutBtn}>

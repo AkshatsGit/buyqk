@@ -325,7 +325,7 @@ function SellerApp() {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-navy-900/80 backdrop-blur-xl border-b border-blue-900/30 px-4 py-3 lg:px-8 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-2">
-          <BuyQkLogo className="w-10 h-10 shadow-lg shadow-yellow-500/10" />
+          <BuyQkLogo className="w-10 h-10" />
           <div>
             <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
               buyQk <span className="text-xs text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">Seller HUB</span>
@@ -442,7 +442,7 @@ function SellerApp() {
         <main className="flex-1 flex items-center justify-center p-6 bg-slate-950/40">
           <Card className="w-full max-w-md p-8" hoverEffect={false}>
             <div className="text-center mb-8 flex flex-col items-center gap-3">
-              <img src="/assets/logopng.png" className="w-24 h-24 object-contain shadow-xl shadow-yellow-500/5 hover:scale-105 transition-all duration-300" alt="buyQk Logo" />
+              <img src="/assets/logopng.png" className="w-24 h-24 object-contain hover:scale-105 transition-all duration-300" alt="buyQk Logo" />
               <h2 className="text-xl font-bold tracking-tight text-white uppercase font-sans">
                 {authMode === 'login' ? 'Merchant Log In' : 'Register Seller Store'}
               </h2>

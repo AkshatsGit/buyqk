@@ -4,7 +4,7 @@ import {
   Category, Brand, LatLng, Address, PaymentMethod, OrderStatus, PaymentStatus
 } from '@buyqk/types';
 
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, FirebaseApp, deleteApp } from 'firebase/app';
 import {
   getAuth, signInWithPopup, GoogleAuthProvider,
   signOut as firebaseSignOut,
@@ -20,6 +20,7 @@ import {
   onSnapshot, query, where, orderBy, limit,
   serverTimestamp, Timestamp, writeBatch
 } from 'firebase/firestore';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 
 // ==========================================
 // FIREBASE INIT
@@ -40,6 +41,7 @@ const firebaseConfig = {
 let firebaseApp: FirebaseApp;
 let firebaseAuth: Auth;
 let db: Firestore;
+let storage: ReturnType<typeof getStorage>;
 
 if (getApps().length === 0) {
   firebaseApp = initializeApp(firebaseConfig);
@@ -48,6 +50,32 @@ if (getApps().length === 0) {
 }
 firebaseAuth = getAuth(firebaseApp);
 db = getFirestore(firebaseApp);
+storage = getStorage(firebaseApp);
+
+// ==========================================
+// STORAGE SERVICE
+// ==========================================
+
+export const storageService = {
+  uploadBase64: async (filePath: string, base64OrDataUrl: string): Promise<string> => {
+    if (!base64OrDataUrl) return '';
+    if (base64OrDataUrl.startsWith('http://') || base64OrDataUrl.startsWith('https://')) {
+      return base64OrDataUrl;
+    }
+    try {
+      let dataUrl = base64OrDataUrl;
+      if (!dataUrl.startsWith('data:')) {
+        dataUrl = `data:image/png;base64,${base64OrDataUrl}`;
+      }
+      const sRef = storageRef(storage, filePath);
+      await uploadString(sRef, dataUrl, 'data_url');
+      return await getDownloadURL(sRef);
+    } catch (err) {
+      console.error("Failed to upload base64 to storage, using fallback:", err);
+      return base64OrDataUrl;
+    }
+  }
+};
 
 // ==========================================
 // STATIC DATA (never needs real-time sync)
@@ -121,12 +149,18 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
 
 let currentAuthUser: any = null;
 let currentUserListener: ((user: any) => void) | null = null;
+const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 
 /** Fetch or create user doc in Firestore after Firebase Auth resolves */
 async function hydrateUser(fbUser: any, role: string = 'customer', extra: any = {}): Promise<any> {
   const ref = doc(db, 'users', fbUser.uid);
   const snap = await getDoc(ref);
   if (snap.exists()) {
+    if (Object.keys(extra).length > 0) {
+      await setDoc(ref, extra, { merge: true });
+      const updatedSnap = await getDoc(ref);
+      return normalizeDoc({ uid: fbUser.uid, ...updatedSnap.data() });
+    }
     return normalizeDoc({ uid: fbUser.uid, ...snap.data() });
   }
   const newUser = {
@@ -142,20 +176,56 @@ async function hydrateUser(fbUser: any, role: string = 'customer', extra: any = 
   return { uid: fbUser.uid, ...newUser };
 }
 
-// Keep auth state in sync with Firestore user doc
+let activeUserUnsub: (() => void) | null = null;
+
+// Keep auth state in sync with Firestore user doc and monitor session concurrency
 firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
+  if (activeUserUnsub) {
+    activeUserUnsub();
+    activeUserUnsub = null;
+  }
+
   if (fbUser) {
-    const ref = doc(db, 'users', fbUser.uid);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      currentAuthUser = normalizeDoc({ uid: fbUser.uid, ...snap.data() });
-    } else {
-      currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: 'customer', name: fbUser.displayName || '' };
+    const userRef = doc(db, 'users', fbUser.uid);
+
+    // Initialize or verify local session ID
+    if (isBrowser) {
+      let localSess = localStorage.getItem('buyqk_session_id');
+      if (!localSess) {
+        localSess = 'sess_' + id10();
+        localStorage.setItem('buyqk_session_id', localSess);
+        await setDoc(userRef, { currentSessionId: localSess }, { merge: true });
+      }
     }
+
+    activeUserUnsub = onSnapshot(userRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        const firestoreSess = data.currentSessionId;
+        const currentLocal = isBrowser ? localStorage.getItem('buyqk_session_id') : null;
+
+        if (isBrowser && firestoreSess && currentLocal && firestoreSess !== currentLocal) {
+          // Logged in elsewhere!
+          firebaseSignOut(firebaseAuth);
+          localStorage.removeItem('buyqk_session_id');
+          alert("Logged out: This account has been logged in on another device or browser tab.");
+          window.location.reload();
+          return;
+        }
+
+        currentAuthUser = normalizeDoc({ uid: fbUser.uid, ...data });
+      } else {
+        currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: 'customer', name: fbUser.displayName || '' };
+      }
+      if (currentUserListener) currentUserListener(currentAuthUser);
+    });
   } else {
     currentAuthUser = null;
+    if (isBrowser) {
+      localStorage.removeItem('buyqk_session_id');
+    }
+    if (currentUserListener) currentUserListener(null);
   }
-  if (currentUserListener) currentUserListener(currentAuthUser);
 });
 
 export const auth = {
@@ -168,11 +238,16 @@ export const auth = {
   },
 
   signUp: async (form: any) => {
+    const newSessionId = 'sess_' + id10();
+    if (isBrowser) {
+      localStorage.setItem('buyqk_session_id', newSessionId);
+    }
     const cred = await createUserWithEmailAndPassword(firebaseAuth, form.email, form.password);
     const user = await hydrateUser(cred.user, form.role || 'customer', {
       name: form.name,
       email: form.email,
       phoneNumber: form.phoneNumber || '',
+      currentSessionId: newSessionId
     });
 
     if (form.role === 'seller') {
@@ -200,19 +275,27 @@ export const auth = {
   },
 
   signIn: async (form: any) => {
+    const newSessionId = 'sess_' + id10();
+    if (isBrowser) {
+      localStorage.setItem('buyqk_session_id', newSessionId);
+    }
     const cred = await signInWithEmailAndPassword(firebaseAuth, form.email, form.password);
-    const user = await hydrateUser(cred.user);
+    const user = await hydrateUser(cred.user, 'customer', { currentSessionId: newSessionId });
     currentAuthUser = user;
     if (currentUserListener) currentUserListener(user);
     return user;
   },
 
   signInWithGoogle: async (defaultRole: 'customer' | 'seller' | 'admin' = 'customer') => {
+    const newSessionId = 'sess_' + id10();
+    if (isBrowser) {
+      localStorage.setItem('buyqk_session_id', newSessionId);
+    }
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(firebaseAuth, provider);
     const fbUser = result.user;
     const role = fbUser.email === 'akshat.srivastava098@gmail.com' ? 'admin' : defaultRole;
-    const user = await hydrateUser(fbUser, role);
+    const user = await hydrateUser(fbUser, role, { currentSessionId: newSessionId });
     currentAuthUser = user;
     if (currentUserListener) currentUserListener(user);
     return user;
@@ -221,6 +304,9 @@ export const auth = {
   signOut: async () => {
     await firebaseSignOut(firebaseAuth);
     currentAuthUser = null;
+    if (isBrowser) {
+      localStorage.removeItem('buyqk_session_id');
+    }
     if (currentUserListener) currentUserListener(null);
   },
 };
@@ -232,12 +318,15 @@ export const auth = {
 export const shopService = {
   createShop: async (sellerId: string, data: any): Promise<Shop> => {
     const shopId = 'shop_' + id10();
+    const logoUrl = await storageService.uploadBase64(`shops/${shopId}/logo`, data.logoBase64 || '');
+    const bannerUrl = await storageService.uploadBase64(`shops/${shopId}/banner`, data.bannerBase64 || '');
+
     const newShop: any = {
       sellerId,
       name: data.shopName,
       description: data.description,
-      logoBase64: data.logoBase64 || '',
-      bannerBase64: data.bannerBase64 || '',
+      logoBase64: logoUrl,
+      bannerBase64: bannerUrl,
       address: {
         street: data.street,
         city: data.city,
@@ -279,7 +368,7 @@ export const shopService = {
 
     // Update user's shopId
     if (currentAuthUser) {
-      await updateDoc(doc(db, 'users', sellerId), { shopId });
+      await setDoc(doc(db, 'users', sellerId), { shopId }, { merge: true });
       currentAuthUser = { ...currentAuthUser, shopId };
       if (currentUserListener) currentUserListener(currentAuthUser);
     }
@@ -330,8 +419,8 @@ export const shopService = {
     const shopData = shopSnap.data();
     await updateDoc(shopRef, { status: 'approved' });
     if (shopData?.sellerId) {
-      await updateDoc(doc(db, 'sellers', shopData.sellerId), { status: 'approved' });
-      await updateDoc(doc(db, 'users', shopData.sellerId), { status: 'approved' });
+      await setDoc(doc(db, 'sellers', shopData.sellerId), { status: 'approved' }, { merge: true });
+      await setDoc(doc(db, 'users', shopData.sellerId), { status: 'approved' }, { merge: true });
     }
   },
 
@@ -342,17 +431,55 @@ export const shopService = {
     const shopData = shopSnap.data();
     await updateDoc(shopRef, { status: 'suspended' });
     if (shopData?.sellerId) {
-      await updateDoc(doc(db, 'sellers', shopData.sellerId), { status: 'rejected' });
+      await setDoc(doc(db, 'sellers', shopData.sellerId), { status: 'rejected' }, { merge: true });
     }
   },
 
   updateShopImages: async (shopId: string, logoBase64?: string, bannerBase64?: string): Promise<void> => {
     const updates: any = {};
-    if (logoBase64) updates.logoBase64 = logoBase64;
-    if (bannerBase64) updates.bannerBase64 = bannerBase64;
+    if (logoBase64) {
+      updates.logoBase64 = await storageService.uploadBase64(`shops/${shopId}/logo`, logoBase64);
+    }
+    if (bannerBase64) {
+      updates.bannerBase64 = await storageService.uploadBase64(`shops/${shopId}/banner`, bannerBase64);
+    }
     if (Object.keys(updates).length > 0) {
       await updateDoc(doc(db, 'shops', shopId), updates);
     }
+  },
+
+  updateShopDetails: async (shopId: string, data: {
+    name: string;
+    description: string;
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    latitude: number;
+    longitude: number;
+    deliveryRadiusKm: number;
+    openingTime: string;
+    closingTime: string;
+    categories: string[];
+  }): Promise<void> => {
+    const updates = {
+      name: data.name,
+      description: data.description,
+      address: {
+        street: data.street,
+        city: data.city,
+        state: data.state,
+        postalCode: data.postalCode,
+        formattedAddress: `${data.street}, ${data.city}, ${data.state} - ${data.postalCode}`,
+        location: { latitude: Number(data.latitude), longitude: Number(data.longitude) }
+      },
+      location: { latitude: Number(data.latitude), longitude: Number(data.longitude) },
+      deliveryRadiusKm: Number(data.deliveryRadiusKm),
+      openingTime: data.openingTime,
+      closingTime: data.closingTime,
+      categories: data.categories
+    };
+    await updateDoc(doc(db, 'shops', shopId), updates);
   },
 };
 
@@ -362,18 +489,21 @@ export const shopService = {
 
 export const productService = {
   createProduct: async (data: any): Promise<Product> => {
+    const productId = 'prod_' + id10();
+    const imageUrl = await storageService.uploadBase64(`products/${productId}/image`, data.imageBase64 || '');
+
     const newProduct: any = {
       name: data.name,
       description: data.description,
       categoryId: data.categoryId,
       brandId: data.brandId || 'b_local',
-      imageBase64: data.imageBase64 || '',
+      imageBase64: imageUrl,
       imageTextDescription: `Descriptive tag of ${data.name}`,
       isApproved: true,
       createdAt: new Date().toISOString(),
     };
-    const ref = await addDoc(collection(db, 'products'), newProduct);
-    return { id: ref.id, ...newProduct } as Product;
+    await setDoc(doc(db, 'products', productId), newProduct);
+    return { id: productId, ...newProduct } as Product;
   },
 
   subscribeToProducts: (callback: (prods: Product[]) => void): (() => void) => {
@@ -653,12 +783,17 @@ export const adminService = {
     categories: string[]; logoBase64: string; bannerBase64: string;
     pan?: string; gst?: string;
   }): Promise<Shop> => {
-    // Create Firebase Auth account for seller
+    // Create Firebase Auth account for seller using a secondary app instance to preserve admin session
     let sellerId: string;
     try {
       const tempPass = 'BuyQk@' + id10();
-      const cred = await createUserWithEmailAndPassword(firebaseAuth, data.sellerEmail, tempPass);
+      const secAppName = 'sec_' + id10();
+      const secApp = initializeApp(firebaseConfig, secAppName);
+      const secAuth = getAuth(secApp);
+      const cred = await createUserWithEmailAndPassword(secAuth, data.sellerEmail, tempPass);
       sellerId = cred.user.uid;
+      await firebaseSignOut(secAuth);
+      await deleteApp(secApp);
     } catch (e: any) {
       if (e.code === 'auth/email-already-in-use') {
         // Find existing user
@@ -674,6 +809,8 @@ export const adminService = {
     }
 
     const shopId = 'shop_' + id10();
+    const logoUrl = await storageService.uploadBase64(`shops/${shopId}/logo`, data.logoBase64 || '');
+    const bannerUrl = await storageService.uploadBase64(`shops/${shopId}/banner`, data.bannerBase64 || '');
 
     const batch = writeBatch(db);
 
@@ -692,7 +829,7 @@ export const adminService = {
     const shopData: any = {
       sellerId,
       name: data.shopName, description: data.description,
-      logoBase64: data.logoBase64 || '', bannerBase64: data.bannerBase64 || '',
+      logoBase64: logoUrl, bannerBase64: bannerUrl,
       address: {
         street: data.street, city: data.city, state: data.state, postalCode: data.postalCode,
         formattedAddress: `${data.street}, ${data.city}, ${data.state} - ${data.postalCode}`,
@@ -713,6 +850,10 @@ export const adminService = {
 
   updateShopImages: async (shopId: string, logoBase64?: string, bannerBase64?: string): Promise<void> => {
     await shopService.updateShopImages(shopId, logoBase64, bannerBase64);
+  },
+
+  updateShopDetails: async (shopId: string, data: any): Promise<void> => {
+    await shopService.updateShopDetails(shopId, data);
   },
 };
 
@@ -743,24 +884,33 @@ export const geoService = {
 // ==========================================
 
 export const geminiService = {
-  askGeminiAssistant: async (userText: string, customerLocation: LatLng): Promise<string> => {
+  askGeminiAssistant: async (userText: string, customerLocation?: LatLng): Promise<string> => {
     const apiKey = env.VITE_GEMINI_API_KEY;
-    if (!apiKey) return 'Gemini AI is not configured.';
+    if (!apiKey) {
+      return 'Gemini AI is not configured. Please define the VITE_GEMINI_API_KEY environment variable in your project/.env file.';
+    }
     try {
+      const lat = customerLocation?.latitude ?? 19.1136;
+      const lng = customerLocation?.longitude ?? 72.8258;
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: `You are buyQk shopping assistant. User location: ${customerLocation.latitude},${customerLocation.longitude}. Question: ${userText}` }] }]
+            contents: [{ parts: [{ text: `You are buyQk shopping assistant. User location: ${lat},${lng}. Question: ${userText}` }] }]
           }),
         }
       );
       const data = await response.json();
-      return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini.';
-    } catch {
-      return 'AI assistant is temporarily unavailable.';
+      if (data?.error) {
+        console.error("Gemini API Error details:", data.error);
+        return `Gemini API Error: ${data.error.message || JSON.stringify(data.error)}`;
+      }
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini. The API key might be inactive, restricted, or blocked.';
+    } catch (err: any) {
+      console.error("Gemini assistant fetch failure:", err);
+      return `AI assistant is temporarily offline: ${err?.message || err}`;
     }
   },
 };

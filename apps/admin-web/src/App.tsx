@@ -35,7 +35,8 @@ import {
   FileText,
   DollarSign,
   Image,
-  Store
+  Store,
+  Edit
 } from 'lucide-react';
 import { Shop, Order, LatLng, City, Area, Zone, PlatformSettings } from '@buyqk/types';
 
@@ -99,6 +100,20 @@ function AdminApp() {
   const [editImgShop, setEditImgShop] = useState<Shop | null>(null);
   const [editLogoB64, setEditLogoB64] = useState('');
   const [editBannerB64, setEditBannerB64] = useState('');
+
+  // Details Edit Modal State
+  const [editDetailShop, setEditDetailShop] = useState<Shop | null>(null);
+  const [editShopName, setEditShopName] = useState('');
+  const [editShopDesc, setEditShopDesc] = useState('');
+  const [editStreet, setEditStreet] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editState, setEditState] = useState('');
+  const [editPostal, setEditPostal] = useState('');
+  const [editLat, setEditLat] = useState(19.1136);
+  const [editLng, setEditLng] = useState(72.8258);
+  const [editRadius, setEditRadius] = useState(5);
+  const [editOpenTime, setEditOpenTime] = useState('08:00');
+  const [editCloseTime, setEditCloseTime] = useState('22:00');
 
   // Location hierarchy Forms
   const [newCityName, setNewCityName] = useState('');
@@ -299,6 +314,29 @@ function AdminApp() {
     } catch (err: any) { showToast(err.message, 'error'); }
   };
 
+  const handleSaveShopDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editDetailShop) return;
+    try {
+      await adminService.updateShopDetails(editDetailShop.id, {
+        name: editShopName,
+        description: editShopDesc,
+        street: editStreet,
+        city: editCity,
+        state: editState,
+        postalCode: editPostal,
+        latitude: editLat,
+        longitude: editLng,
+        deliveryRadiusKm: editRadius,
+        openingTime: editOpenTime,
+        closingTime: editCloseTime,
+        categories: editDetailShop.categories || ['cat_groceries']
+      });
+      showToast('Shop details updated!', 'success');
+      setEditDetailShop(null);
+    } catch (err: any) { showToast(err.message, 'error'); }
+  };
+
   // Calculations for KPI Cards
   const totalPlatformVolume = orders
     .filter((o: any) => o.status !== 'cancelled')
@@ -315,7 +353,7 @@ function AdminApp() {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-navy-900/80 backdrop-blur-xl border-b border-blue-900/30 px-4 py-3 lg:px-8 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-2">
-          <BuyQkLogo className="w-10 h-10 shadow-lg shadow-yellow-500/10" />
+          <BuyQkLogo className="w-10 h-10" />
           <div>
             <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
               buyQk <span className="text-xs text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20 font-bold">Admin Console</span>
@@ -399,6 +437,20 @@ function AdminApp() {
               onReject={handleRejectShop}
               onAddSeller={() => setIsAddSellerOpen(true)}
               onEditImages={(shop) => { setEditImgShop(shop); setEditLogoB64(shop.logoBase64); setEditBannerB64(shop.bannerBase64); }}
+              onEditDetails={(shop) => {
+                setEditDetailShop(shop);
+                setEditShopName(shop.name);
+                setEditShopDesc(shop.description);
+                setEditStreet(shop.address?.street || '');
+                setEditCity(shop.address?.city || '');
+                setEditState(shop.address?.state || '');
+                setEditPostal(shop.address?.postalCode || '');
+                setEditLat(shop.location?.latitude || 19.1136);
+                setEditLng(shop.location?.longitude || 72.8258);
+                setEditRadius(shop.deliveryRadiusKm || 5);
+                setEditOpenTime(shop.openingTime || '08:00');
+                setEditCloseTime(shop.closingTime || '22:00');
+              }}
             />
           )}
 
@@ -471,6 +523,34 @@ function AdminApp() {
             </div>
           </Modal>
 
+          {/* Edit Shop Details Modal */}
+          <Modal isOpen={!!editDetailShop} onClose={() => setEditDetailShop(null)} title={`✏️ Edit Shop Details: ${editDetailShop?.name}`}>
+            <form onSubmit={handleSaveShopDetails} className="flex flex-col gap-4">
+              <Input label="Shop Name" value={editShopName} onChange={e => setEditShopName(e.target.value)} required />
+              <Input label="Shop Description" value={editShopDesc} onChange={e => setEditShopDesc(e.target.value)} required />
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Street" value={editStreet} onChange={e => setEditStreet(e.target.value)} required />
+                <Input label="City" value={editCity} onChange={e => setEditCity(e.target.value)} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="State" value={editState} onChange={e => setEditState(e.target.value)} required />
+                <Input label="Postal Code" value={editPostal} onChange={e => setEditPostal(e.target.value)} required />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <Input label="Latitude" type="number" value={String(editLat)} onChange={e => setEditLat(Number(e.target.value))} step="0.0001" required />
+                <Input label="Longitude" type="number" value={String(editLng)} onChange={e => setEditLng(Number(e.target.value))} step="0.0001" required />
+                <Input label="Radius (km)" type="number" value={String(editRadius)} onChange={e => setEditRadius(Number(e.target.value))} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Opening Time" type="time" value={editOpenTime} onChange={e => setEditOpenTime(e.target.value)} required />
+                <Input label="Closing Time" type="time" value={editCloseTime} onChange={e => setEditCloseTime(e.target.value)} required />
+              </div>
+              <Button variant="primary" type="submit" className="mt-2">
+                Save Changes
+              </Button>
+            </form>
+          </Modal>
+
           {activeTab === 'maps' && (
             <AdminMapsView 
               cities={cities}
@@ -528,7 +608,7 @@ function AdminApp() {
         <main className="flex-1 flex items-center justify-center p-6 bg-slate-950/40">
           <Card className="w-full max-w-md p-8" hoverEffect={false}>
             <div className="text-center mb-8 flex flex-col items-center gap-3">
-              <img src="/assets/logopng.png" className="w-24 h-24 object-contain shadow-xl shadow-yellow-500/5 hover:scale-105 transition-all duration-300" alt="buyQk Logo" />
+              <img src="/assets/logopng.png" className="w-24 h-24 object-contain hover:scale-105 transition-all duration-300" alt="buyQk Logo" />
               <h2 className="text-xl font-bold tracking-tight text-white uppercase font-sans">
                 Admin Console
               </h2>
@@ -687,6 +767,7 @@ interface AdminApprovalsProps {
   onReject: (id: string) => void;
   onAddSeller: () => void;
   onEditImages: (shop: Shop) => void;
+  onEditDetails: (shop: Shop) => void;
 }
 
 const AdminApprovalsView: React.FC<AdminApprovalsProps> = ({
@@ -695,7 +776,8 @@ const AdminApprovalsView: React.FC<AdminApprovalsProps> = ({
   onApprove,
   onReject,
   onAddSeller,
-  onEditImages
+  onEditImages,
+  onEditDetails
 }) => {
   const [viewMode, setViewMode] = useState<'pending' | 'all'>('pending');
   const approvedShops = allShops.filter(s => s.status === 'approved');
@@ -729,6 +811,9 @@ const AdminApprovalsView: React.FC<AdminApprovalsProps> = ({
       </div>
 
       <div className="flex gap-2 justify-end flex-wrap">
+        <Button variant="glass" size="sm" onClick={() => onEditDetails(shop)}>
+          <Edit className="w-3.5 h-3.5" /> Edit Details
+        </Button>
         <Button variant="glass" size="sm" onClick={() => onEditImages(shop)}>
           <Image className="w-3.5 h-3.5" /> Edit Images
         </Button>

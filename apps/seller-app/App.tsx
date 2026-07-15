@@ -50,45 +50,50 @@ export default function App() {
   const [closingTime, setClosingTime] = useState('22:00');
 
   useEffect(() => {
+    let unsubShopOrders: (() => void) | null = null;
+    let unsubInventory: (() => void) | null = null;
+
     const unsubUser = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
       if (user) {
-        loadSellerData(user.uid, user.shopId);
+        setSellerProfile(user);
+      } else {
+        setSellerProfile(null);
       }
     });
 
-    const unsubShops = shopService.subscribeToShops(() => {
-      if (currentUser) {
-        loadSellerData(currentUser.uid, currentUser.shopId);
-      }
-    });
+    const unsubShops = shopService.subscribeToShops((allShops) => {
+      const liveUser = auth.getCurrentUser();
+      if (!liveUser) return;
+      
+      const shop = allShops.find((s: any) => s.sellerId === liveUser.uid || s.id === liveUser.shopId);
+      setMyShop(shop || null);
 
-    const unsubOrders = orderService.subscribeToOrders(() => {
-      if (myShop) {
-        setMyOrders(orderService.getOrdersForSeller(myShop.id));
+      if (shop) {
+        if (unsubShopOrders) unsubShopOrders();
+        unsubShopOrders = orderService.subscribeToShopOrders(shop.id, (orders) => {
+          setMyOrders(orders);
+        });
+
+        if (unsubInventory) unsubInventory();
+        unsubInventory = inventoryService.subscribeToInventory(shop.id, (invItems) => {
+          productService.getProducts().then((products) => {
+            setMyInventory(invItems.map(item => ({
+              ...item,
+              product: products.find(p => p.id === item.productId)
+            })));
+          }).catch(console.error);
+        });
       }
     });
 
     return () => {
       unsubUser();
       unsubShops();
-      unsubOrders();
+      if (unsubShopOrders) unsubShopOrders();
+      if (unsubInventory) unsubInventory();
     };
-  }, [currentUser?.uid, myShop?.id]);
-
-  const loadSellerData = (uid: string, shopId?: string) => {
-    const sellers = JSON.parse(localStorage.getItem('gin_sellers') || '[]');
-    const profile = sellers.find((s: any) => s.uid === uid);
-    setSellerProfile(profile);
-
-    const shops = shopService.getShops();
-    const shop = shops.find(s => s.sellerId === uid || s.id === shopId);
-    if (shop) {
-      setMyShop(shop);
-      setMyOrders(orderService.getOrdersForSeller(shop.id));
-      setMyInventory(inventoryService.getInventoryByShop(shop.id));
-    }
-  };
+  }, []);
 
   const handleAuth = async () => {
     try {
@@ -146,7 +151,6 @@ export default function App() {
     try {
       await orderService.updateOrderStatus(orderId, nextStatus);
       Alert.alert("Success", `Fulfillment status: ${nextStatus.toUpperCase()}`);
-      setMyOrders(orderService.getOrdersForSeller(myShop!.id));
     } catch (err: any) {
       Alert.alert("Error", err.message);
     }
@@ -156,7 +160,6 @@ export default function App() {
     try {
       await inventoryService.updateInventory(myShop!.id, productId, newStock, price);
       Alert.alert("Success", "Inventory quantities updated.");
-      setMyInventory(inventoryService.getInventoryByShop(myShop!.id));
     } catch (err: any) {
       Alert.alert("Error", err.message);
     }

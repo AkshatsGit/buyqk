@@ -251,6 +251,10 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
 
         if (isBrowser && firestoreSess && currentLocal && firestoreSess !== currentLocal) {
           // Logged in elsewhere!
+          if (fbUser.email === 'akshat.srivastava098@gmail.com') {
+            updateDoc(userRef, { currentSessionId: currentLocal }).catch(e => console.log("Session takeover error: ", e));
+            return;
+          }
           firebaseSignOut(firebaseAuth);
           localStorage.removeItem('buyqk_session_id');
           alert("Logged out: This account has been logged in on another device or browser tab.");

@@ -29,6 +29,31 @@ body {
   background-attachment: fixed;
 }
 
+.a4-page-card {
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  width: 210mm;
+  height: 297mm;
+  background: white;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #1e293b;
+  flex-shrink: 0;
+}
+
+@media print {
+  .no-print-gap {
+    gap: 0 !important;
+  }
+}
+
 /* CSS Page styling rules for printable A4 sheet preview */
 @media print {
   @page {

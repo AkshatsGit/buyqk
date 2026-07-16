@@ -676,6 +676,25 @@ export default function App() {
   const [cofounderScale, setCofounderScale] = useState<number>(1.0);
   const [cofounderPixelated, setCofounderPixelated] = useState<boolean>(false);
 
+  // Chapters Policy Content from content.txt
+  const [chaptersText, setChaptersText] = useState<string>('');
+  const [attachChapters, setAttachChapters] = useState<boolean>(true);
+
+  // Load content.txt once at mount
+  useEffect(() => {
+    fetch('/assets/content.txt')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.text();
+      })
+      .then(text => {
+        setChaptersText(text);
+      })
+      .catch(err => {
+        console.error("Error loading /assets/content.txt:", err);
+      });
+  }, []);
+
   const previewRef = useRef<HTMLDivElement>(null);
 
   // Auth Hook listener
@@ -926,6 +945,301 @@ export default function App() {
     t = t.replace(/{ctc}/g, ctc ? `${ctc} (${currencySymbol})` : "[Stipend/Salary]");
     t = t.replace(/{expiryDate}/g, expiryDate || "[Expiry Date]");
     return t;
+  };
+
+  const renderDocumentHeader = () => (
+    <div className="relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.8in] overflow-hidden shrink-0">
+      <div className="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style={{ borderLeft: '6px solid #021835' }} />
+      <div className="absolute top-2 right-2 flex gap-1 z-20">
+        <div className="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
+        <div className="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
+        <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style={{ clipPath: 'polygon(0 80%, 35% 0, 100% 100%, 0 100%)' }}></div>
+      <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#021835] transform" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
+      <div className="relative z-10 flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+            <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="6.5">
+              <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+            </svg>
+            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 4h1.5l1.5 10h10l1.5-6H7.5" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="6" y1="9" x2="16" y2="9" strokeLinecap="round" />
+              <circle cx="8" cy="18" r="1.5" fill="currentColor" />
+              <circle cx="16" cy="18" r="1.5" fill="currentColor" />
+            </svg>
+          </div>
+          <div className="text-left font-sans">
+            <span className="text-3xl font-extrabold tracking-tight text-white">buy<span className="text-[#fbbc04]">Qk</span></span>
+            <span className="text-[7.5pt] block tracking-[0.25em] font-semibold text-[#fbbc04] uppercase">BUILDERS GATEWAY</span>
+          </div>
+        </div>
+        <div className="w-[1.5px] h-9 bg-white/20"></div>
+        <div className="text-left leading-normal font-sans">
+          <p className="text-[7pt] tracking-[0.18em] font-black uppercase text-slate-200">
+            THE UNIVERSAL<br/>LOCAL SUPPLY<br/>NETWORK
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDocumentFooter = () => (
+    <div className="relative w-full h-[0.9in] bg-[#021835] text-white flex items-center justify-between pl-0 pr-[0.8in] overflow-hidden shrink-0 mt-auto">
+      <div className="relative h-full w-[20%] bg-[#fbbc04] flex items-center justify-center pr-3 shrink-0" style={{ clipPath: 'polygon(0 0, 82% 0, 100% 100%, 0 100%)' }}>
+        <svg className="w-8 h-8 text-[#021835]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
+          <path d="M12 2C6.5 2 2 6.5 2 12c0 2 1 3.5 1 3.5s1.5-1 3.5-1c3 0 5.5-2.5 5.5-5.5" />
+          <path d="M22 2l-3 3-5-2-4 4 3 3-3 3 2 2 3-3 3 3 4-4-2-5 3-3z" />
+        </svg>
+      </div>
+      <div className="text-left leading-normal shrink-0 font-sans tracking-wide">
+        <span className="text-[7.5pt] font-black text-white">FIND ANYTHING.<br/></span>
+        <span className="text-[7.5pt] font-black text-[#fbbc04]">DELIVER ANYTHING.<br/></span>
+        <span className="text-[7.5pt] font-black text-white font-mono">INSTANTLY.</span>
+      </div>
+      <div className="w-[1px] h-9 bg-white/10 shrink-0"></div>
+      <div className="flex items-center gap-6 font-sans shrink-0">
+        <div className="flex flex-col items-center gap-0.5">
+          <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M3 11L12 2l9 9" />
+          </svg>
+          <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Local<br/>Sellers</span>
+        </div>
+        <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
+        <div className="flex flex-col items-center gap-0.5">
+          <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>
+          <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Happy<br/>Customers</span>
+        </div>
+        <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
+        <div className="flex flex-col items-center gap-0.5">
+          <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" />
+            <path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[5pt] font-black uppercase text-[#fbbc04] tracking-wider font-semibold">Fast & Reliable<br/>Delivery</span>
+        </div>
+        <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
+        <div className="flex flex-col items-center gap-0.5">
+          <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Safe &<br/>Secure</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const getPagesList = () => {
+    const basic = compiledText();
+    let fullText = basic;
+    if (templateKey !== 'founding_ownership' && attachChapters && chaptersText) {
+      fullText = `${basic}\n\n⸻\n\n${chaptersText}`;
+    } else if (templateKey === 'founding_ownership' && chaptersText) {
+      fullText = chaptersText;
+    }
+    
+    // Split by page divider
+    return fullText.split('⸻').map(p => p.trim()).filter(p => p.length > 0);
+  };
+
+  const renderPageContent = (pageText: string, isFirstPage: boolean, isLastPage: boolean) => {
+    const lines = pageText.split('\n');
+    const renderedElements: React.ReactNode[] = [];
+    
+    let keyCounter = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      const isChapterTitle = /^CHAPTER\s+\d+/i.test(line);
+      const isMainTitle = /^[A-Z0-9\s&()’,.—]+$/.test(line) && line.length > 3 && line === line.toUpperCase();
+      
+      if (isChapterTitle) {
+        renderedElements.push(
+          <h2 key={keyCounter++} className="text-[12pt] font-black text-[#021835] uppercase tracking-wider mt-4 mb-2 font-sans border-b border-slate-100 pb-1">
+            {line}
+          </h2>
+        );
+      } else if (isMainTitle) {
+        renderedElements.push(
+          <h3 key={keyCounter++} className="text-[11pt] font-extrabold text-[#021835] mt-3 mb-1.5 font-sans">
+            {line}
+          </h3>
+        );
+      } else if (line.startsWith('*') || line.startsWith('•')) {
+        renderedElements.push(
+          <div key={keyCounter++} className="flex items-start gap-2 text-[9.5pt] text-slate-700 leading-relaxed mb-1 pl-4 font-sans text-justify">
+            <span className="text-[#fbbc04] font-bold text-xs select-none mt-0.5">•</span>
+            <span className="flex-1">{line.replace(/^[\*•]\s*/, '')}</span>
+          </div>
+        );
+      } else if (/^\d+\.\s*/.test(line)) {
+        renderedElements.push(
+          <div key={keyCounter++} className="flex items-start gap-2 text-[9.5pt] text-slate-700 leading-relaxed mb-1 pl-4 font-sans text-justify">
+            <span className="text-[#021835] font-extrabold text-xs select-none mt-0.5">{line.match(/^\d+\./)?.[0]}</span>
+            <span className="flex-1">{line.replace(/^\d+\.\s*/, '')}</span>
+          </div>
+        );
+      } else {
+        renderedElements.push(
+          <p key={keyCounter++} className="text-[9.5pt] text-slate-700 leading-relaxed mb-2 font-sans text-justify">
+            {line}
+          </p>
+        );
+      }
+    }
+
+    return (
+      <div className="flex-1 flex flex-col justify-start px-[0.8in] py-4 overflow-hidden relative">
+        <div className="flex-1">
+          {isFirstPage && (
+            <>
+              {/* Reference and Date block */}
+              <div className="flex flex-col gap-2 items-end justify-start text-[9pt] text-[#021835] font-sans mt-[0.1in] mb-4 w-full shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
+                    <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </div>
+                  <span className="font-bold text-slate-700">Date:</span>
+                  <span className="border-b border-slate-300 min-w-[200px] text-left pl-2 font-medium text-slate-900 font-mono">
+                    {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-6 h-6 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
+                    <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                  </div>
+                  <span className="font-bold text-slate-700">Ref:</span>
+                  <span className="border-b border-slate-300 min-w-[200px] text-left pl-2 font-medium text-slate-900 font-mono">
+                    REF: {refNo || "BQ/"}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Document Header Title block */}
+              <div className="text-center my-4 flex flex-col items-center shrink-0">
+                <h1 className="text-[20pt] font-black tracking-tight text-[#021835] font-sans m-0">OFFER LETTER</h1>
+                <div className="flex items-center justify-center w-full max-w-[180px] mt-1 relative">
+                  <div className="w-full h-[1.5px] bg-[#fbbc04]"></div>
+                  <div className="absolute bg-white px-2">
+                    <svg className="w-3 h-3 text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
+                      <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recipient Details */}
+              <div className="mb-4 text-left text-[10pt]">
+                <p className="font-bold text-slate-755 m-0">Dear <span className="border-b border-slate-300 px-4 font-black text-[#021835]">{name || "____________________"}</span>,</p>
+              </div>
+            </>
+          )}
+
+          {renderedElements}
+
+          {/* Conditional CTC Breakup Table on Page 0 */}
+          {isFirstPage && ctc && (
+            <div className="mt-4 font-sans text-left shrink-0">
+              <h4 className="text-[8.5pt] font-extrabold text-slate-700 uppercase tracking-widest mb-1.5">Salary Breakup Guidelines</h4>
+              <table className="w-full border border-slate-200 text-[9pt] border-collapse bg-slate-50/20">
+                <thead>
+                  <tr className="bg-slate-100/60 text-slate-750 border-b border-slate-200">
+                    <th className="border-r border-slate-200 px-3 py-1.5 text-left font-bold uppercase tracking-wider text-[7.5pt]">Designation / Package detail</th>
+                    <th className="px-3 py-1.5 text-right font-bold uppercase tracking-wider text-[7.5pt]">Structure ({currencySymbol})</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-slate-150">
+                    <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Assigned Corporate Role</td>
+                    <td className="px-3 py-1.5 text-right text-slate-900 font-bold">{position || "TBD"}</td>
+                  </tr>
+                  <tr className="border-b border-slate-150">
+                    <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Monthly Remuneration / Annual CTC</td>
+                    <td className="px-3 py-1.5 text-right text-slate-950 font-black">{ctc}</td>
+                  </tr>
+                  {joiningDate && (
+                    <tr>
+                      <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Start Date / Date of Joining</td>
+                      <td className="px-3 py-1.5 text-right text-slate-900 font-semibold">
+                        {new Date(joiningDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* If last page, render e-signatures block */}
+        {isLastPage && (
+          <div className="mt-auto pt-4 border-t border-slate-200 grid grid-cols-2 gap-8 w-full sticky bottom-0 bg-white z-20">
+            <div className="relative flex flex-col items-center text-center font-sans">
+              <div className="absolute -top-[1.2in] left-4 w-9 h-9 flex items-center justify-center shrink-0">
+                <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
+                  <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+                </svg>
+                <svg className="relative w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div className="text-left w-full pl-2">
+                <h3 className="text-[10pt] font-black text-slate-800 mb-0.5">Ankit Shrivastava</h3>
+                <p className="text-[8pt] text-slate-500 font-semibold mb-2">Founder & CEO</p>
+              </div>
+              <div className="h-12 flex items-end justify-center w-full relative mb-1">
+                {founderSign ? (
+                  <img src={founderSign} alt="Founder Signature" className="h-10 w-auto object-contain block max-w-full z-10"
+                    style={{ transform: `translate(${founderXOffset}px, ${founderYOffset}px) scale(${founderScale})`, imageRendering: founderPixelated ? 'pixelated' : 'auto' }}
+                  />
+                ) : (
+                  <div className="italic text-[10pt] text-slate-350 select-none pb-1 font-serif">[Pending Signature]</div>
+                )}
+              </div>
+              <div className="w-full border-t-2 border-[#021835] my-1" />
+              <p className="text-[7.5pt] uppercase tracking-widest text-[#021835] font-extrabold mt-0.5">Signature</p>
+            </div>
+
+            <div className="relative flex flex-col items-center text-center font-sans">
+              <div className="absolute -top-[1.2in] left-4 w-9 h-9 flex items-center justify-center shrink-0">
+                <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
+                  <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+                </svg>
+                <svg className="relative w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div className="text-left w-full pl-2">
+                <h3 className="text-[10pt] font-black text-slate-800 mb-0.5">Akshat Srivastava</h3>
+                <p className="text-[8pt] text-slate-500 font-semibold mb-2">Co-Founder & CTO</p>
+              </div>
+              <div className="h-12 flex items-end justify-center w-full relative mb-1">
+                {cofounderSign ? (
+                  <img src={cofounderSign} alt="Co-Founder Signature" className="h-10 w-auto object-contain block max-w-full z-10"
+                    style={{ transform: `translate(${cofounderXOffset}px, ${cofounderYOffset}px) scale(${cofounderScale})`, imageRendering: cofounderPixelated ? 'pixelated' : 'auto' }}
+                  />
+                ) : (
+                  <div className="italic text-[10pt] text-slate-350 select-none pb-1 font-serif">[Pending Signature]</div>
+                )}
+              </div>
+              <div className="w-full border-t-2 border-[#021835] my-1" />
+              <p className="text-[7.5pt] uppercase tracking-widest text-[#021835] font-extrabold mt-0.5">Signature</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const handlePrint = () => {
@@ -1392,6 +1706,21 @@ export default function App() {
                 placeholder="Compose offer letter..."
               />
             </div>
+
+            {templateKey !== 'founding_ownership' && (
+              <div className="flex items-center gap-2 mt-1 bg-slate-950/40 p-2.5 rounded-xl border border-slate-900 select-none">
+                <input 
+                  type="checkbox" 
+                  id="attach-chapters-checkbox"
+                  checked={attachChapters} 
+                  onChange={e => setAttachChapters(e.target.checked)}
+                  className="rounded text-yellow-500 focus:ring-yellow-500 text-slate-950 w-3.5 h-3.5" 
+                />
+                <label htmlFor="attach-chapters-checkbox" className="text-xs text-slate-350 cursor-pointer font-bold select-none flex-1">
+                  Append Founding Ownership Program <span className="text-[10px] text-yellow-500/80 font-normal">(content.txt)</span>
+                </label>
+              </div>
+            )}
             
             <button 
               onClick={saveToHistory}
@@ -1654,329 +1983,25 @@ export default function App() {
           <div
             id="offer-letter-print-zone"
             ref={previewRef}
-            className="a4-page bg-white text-slate-900 shadow-2xl p-0 w-[8.27in] min-h-[11.7in] max-w-[8.27in] flex flex-col justify-between text-left relative overflow-hidden shrink-0"
-            style={{ 
-              boxSizing: 'border-box',
-              fontFamily: "'Inter', sans-serif",
-              lineHeight: '1.5',
-              fontSize: '10.5pt'
-            }}
+            className="flex flex-col gap-6 items-center w-full no-print-gap"
           >
-            {/* Header Block with Skewed Gold Slice */}
-            <div className="relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.8in] overflow-hidden shrink-0">
-              {/* Golden slanted corner highlight */}
-              <div className="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style={{ borderLeft: '6px solid #021835' }} />
+            {getPagesList().map((pageText, pageIndex) => {
+              const pages = getPagesList();
+              const isFirstPage = pageIndex === 0;
+              const isLastPage = pageIndex === pages.length - 1;
               
-              {/* Corner decor */}
-              <div className="absolute top-2 right-2 flex gap-1 z-20">
-                <div className="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
-                <div className="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
-                <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
-              </div>
-
-              {/* Diagonal sweeping yellow/navy under-lines */}
-              <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style={{ clipPath: 'polygon(0 80%, 35% 0, 100% 100%, 0 100%)' }}></div>
-              <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#021835] transform" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
-
-              <div className="relative z-10 flex items-center gap-4">
-                {/* Logo Hexagon Outline */}
-                <div className="flex items-center gap-3">
-                  <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-                    <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="6.5">
-                      <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
-                    </svg>
-                    {/* Cart with lines */}
-                    <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M5 4h1.5l1.5 10h10l1.5-6H7.5" strokeLinecap="round" strokeLinejoin="round" />
-                      <line x1="6" y1="9" x2="16" y2="9" strokeLinecap="round" />
-                      <circle cx="8" cy="18" r="1.5" fill="currentColor" />
-                      <circle cx="16" cy="18" r="1.5" fill="currentColor" />
-                    </svg>
-                  </div>
-                  {/* brand title */}
-                  <div className="text-left font-sans">
-                    <span className="text-3xl font-extrabold tracking-tight text-white">
-                      buy<span className="text-[#fbbc04]">Qk</span>
-                    </span>
-                  </div>
+              return (
+                <div 
+                  key={pageIndex} 
+                  className="a4-page-card bg-white text-slate-900 shadow-2xl p-0 w-[8.27in] h-[11.69in] min-h-[11.69in] max-h-[11.69in] flex flex-col justify-between text-left relative overflow-hidden shrink-0"
+                  style={{ boxSizing: 'border-box' }}
+                >
+                  {renderDocumentHeader()}
+                  {renderPageContent(pageText, isFirstPage, isLastPage)}
+                  {renderDocumentFooter()}
                 </div>
-
-                {/* Vertical Divider line */}
-                <div className="w-[1.5px] h-9 bg-white/20"></div>
-
-                {/* Tagline stacked details */}
-                <div className="text-left leading-normal font-sans">
-                  <p className="text-[7pt] tracking-[0.18em] font-black uppercase text-slate-200">
-                    THE UNIVERSAL<br/>LOCAL SUPPLY<br/>NETWORK
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Reference and Date block */}
-            <div className="flex flex-col gap-2 items-end justify-start text-[9pt] text-slate-800 font-sans mt-[0.35in] px-[0.8in] w-full shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
-                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </div>
-                <span className="font-bold text-slate-800">Date:</span>
-                <span className="border-b border-slate-300 min-w-[200px] text-left pl-2 font-medium text-slate-900">
-                  {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 mt-1.5">
-                <div className="w-6 h-6 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
-                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                  </svg>
-                </div>
-                <span className="font-bold text-slate-800">Ref:</span>
-                <span className="border-b border-slate-300 min-w-[200px] text-left pl-2 font-medium text-slate-900 font-mono">
-                  REF: {refNo || "BQ/"}
-                </span>
-              </div>
-            </div>
-
-            {/* Document Header Title block */}
-            <div className="text-center my-5 flex flex-col items-center shrink-0">
-              <h1 className="text-[23pt] font-black tracking-tight text-[#021835] font-sans m-0">OFFER LETTER</h1>
-              {/* Divider with hexagon */}
-              <div className="flex items-center justify-center w-full max-w-[200px] mt-1 relative">
-                <div className="w-full h-[1.5px] bg-[#fbbc04]"></div>
-                <div className="absolute bg-white px-2">
-                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
-                    <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Letter Body Area */}
-            <div className="flex-1 flex flex-col justify-start px-[0.8in] text-slate-800">
-              {/* Recipient details */}
-              <div className="mb-5 text-left text-[10.5pt]">
-                <p className="font-bold text-slate-700 m-0">Dear <span className="border-b border-slate-300 px-4 font-black text-[#021835]">{name || "____________________"}</span>,</p>
-              </div>
-
-              {/* Main content paragraph */}
-              <div className="mb-4 text-left leading-relaxed text-justify text-[10pt] text-slate-700">
-                we are pleased to offer you the position of <span className="border-b border-slate-300 px-4 font-bold text-slate-950">{position || "____________________"}</span> at <span className="font-extrabold text-[#021835]">buyQk</span>.
-              </div>
-
-              <div 
-                className="text-[10pt] text-slate-750 leading-relaxed text-justify mb-5 font-sans"
-                style={{ whiteSpace: 'pre-line' }}
-              >
-                {compiledText()}
-              </div>
-
-              {/* Optional CTC details overview grid table */}
-              {ctc && (
-                <div className="mb-5 font-sans text-left shrink-0">
-                  <h4 className="text-[8.5pt] font-extrabold text-slate-700 uppercase tracking-widest mb-1.5">Salary Breakup Guidelines</h4>
-                  <table className="w-full border border-slate-200 text-[9pt] border-collapse bg-slate-50/20">
-                    <thead>
-                      <tr className="bg-slate-100/60 text-slate-700 border-b border-slate-200">
-                        <th className="border-r border-slate-200 px-3 py-1 text-left font-bold uppercase tracking-wider text-[7.5pt]">Designation / Package detail</th>
-                        <th className="px-3 py-1 text-right font-bold uppercase tracking-wider text-[7.5pt]">Structure ({currencySymbol})</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-slate-150">
-                        <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Assigned Corporate Role</td>
-                        <td className="px-3 py-1.5 text-right text-slate-900 font-bold">{position || "TBD"}</td>
-                      </tr>
-                      <tr className="border-b border-slate-150">
-                        <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Monthly Remuneration / Annual CTC</td>
-                        <td className="px-3 py-1.5 text-right text-slate-950 font-black">{ctc}</td>
-                      </tr>
-                      {joiningDate && (
-                        <tr>
-                          <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Start Date / Date of Joining</td>
-                          <td className="px-3 py-1.5 text-right text-slate-900 font-semibold">
-                            {new Date(joiningDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* Signature Block Area with vertical separator line */}
-            <div className="mt-auto px-[0.8in] py-4 w-full shrink-0">
-              <div className="relative grid grid-cols-2 gap-12 w-full pt-8 border-t border-slate-200">
-                {/* Vertical Divider line with golden hexagon */}
-                <div className="absolute top-[10%] bottom-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center justify-center w-[1px] bg-slate-200">
-                  <svg className="w-3.5 h-3.5 text-[#fbbc04] bg-white rounded-full p-0.5" viewBox="0 0 100 100" fill="currentColor">
-                    <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
-                  </svg>
-                </div>
-
-                {/* Founder Column */}
-                <div className="relative flex flex-col items-center text-center font-sans">
-                  {/* Silhouette icon on gold Hexagon */}
-                  <div className="absolute -top-[1.2in] left-4 w-11 h-11 flex items-center justify-center shrink-0">
-                    <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
-                      <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
-                    </svg>
-                    <svg className="relative w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  </div>
-                  
-                  {/* Name and Designation */}
-                  <div className="text-left w-full pl-2">
-                    <h3 className="text-[11pt] font-black text-slate-800 mb-0.5">Ankit Shrivastava</h3>
-                    <p className="text-[8.5pt] text-slate-500 font-semibold mb-3">Founder</p>
-                  </div>
-
-                  {/* Sign Image Zone */}
-                  <div className="h-14 flex items-end justify-center w-full relative mb-1">
-                    {founderSign ? (
-                      <img 
-                        src={founderSign} 
-                        alt="Ankit Signature" 
-                        className="h-12 w-auto object-contain block max-w-full z-10 animate-fade-in"
-                        style={{
-                          transform: `translate(${founderXOffset}px, ${founderYOffset}px) scale(${founderScale})`,
-                          imageRendering: founderPixelated ? 'pixelated' : 'auto'
-                        }}
-                      />
-                    ) : (
-                      <div className="italic text-[12pt] text-slate-350 select-none pb-1 font-serif">
-                        [Pending Signature]
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Navy border and label */}
-                  <div className="w-full border-t-2 border-[#021835] my-1" />
-                  <p className="text-[8pt] uppercase tracking-widest text-[#021835] font-extrabold mt-1">Signature</p>
-                </div>
-
-                {/* Co-Founder Column */}
-                <div className="relative flex flex-col items-center text-center font-sans">
-                  {/* Co-Founder Silhouette icon on gold Hexagon */}
-                  <div className="absolute -top-[1.2in] left-4 w-11 h-11 flex items-center justify-center shrink-0">
-                    <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
-                      <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
-                    </svg>
-                    <svg className="relative w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  </div>
-                  
-                  {/* Name and Designation */}
-                  <div className="text-left w-full pl-2">
-                    <h3 className="text-[11pt] font-black text-slate-800 mb-0.5">Akshat Srivastava</h3>
-                    <p className="text-[8.5pt] text-slate-500 font-semibold mb-3">Co-Founder</p>
-                  </div>
-
-                  {/* Sign Image Zone */}
-                  <div className="h-14 flex items-end justify-center w-full relative mb-1">
-                    {cofounderSign ? (
-                      <img 
-                        src={cofounderSign} 
-                        alt="Akshat Signature" 
-                        className="h-12 w-auto object-contain block max-w-full z-10 animate-fade-in"
-                        style={{
-                          transform: `translate(${cofounderXOffset}px, ${cofounderYOffset}px) scale(${cofounderScale})`,
-                          imageRendering: cofounderPixelated ? 'pixelated' : 'auto'
-                        }}
-                      />
-                    ) : (
-                      <div className="italic text-[12pt] text-slate-350 select-none pb-1 font-serif">
-                        [Pending Signature]
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Navy border and label */}
-                  <div className="w-full border-t-2 border-[#021835] my-1" />
-                  <p className="text-[8pt] uppercase tracking-widest text-[#021835] font-extrabold mt-1">Signature</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Page Footer Block with metrics */}
-            <div className="relative w-full h-[0.9in] bg-[#021835] text-white flex items-center justify-between pl-0 pr-[0.8in] overflow-hidden shrink-0 mt-6">
-              
-              {/* Rocket yellow accent slant left */}
-              <div className="relative h-full w-[20%] bg-[#fbbc04] flex items-center justify-center pr-3 shrink-0" style={{ clipPath: 'polygon(0 0, 82% 0, 100% 100%, 0 100%)' }}>
-                <svg className="w-8 h-8 text-[#021835]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
-                  <path d="M12 2C6.5 2 2 6.5 2 12c0 2 1 3.5 1 3.5s1.5-1 3.5-1c3 0 5.5-2.5 5.5-5.5" />
-                  <path d="M22 2l-3 3-5-2-4 4 3 3-3 3 2 2 3-3 3 3 4-4-2-5 3-3z" />
-                </svg>
-              </div>
-
-              {/* Slogan details block */}
-              <div className="text-left leading-normal shrink-0 font-sans tracking-wide">
-                <span className="text-[7.5pt] font-black text-white">FIND ANYTHING.<br/></span>
-                <span className="text-[7.5pt] font-black text-[#fbbc04]">DELIVER ANYTHING.<br/></span>
-                <span className="text-[7.5pt] font-black text-white font-mono">INSTANTLY.</span>
-              </div>
-
-              {/* Gold vertical line separator */}
-              <div className="w-[1px] h-9 bg-white/10 shrink-0"></div>
-
-              {/* Metric links block */}
-              <div className="flex items-center gap-6 font-sans shrink-0">
-                {/* 1. Local Sellers */}
-                <div className="flex flex-col items-center gap-0.5">
-                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" />
-                    <path d="M3 11L12 2l9 9" />
-                  </svg>
-                  <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Local<br/>Sellers</span>
-                </div>
-
-                <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
-
-                {/* 2. Happy Customers */}
-                <div className="flex flex-col items-center gap-0.5">
-                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                  </svg>
-                  <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Happy<br/>Customers</span>
-                </div>
-
-                <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
-
-                {/* 3. Fast & Reliable */}
-                <div className="flex flex-col items-center gap-0.5">
-                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="2" y="7" width="20" height="14" rx="2" />
-                    <path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span className="text-[5pt] font-black uppercase text-[#fbbc04] tracking-wider font-semibold">Fast & Reliable<br/>Delivery</span>
-                </div>
-
-                <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
-
-                {/* 4. Safe & Secure */}
-                <div className="flex flex-col items-center gap-0.5">
-                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                  <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Safe &<br/>Secure</span>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </section>
       </div>

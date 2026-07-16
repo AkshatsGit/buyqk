@@ -59,6 +59,564 @@ In this role, you will lead our operations network, onboarding merchants, managi
 
 Please sign this letter of acceptance below to confirm your confirmation. This offer remains valid till {expiryDate}.`,
 
+  founding_ownership: `Building Owners. Not Employees.
+Classification: Internal & Confidential
+Issued by: BUYQK (Currently Operating as a Sole Proprietorship)
+
+Founders:
+Ankit Shrivastav (Founder & Chief Executive Officer)
+Akshat Srivastava (Co-Founder & Chief Technology Officer)
+
+⸻
+
+“People don’t build great companies because they are paid to.
+They build them because they believe they are building something worth owning.”
+
+⸻
+
+A MESSAGE FROM THE FOUNDERS
+
+Dear Builder,
+Thank you for believing in BuyQK.
+When companies are young, they rarely have abundant capital, luxurious offices, or globally recognized brands. What they do have is belief.
+Belief that a meaningful problem deserves to be solved.
+Belief that ordinary people can create extraordinary impact.
+Belief that the future belongs to those willing to build it before anyone else believes it exists.
+
+BuyQK was founded on one simple idea:
+The people who help build the company should have the opportunity to participate in the value they help create.
+
+Ownership, however, is not a joining bonus. It is not a hiring incentive. It is not a reward for titles.
+Ownership represents trust. Trust is earned through consistency. Through difficult days. Through solving problems. Through making sacrifices. Through staying when quitting would have been easier.
+
+This document exists because we want every individual joining BuyQK to understand one important principle:
+We are building owners—not employees.
+
+Some people will stay for months. Some for years. Some may become future leaders of this company. Wherever your journey leads, we want every opportunity within BuyQK to be guided by fairness, transparency, integrity, and long-term thinking.
+
+Thank you for choosing to build with us. We look forward to building the future together.
+
+Founders:
+Ankit Shrivastav (Founder & CEO)
+Akshat Srivastava (Co-Founder & CTO)
+
+⸻
+
+CHAPTER 1: WHY THIS DOCUMENT EXISTS
+
+Every startup says: “We’ll give ESOPs.” Very few explain what that truly means.
+At BuyQK, we believe ownership deserves clarity.
+This document exists to explain:
+• Why BuyQK believes in ownership.
+• How ownership will be viewed.
+• What values are expected.
+• How long-term contribution matters.
+• How future ownership opportunities may be evaluated.
+
+This document is built upon one simple philosophy:
+Ownership should never be promised casually. Ownership should be earned.
+
+CHAPTER 2: WHAT OWNERSHIP MEANS AT BUYQK
+
+Ownership is not merely receiving equity. Ownership is a mindset.
+At BuyQK, ownership means:
+• Taking responsibility before being asked.
+• Protecting company resources.
+• Thinking beyond your assigned role.
+• Making decisions that benefit the company rather than personal convenience.
+• Documenting your work.
+• Helping teammates succeed.
+• Improving systems.
+• Leaving every project better than you found it.
+• Owning mistakes.
+• Celebrating team success over personal recognition.
+
+Ownership begins long before equity does.
+
+⸻
+
+CHAPTER 3: WHY WE BELIEVE IN SHARING SUCCESS
+
+Many organisations compensate individuals solely through salaries. While salaries reward time and effort, ownership recognizes long-term value creation.
+BuyQK believes that individuals who dedicate themselves to building the company should have the opportunity to participate in its future success.
+
+This philosophy encourages:
+• Long-term thinking.
+• Better decision-making.
+• Higher accountability.
+• Innovation.
+• Greater collaboration.
+• A stronger company.
+
+However—
+Ownership is meaningful only when it reflects genuine contribution.
+For this reason, BuyQK does not believe in automatic ownership. Every future ownership decision must balance fairness to contributors with the long-term health of the company.
+
+CHAPTER 4: OUR OWNERSHIP PHILOSOPHY
+
+At BuyQK, ownership is guided by the following principles:
+
+Integrity before Incentives:
+Character will always matter more than titles.
+
+Contribution before Compensation:
+Value created is more important than promises made.
+
+Commitment before Ownership:
+Long-term builders create long-term companies.
+
+Merit before Politics:
+Recognition is earned through performance—not influence.
+
+Team before Individual:
+Great companies are built together.
+
+Future before Immediate Reward:
+We choose sustainable growth over short-term decisions.
+
+Transparency before Assumptions:
+We believe people deserve clarity about how opportunities are created.
+
+⸻
+
+CHAPTER 5: WHO MAY BE CONSIDERED
+
+As BuyQK grows and establishes an appropriate corporate structure, individuals who demonstrate exceptional long-term contribution may be considered for future ownership opportunities.
+
+Potential categories may include:
+• Founding Leadership.
+• Core Employees.
+• Exceptional Long-Term Contributors.
+• High-Impact Technical Leaders.
+• Future Executives.
+• Outstanding Interns who continue their journey with BuyQK.
+• Strategic Advisors.
+• External Experts making significant long-term contributions.
+
+Eligibility alone does not guarantee participation. Every decision will depend upon multiple factors including business requirements, company stage, applicable law, governance approvals, and individual contribution.
+
+CHAPTER 6: OUR COMMITMENT
+
+As founders, we make the following commitment to every builder who joins BuyQK:
+• We will strive to evaluate opportunities fairly.
+• We will communicate transparently.
+• We will reward long-term contribution over short-term appearances.
+• We will build systems that recognize genuine builders.
+• We will never use ownership as a false promise to attract people.
+
+Trust, once broken, is difficult to rebuild. We choose honesty over convenience.
+
+⸻
+
+CHAPTER 13: IMPORTANT CLARIFICATION
+
+BuyQK is currently operating as a sole proprietorship and is in the early stages of building its business. This document has been created to communicate BuyQK’s philosophy regarding long-term ownership and recognition of meaningful contribution. It is intended to provide transparency around our values and future direction.
+
+This document does not constitute:
+• A grant of shares or stock options.
+• An employment contract.
+• A partnership agreement.
+• A legally enforceable promise of equity.
+• A guarantee of future ownership.
+
+Any future ownership opportunities, including any Employee Stock Option Plan (ESOP), shall be considered only after BuyQK adopts an appropriate corporate structure, establishes a formal equity program, and completes all required legal and governance processes.
+Participation in any future ownership program, if introduced, shall always remain subject to applicable laws, company policies, performance, long-term commitment, business requirements, and the necessary approvals at that time.
+
+⸻
+
+PART 5 — Commitment & Acknowledgement
+
+CHAPTER 27: Founders’ Commitment
+
+Every company begins with an idea.
+Great companies are built by people.
+At BuyQK, we recognize that every individual who chooses to build with us contributes to something much larger than a product or a business.
+
+As founders, we make the following commitments to every member of the BuyQK family.
+We commit to:
+• Build BuyQK with integrity and transparency.
+• Create an environment where people are respected, trusted, and empowered.
+• Recognize meaningful contribution over titles or hierarchy.
+• Encourage continuous learning, innovation, and collaboration.
+• Communicate honestly, especially during difficult times.
+• Build systems that reward long-term commitment fairly.
+• Protect the interests of the company while respecting every builder.
+• Never use ownership or future opportunities as false promises.
+• Continuously improve our culture as BuyQK grows.
+
+We understand that trust is earned—not requested.
+Our responsibility as founders is to earn that trust every single day.
+
+⸻
+
+CHAPTER 28: The BuyQK Builder’s Oath
+
+By becoming a part of BuyQK, I choose to become more than an employee or an intern.
+I choose to become a Builder.
+I understand that meaningful companies are not built overnight.
+They are built through consistency, courage, integrity, and long-term commitment.
+
+Therefore, I pledge that I will:
+• Build with honesty and integrity.
+• Take ownership of my responsibilities.
+• Protect the trust placed in me.
+• Respect every teammate, customer, merchant, delivery partner, and stakeholder.
+• Learn continuously and share knowledge openly.
+• Act professionally in every interaction.
+• Protect BuyQK’s confidential information and intellectual property.
+• Represent BuyQK responsibly inside and outside the workplace.
+• Leave every project, every process, and every person better than I found them.
+• Contribute towards building a company that creates meaningful impact for society.
+
+I understand that my contribution today helps shape the future of BuyQK.
+
+⸻
+
+CHAPTER 29: Builder’s Acknowledgement
+
+I acknowledge that I have carefully read and understood the BuyQK Founding Ownership Policy.
+I understand that this document communicates BuyQK’s philosophy regarding ownership, long-term contribution, and future opportunities.
+I acknowledge that this document does not constitute an equity grant, stock option, employment guarantee, partnership agreement, or legally enforceable promise of ownership.
+I understand that any future ownership opportunity, if introduced, will be governed by separate legal documentation, applicable laws, company policies, and necessary approvals.
+By signing below, I confirm my understanding of the principles described in this document and my commitment to uphold the values and culture of BuyQK.
+
+Builder Details
+Name: {name}
+Department: [Insert Department]
+Role: {position}
+Builder ID: [Insert Builder ID]
+Signature: 
+Date: {date}
+
+⸻
+
+Closing Message
+
+Years from now, when BuyQK has grown far beyond what it is today, success will not be measured only by revenue, funding, technology, or market share.
+It will be measured by the character of the people who chose to believe when success was uncertain.
+By those who solved problems before they had titles.
+By those who stayed committed when the path was difficult.
+By those who chose integrity over shortcuts, collaboration over ego, and purpose over comfort.
+
+Every great company has a beginning.
+Every beginning has a few people who choose to believe before the world does.
+Thank you for choosing to become one of those people.
+
+Together, we are not just building a company.
+We are building the future of local commerce.
+
+BuyQK
+“Believe. Build. Belong.”`,
+
+  nda: `BUYQK
+CONFIDENTIALITY & NON-DISCLOSURE AGREEMENT (NDA)
+
+Version: 1.0
+Classification: Confidential
+
+Issued By:
+BUYQK
+(Currently Operating as a Sole Proprietorship)
+
+Founders:
+Ankit Shrivastav (Founder & CEO)
+Akshat Srivastava (Co-Founder & CTO)
+
+⸻
+
+Protecting What We Build Together
+
+At BuyQK, ideas, technology, relationships, research, and innovation are among our most valuable assets. Every person who joins BuyQK is trusted with information that contributes to building the company. This agreement exists to protect that trust.
+
+⸻
+
+1. Purpose
+The purpose of this Agreement is to ensure that confidential information shared within BuyQK is used solely for the benefit of BuyQK and is not disclosed, copied, misused, or shared without proper authorization. This agreement helps protect our technology, business strategy, merchant relationships, customer information, research, and other proprietary information.
+
+⸻
+
+2. Scope
+This Agreement applies to every individual associated with BuyQK, including but not limited to: Founders, Co-Founders, Leadership Team, Employees, Interns, Consultants, Advisors, Freelancers, Contractors, and Volunteers.
+
+⸻
+
+3. What Is Confidential Information
+Confidential Information includes, but is not limited to:
+• Business plans and strategy
+• Product roadmap
+• Source code
+• AI models and datasets
+• Technical architecture
+• Research and development
+• Financial information
+• Investor discussions
+• Merchant information
+• Customer information
+• Delivery partner information
+• Internal documents
+• Marketing strategies
+• Pricing models
+• Vendor information
+• Internal meetings and discussions
+• Passwords and credentials
+• Company documents and reports
+• Any information marked confidential
+
+Information shared verbally and identified as confidential should also be treated as confidential.
+
+⸻
+
+4. Your Responsibilities
+As a member of BuyQK, you agree to:
+• Keep confidential information secure.
+• Use confidential information only for BuyQK-related work.
+• Avoid sharing confidential information with anyone outside BuyQK unless authorized.
+• Protect company accounts, passwords, and systems.
+• Inform the founders immediately if confidential information is lost, leaked, or accessed without authorization.
+• Return or delete confidential information when requested.
+
+⸻
+
+5. Information That Is Not Confidential
+This Agreement does not apply to information that:
+• Is already publicly available through lawful means.
+• Was lawfully known to you before joining BuyQK.
+• Is received lawfully from another source without confidentiality obligations.
+• Is approved by BuyQK for public disclosure.
+
+⸻
+
+6. During and After Your Association
+Your responsibility to protect BuyQK’s confidential information continues during your association with the company and after your association ends, unless the information has lawfully become public.
+
+⸻
+
+7. Company Property
+All documents, files, research, reports, presentations, software, designs, credentials, databases, and other materials created or shared specifically for BuyQK remain the property of BuyQK. Upon request or at the end of your association, you agree to return or permanently delete BuyQK property in your possession, unless otherwise instructed.
+
+⸻
+
+8. Security Expectations
+To help protect BuyQK’s information, you agree to:
+• Use strong passwords.
+• Enable two-factor authentication wherever available.
+• Avoid sharing company credentials.
+• Use only approved tools and platforms.
+• Report suspicious activity immediately.
+• Avoid downloading company information onto unsecured devices.
+
+⸻
+
+9. Respect for Privacy
+BuyQK is committed to protecting the privacy of customers, merchants, delivery partners, employees, interns, and business partners. Any personal information accessed during your work must be handled responsibly and only for legitimate business purposes.
+
+⸻
+
+10. Questions and Reporting
+If you are ever unsure whether information is confidential, treat it as confidential until clarification is provided by the founders or an authorized representative. If you suspect a security incident, accidental disclosure, or misuse of company information, report it immediately.
+
+⸻
+
+11. Our Shared Commitment
+Confidentiality is not only a legal responsibility. It is a reflection of trust. Every person at BuyQK contributes to protecting the ideas, technology, and relationships that enable the company to grow. By protecting confidential information, we protect the future we are building together.
+
+⸻
+
+Acknowledgement
+I confirm that I have read and understood this Confidentiality & Non-Disclosure Agreement. I agree to uphold the responsibilities described in this document and to protect BuyQK’s confidential information throughout my association with the company and thereafter, as applicable.
+
+Builder Name: {name}
+Builder Signature: 
+Date: {date}`,
+
+  ip_agreement: `INTELLECTUAL PROPERTY & WORK PRODUCT AGREEMENT
+
+Version: 1.0
+Classification: Confidential
+
+Issued By:
+BUYQK
+(Currently Operating as a Sole Proprietorship)
+
+Founders:
+Ankit Shrivastav (Founder & CEO)
+Akshat Srivastava (Co-Founder & CTO)
+
+⸻
+
+Protecting What We Create Together
+
+Innovation is the foundation of BuyQK. Every line of code, every design, every strategy, every document, every AI model, every research paper, and every idea contributes to the future of the company. This agreement ensures that everything created for BuyQK remains available for BuyQK to use, improve, and grow.
+
+⸻
+
+1. Purpose
+The purpose of this Agreement is to clearly establish that intellectual property and work products created specifically for BuyQK during the course of your association are intended for BuyQK’s business and may be used, modified, improved, and commercialized by BuyQK.
+
+⸻
+
+2. Scope
+This Agreement applies to all individuals associated with BuyQK, including: Creators, Founders, Co-Founders, Leadership Team, Employees, Interns, Consultants, Advisors, Freelancers, Contractors, and Volunteers.
+
+⸻
+
+3. What Is Considered Work Product
+Work Product includes, but is not limited to:
+• Software and source code
+• APIs and backend services
+• Mobile and web applications
+• User Interface (UI) designs
+• User Experience (UX) designs
+• Wireframes
+• Databases
+• AI models
+• Machine learning models
+• Prompts and prompt libraries
+• Datasets prepared for BuyQK
+• Technical documentation
+• Research reports
+• Business strategies
+• Marketing campaigns
+• Sales material
+• Logos
+• Brand assets
+• Product names
+• Videos
+• Graphics
+• Presentations
+• Training material
+• Standard Operating Procedures (SOPs)
+• Workflows
+• Internal tools
+• Automation scripts
+• Dashboards
+• Any other material created specifically for BuyQK.
+
+⸻
+
+4. Ownership
+Unless otherwise agreed in writing, all Work Product created specifically for BuyQK as part of your assigned responsibilities is intended for BuyQK’s use and business. You agree to cooperate in signing any additional documentation reasonably required in the future to formalize ownership if BuyQK adopts a different legal structure or registration.
+
+⸻
+
+5. Pre-Existing Intellectual Property
+BuyQK respects work that you created before joining the company. Any software, designs, inventions, research, or other intellectual property that you developed independently before your association with BuyQK remains yours, unless you voluntarily contribute it to BuyQK under a separate written agreement.
+
+⸻
+
+6. Open Source Software
+BuyQK encourages the responsible use of open-source technologies. Before introducing third-party libraries, frameworks, datasets, or software into BuyQK projects, you should ensure that their licenses permit the intended use and comply with company guidelines.
+
+⸻
+
+7. AI-Assisted Development
+BuyQK embraces responsible use of Artificial Intelligence. You may use AI tools to assist with development, research, documentation, design, or analysis where approved.
+However:
+• You remain responsible for the quality and originality of your work.
+• Sensitive company information should not be shared with external AI platforms unless approved.
+• AI-generated work intended for BuyQK projects should be reviewed before use.
+
+⸻
+
+8. Moral Rights & Attribution
+Where applicable, BuyQK will acknowledge meaningful contributions to projects internally. However, BuyQK may modify, improve, combine, adapt, or use Work Product without requiring further approval from the original contributor.
+
+⸻
+
+9. Return of Company Materials
+Upon request or at the end of your association, you agree to return or securely delete BuyQK materials in your possession, including:
+• Source code
+• Internal documents
+• Research
+• Credentials
+• Designs
+• Proprietary datasets
+• Company devices (if provided)
+• Any confidential files
+
+⸻
+
+10. Continuing Cooperation
+If BuyQK reasonably requires your assistance to protect, register, maintain, or clarify ownership of Work Product created during your association, you agree to cooperate in good faith, subject to mutually reasonable arrangements.
+
+⸻
+
+11. Respect for Innovation
+Innovation thrives when creators trust that their work will be used responsibly. BuyQK is committed to respecting contributors, recognising meaningful work, and fostering an environment where ideas are encouraged, documented, and transformed into products that create value for society.
+
+⸻
+
+Acknowledgement
+I confirm that I have read and understood this Intellectual Property & Work Product Agreement. I acknowledge my responsibilities regarding work created specifically for BuyQK and agree to cooperate in protecting the company’s intellectual assets in accordance with this Agreement.
+
+Builder Name: {name}
+Builder Signature: 
+Date: {date}`,
+
+  code_of_conduct: `BUYQK
+CODE OF CONDUCT
+
+Building with Integrity
+
+Version: 1.0
+Classification: Internal
+
+Issued By:
+BUYQK
+(Currently Operating as a Sole Proprietorship)
+
+Founders:
+Ankit Shrivastav (Founder & CEO)
+Akshat Srivastava (Co-Founder & CTO)
+
+⸻
+
+A Message From The Founders
+
+Technology can be copied. Ideas can be copied. Products can be copied. Culture cannot.
+At BuyQK, we believe the way we build is just as important as what we build. This Code of Conduct is not written to restrict people. It is written to help us create a workplace built on trust, respect, ownership, curiosity and integrity.
+Whether you’re an intern, engineer, designer, marketer, department head or founder—these principles apply equally to all of us. The culture we create today will define BuyQK tomorrow.
+
+Welcome to the team. Let’s build responsibly.
+
+⸻
+
+1. Our Values
+Every decision at BuyQK should reflect these values:
+• Integrity
+• Ownership
+• Respect
+• Accountability
+• Innovation
+• Continuous Learning
+• Transparency
+• Customer First
+• Merchant First
+• Team Before Ego
+
+⸻
+
+2. The BuyQK Way
+• We don’t blame. We solve.
+• We don’t hide mistakes. We learn from them.
+• We don’t create politics. We build trust.
+• We don’t compete against teammates. We compete against yesterday.
+• We don’t seek credit. We seek impact.
+
+⸻
+
+3. Professional Behaviour
+Every member of BuyQK is expected to act with high ethical standards, keep communications professional, support their colleagues, and keep the team's objectives in sight.
+
+⸻
+
+Acknowledgement
+I confirm that I have read and understood this Code of Conduct. I agree to uphold these values and behaviors in my day-to-day engagement with BuyQK.
+
+Builder Name: {name}
+Builder Signature: 
+Date: {date}`,
+
   custom: `We are pleased to offer you the position of {position} at buyQk. This letter contains the general terms and conditions of your employment.
 
 Your joining date will be {joiningDate}. You will receive a Total Annual Compensation Package (CTC) of {ctc}.
@@ -104,9 +662,19 @@ export default function App() {
   const [templateKey, setTemplateKey] = useState<keyof typeof DEFAULT_TEMPLATES>('tech');
   const [customText, setCustomText] = useState(DEFAULT_TEMPLATES.tech);
 
-  // Signatures State
+  // Signatures State & Alignment Settings
   const [founderSign, setFounderSign] = useState<string>('');
   const [cofounderSign, setCofounderSign] = useState<string>('');
+
+  const [founderXOffset, setFounderXOffset] = useState<number>(0);
+  const [founderYOffset, setFounderYOffset] = useState<number>(0);
+  const [founderScale, setFounderScale] = useState<number>(1.0);
+  const [founderPixelated, setFounderPixelated] = useState<boolean>(false);
+
+  const [cofounderXOffset, setCofounderXOffset] = useState<number>(0);
+  const [cofounderYOffset, setCofounderYOffset] = useState<number>(0);
+  const [cofounderScale, setCofounderScale] = useState<number>(1.0);
+  const [cofounderPixelated, setCofounderPixelated] = useState<boolean>(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -136,6 +704,25 @@ export default function App() {
     if (fSign) setFounderSign(fSign);
     const coSign = localStorage.getItem('bq_cofounder_sign');
     if (coSign) setCofounderSign(coSign);
+
+    // Load signature alignments
+    const fX = localStorage.getItem('bq_founder_x');
+    if (fX) setFounderXOffset(parseInt(fX) || 0);
+    const fY = localStorage.getItem('bq_founder_y');
+    if (fY) setFounderYOffset(parseInt(fY) || 0);
+    const fScale = localStorage.getItem('bq_founder_scale');
+    if (fScale) setFounderScale(parseFloat(fScale) || 1.0);
+    const fPix = localStorage.getItem('bq_founder_pix');
+    if (fPix) setFounderPixelated(fPix === 'true');
+
+    const coX = localStorage.getItem('bq_cofounder_x');
+    if (coX) setCofounderXOffset(parseInt(coX) || 0);
+    const coY = localStorage.getItem('bq_cofounder_y');
+    if (coY) setCofounderYOffset(parseInt(coY) || 0);
+    const coScale = localStorage.getItem('bq_cofounder_scale');
+    if (coScale) setCofounderScale(parseFloat(coScale) || 1.0);
+    const coPix = localStorage.getItem('bq_cofounder_pix');
+    if (coPix) setCofounderPixelated(coPix === 'true');
 
     return () => unsubscribe();
   }, []);
@@ -282,6 +869,28 @@ export default function App() {
     }
   };
 
+  const updateFounderSignOffset = (x: number, y: number, scale: number, pixelated: boolean) => {
+    setFounderXOffset(x);
+    setFounderYOffset(y);
+    setFounderScale(scale);
+    setFounderPixelated(pixelated);
+    localStorage.setItem('bq_founder_x', x.toString());
+    localStorage.setItem('bq_founder_y', y.toString());
+    localStorage.setItem('bq_founder_scale', scale.toString());
+    localStorage.setItem('bq_founder_pix', pixelated.toString());
+  };
+
+  const updateCofounderSignOffset = (x: number, y: number, scale: number, pixelated: boolean) => {
+    setCofounderXOffset(x);
+    setCofounderYOffset(y);
+    setCofounderScale(scale);
+    setCofounderPixelated(pixelated);
+    localStorage.setItem('bq_cofounder_x', x.toString());
+    localStorage.setItem('bq_cofounder_y', y.toString());
+    localStorage.setItem('bq_cofounder_scale', scale.toString());
+    localStorage.setItem('bq_cofounder_pix', pixelated.toString());
+  };
+
   const handleSignatureUpload = (person: 'founder' | 'cofounder', file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -301,9 +910,11 @@ export default function App() {
     if (person === 'founder') {
       setFounderSign('');
       localStorage.removeItem('bq_founder_sign');
+      updateFounderSignOffset(0, 0, 1.0, false);
     } else {
       setCofounderSign('');
       localStorage.removeItem('bq_cofounder_sign');
+      updateCofounderSignOffset(0, 0, 1.0, false);
     }
   };
 
@@ -764,6 +1375,10 @@ export default function App() {
                 <option value="web_development_intern">Web Dev Intern</option>
                 <option value="test_engineer">Test Engineer</option>
                 <option value="operations">Operations Associate</option>
+                <option value="founding_ownership">Founding Ownership Program</option>
+                <option value="nda">Non-Disclosure Agreement (NDA)</option>
+                <option value="ip_agreement">Intellectual Property Agreement</option>
+                <option value="code_of_conduct">Code of Conduct</option>
                 <option value="custom">Custom Template</option>
               </select>
             </div>
@@ -789,20 +1404,112 @@ export default function App() {
           {/* HR Signature Authorization */}
           <div className="bg-slate-900/40 border border-blue-900/20 rounded-2xl p-5 shadow-premium flex flex-col gap-5 mb-10">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Upload className="w-4 h-4 text-yellow-500" /> 4. Signature Assets
+              <Upload className="w-4 h-4 text-yellow-500" /> 4. Signature Tuning & Alignment Console
             </h3>
 
             {/* Founder Sign */}
-            <div className="flex flex-col gap-2 p-3 bg-slate-950/40 rounded-xl border border-slate-900">
+            <div className="flex flex-col gap-3 p-4 bg-slate-950/40 rounded-xl border border-slate-900">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-350">Founder: Ankit Shrivastava</span>
+                <span className="text-xs font-bold text-slate-300">Founder: Ankit Shrivastava</span>
                 {founderSign && (
-                  <button onClick={() => clearSignature('founder')} className="text-[10px] text-red-400 hover:text-red-300 font-semibold">Clear</button>
+                  <button onClick={() => clearSignature('founder')} className="text-[10px] text-red-400 hover:text-red-300 font-semibold transition-colors">Clear</button>
                 )}
               </div>
               {founderSign ? (
-                <div className="h-16 w-32 border border-slate-800 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1">
-                  <img src={founderSign} alt="Founder Signature" className="h-full w-auto object-contain" />
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start gap-4">
+                    <div className="h-16 w-32 border border-slate-800 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shrink-0 relative">
+                      <img 
+                        src={founderSign} 
+                        alt="Founder Signature" 
+                        className="h-full w-auto object-contain" 
+                        style={{
+                          transform: `translate(${founderXOffset}px, ${founderYOffset}px) scale(${founderScale})`,
+                          imageRendering: founderPixelated ? 'pixelated' : 'auto'
+                        }}
+                      />
+                    </div>
+                    {/* Pixelate toggle & Scale Slider */}
+                    <div className="flex-1 flex flex-col gap-2 min-w-0">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={founderPixelated} 
+                          onChange={(e) => updateFounderSignOffset(founderXOffset, founderYOffset, founderScale, e.target.checked)}
+                          className="rounded border-slate-700 bg-slate-850 text-yellow-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                        />
+                        <span className="text-[10px] text-slate-400 font-semibold">Pixelate / Sharp Ink</span>
+                      </label>
+                      
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-[9px] text-slate-400">
+                          <span>Zoom (Scale)</span>
+                          <span className="text-yellow-500 font-mono font-bold">{founderScale.toFixed(2)}x</span>
+                        </div>
+                        <input 
+                          type="range"
+                          min="0.3"
+                          max="2.5"
+                          step="0.05"
+                          value={founderScale}
+                          onChange={(e) => updateFounderSignOffset(founderXOffset, founderYOffset, parseFloat(e.target.value), founderPixelated)}
+                          className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Positioning Joystick Pad Layout */}
+                  <div className="bg-slate-900/30 p-2.5 rounded-lg border border-slate-800/80 flex items-center justify-between gap-3">
+                    <div className="flex flex-col gap-1 flex-1 min-w-0">
+                      <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block mb-0.5">Align Signature</span>
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-slate-400 font-mono">
+                        <div>X Offset: <span className="text-slate-200">{founderXOffset}px</span></div>
+                        <div>Y Offset: <span className="text-slate-200">{founderYOffset}px</span></div>
+                      </div>
+                    </div>
+
+                    {/* D-Pad controls */}
+                    <div className="flex items-center gap-1 shrink-0 bg-slate-950/80 p-1 rounded-lg border border-slate-850">
+                      <button 
+                        onClick={() => updateFounderSignOffset(founderXOffset - 1, founderYOffset, founderScale, founderPixelated)}
+                        title="Move Left 1px"
+                        className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                      >
+                        ←
+                      </button>
+                      <div className="flex flex-col gap-1">
+                        <button 
+                          onClick={() => updateFounderSignOffset(founderXOffset, founderYOffset - 1, founderScale, founderPixelated)}
+                          title="Move Up 1px"
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                        >
+                          ↑
+                        </button>
+                        <button 
+                          onClick={() => updateFounderSignOffset(founderXOffset, founderYOffset + 1, founderScale, founderPixelated)}
+                          title="Move Down 1px"
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                      <button 
+                        onClick={() => updateFounderSignOffset(founderXOffset + 1, founderYOffset, founderScale, founderPixelated)}
+                        title="Move Right 1px"
+                        className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                      >
+                        →
+                      </button>
+                      <button 
+                        onClick={() => updateFounderSignOffset(0, 0, 1.0, founderPixelated)}
+                        title="Reset Alignment"
+                        className="w-6 h-6 flex items-center justify-center rounded bg-red-955/50 hover:bg-red-900/50 text-red-200 text-[9px] font-bold transition-all border border-red-900/20 ml-1"
+                      >
+                        Rst
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="relative border border-dashed border-slate-800 rounded-lg p-4 flex flex-col items-center justify-center hover:border-slate-700 transition-all cursor-pointer">
@@ -819,16 +1526,108 @@ export default function App() {
             </div>
 
             {/* Cofounder Sign */}
-            <div className="flex flex-col gap-2 p-3 bg-slate-950/40 rounded-xl border border-slate-900">
+            <div className="flex flex-col gap-3 p-4 bg-slate-950/40 rounded-xl border border-slate-900">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-350">Co-Founder: Akshat Srivastava</span>
+                <span className="text-xs font-bold text-slate-300">Co-Founder: Akshat Srivastava</span>
                 {cofounderSign && (
-                  <button onClick={() => clearSignature('cofounder')} className="text-[10px] text-red-400 hover:text-red-300 font-semibold">Clear</button>
+                  <button onClick={() => clearSignature('cofounder')} className="text-[10px] text-red-400 hover:text-red-300 font-semibold transition-colors">Clear</button>
                 )}
               </div>
               {cofounderSign ? (
-                <div className="h-16 w-32 border border-slate-800 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1">
-                  <img src={cofounderSign} alt="Co-Founder Signature" className="h-full w-auto object-contain" />
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start gap-4">
+                    <div className="h-16 w-32 border border-slate-800 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shrink-0 relative">
+                      <img 
+                        src={cofounderSign} 
+                        alt="Co-Founder Signature" 
+                        className="h-full w-auto object-contain" 
+                        style={{
+                          transform: `translate(${cofounderXOffset}px, ${cofounderYOffset}px) scale(${cofounderScale})`,
+                          imageRendering: cofounderPixelated ? 'pixelated' : 'auto'
+                        }}
+                      />
+                    </div>
+                    {/* Pixelate toggle & Scale Slider */}
+                    <div className="flex-1 flex flex-col gap-2 min-w-0">
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={cofounderPixelated} 
+                          onChange={(e) => updateCofounderSignOffset(cofounderXOffset, cofounderYOffset, cofounderScale, e.target.checked)}
+                          className="rounded border-slate-700 bg-slate-850 text-yellow-500 focus:ring-0 focus:ring-offset-0 w-3.5 h-3.5"
+                        />
+                        <span className="text-[10px] text-slate-400 font-semibold">Pixelate / Sharp Ink</span>
+                      </label>
+                      
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-[9px] text-slate-400">
+                          <span>Zoom (Scale)</span>
+                          <span className="text-yellow-500 font-mono font-bold">{cofounderScale.toFixed(2)}x</span>
+                        </div>
+                        <input 
+                          type="range"
+                          min="0.3"
+                          max="2.5"
+                          step="0.05"
+                          value={cofounderScale}
+                          onChange={(e) => updateCofounderSignOffset(cofounderXOffset, cofounderYOffset, parseFloat(e.target.value), cofounderPixelated)}
+                          className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Positioning Joystick Pad Layout */}
+                  <div className="bg-slate-900/30 p-2.5 rounded-lg border border-slate-800/80 flex items-center justify-between gap-3">
+                    <div className="flex flex-col gap-1 flex-1 min-w-0">
+                      <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block mb-0.5">Align Signature</span>
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-slate-400 font-mono">
+                        <div>X Offset: <span className="text-slate-200">{cofounderXOffset}px</span></div>
+                        <div>Y Offset: <span className="text-slate-200">{cofounderYOffset}px</span></div>
+                      </div>
+                    </div>
+
+                    {/* D-Pad controls */}
+                    <div className="flex items-center gap-1 shrink-0 bg-slate-950/80 p-1 rounded-lg border border-slate-850">
+                      <button 
+                        onClick={() => updateCofounderSignOffset(cofounderXOffset - 1, cofounderYOffset, cofounderScale, cofounderPixelated)}
+                        title="Move Left 1px"
+                        className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                      >
+                        ←
+                      </button>
+                      <div className="flex flex-col gap-1">
+                        <button 
+                          onClick={() => updateCofounderSignOffset(cofounderXOffset, cofounderYOffset - 1, cofounderScale, cofounderPixelated)}
+                          title="Move Up 1px"
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                        >
+                          ↑
+                        </button>
+                        <button 
+                          onClick={() => updateCofounderSignOffset(cofounderXOffset, cofounderYOffset + 1, cofounderScale, cofounderPixelated)}
+                          title="Move Down 1px"
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                      <button 
+                        onClick={() => updateCofounderSignOffset(cofounderXOffset + 1, cofounderYOffset, cofounderScale, cofounderPixelated)}
+                        title="Move Right 1px"
+                        className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                      >
+                        →
+                      </button>
+                      <button 
+                        onClick={() => updateCofounderSignOffset(0, 0, 1.0, cofounderPixelated)}
+                        title="Reset Alignment"
+                        className="w-6 h-6 flex items-center justify-center rounded bg-red-953/50 hover:bg-red-900/50 text-red-200 text-[9px] font-bold transition-all border border-red-900/20 ml-1"
+                      >
+                        Rst
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="relative border border-dashed border-slate-800 rounded-lg p-4 flex flex-col items-center justify-center hover:border-slate-700 transition-all cursor-pointer">
@@ -1049,7 +1848,11 @@ export default function App() {
                       <img 
                         src={founderSign} 
                         alt="Ankit Signature" 
-                        className="h-12 w-auto object-contain block max-w-full z-10"
+                        className="h-12 w-auto object-contain block max-w-full z-10 animate-fade-in"
+                        style={{
+                          transform: `translate(${founderXOffset}px, ${founderYOffset}px) scale(${founderScale})`,
+                          imageRendering: founderPixelated ? 'pixelated' : 'auto'
+                        }}
                       />
                     ) : (
                       <div className="italic text-[12pt] text-slate-350 select-none pb-1 font-serif">
@@ -1088,7 +1891,11 @@ export default function App() {
                       <img 
                         src={cofounderSign} 
                         alt="Akshat Signature" 
-                        className="h-12 w-auto object-contain block max-w-full z-10"
+                        className="h-12 w-auto object-contain block max-w-full z-10 animate-fade-in"
+                        style={{
+                          transform: `translate(${cofounderXOffset}px, ${cofounderYOffset}px) scale(${cofounderScale})`,
+                          imageRendering: cofounderPixelated ? 'pixelated' : 'auto'
+                        }}
                       />
                     ) : (
                       <div className="italic text-[12pt] text-slate-350 select-none pb-1 font-serif">

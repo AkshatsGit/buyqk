@@ -31,27 +31,90 @@ body {
 
 /* CSS Page styling rules for printable A4 sheet preview */
 @media print {
-  body {
-    background: none !important;
-    background-image: none !important;
-    color: black !important;
+  @page {
+    size: A4 portrait;
+    margin: 0;
   }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    background-image: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide all non-printable elements using the no-print class */
   .no-print {
     display: none !important;
   }
-  .print-only {
-    display: block !important;
+
+  /* Make everything invisible by default */
+  body * {
+    visibility: hidden;
   }
-  .a4-page {
+
+  /* Make the print container and its contents visible */
+  #offer-letter-print-zone,
+  #offer-letter-print-zone * {
+    visibility: visible !important;
+  }
+
+  /* Override the scaling wrapper for print */
+  .preview-scale-container {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .preview-scale-inner {
+    transform: none !important;
     margin: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Pull the print zone to absolute top-left of the page with exact A4 dimensions */
+  #offer-letter-print-zone {
+    visibility: visible !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 210mm !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
+    background: transparent !important;
+  }
+
+  .a4-page-card {
+    visibility: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    margin: 0 !important;
     padding: 0 !important;
-    page-break-after: always;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 }

@@ -1037,15 +1037,221 @@ export default function App() {
 
   const getPagesList = () => {
     const basic = compiledText();
-    let fullText = basic;
-    if (templateKey !== 'founding_ownership' && attachChapters && chaptersText) {
-      fullText = `${basic}\n\n⸻\n\n${chaptersText}`;
-    } else if (templateKey === 'founding_ownership' && chaptersText) {
-      fullText = chaptersText;
+    return basic.split('⸻').map(p => p.trim()).filter(p => p.length > 0);
+  };
+
+  const handleDownloadHandbook = () => {
+    if (!chaptersText) {
+      alert("Policies handbook is still loading. Please wait a moment.");
+      return;
     }
-    
-    // Split by page divider
-    return fullText.split('⸻').map(p => p.trim()).filter(p => p.length > 0);
+
+    // Create a temporary container for handbook generation
+    const printContainer = document.createElement('div');
+    printContainer.id = 'policies-handbook-print-container';
+    printContainer.style.position = 'absolute';
+    printContainer.style.left = '-9999px';
+    printContainer.style.top = '0';
+    printContainer.style.width = '210mm';
+    printContainer.style.background = 'white';
+    printContainer.style.color = '#1e293b';
+    document.body.appendChild(printContainer);
+
+    // Split chaptersText by page divider
+    const handbookChapters = chaptersText.split('⸻').map(c => c.trim()).filter(c => c.length > 0);
+
+    // Populate the container with page cards
+    handbookChapters.forEach((chapterContent, index) => {
+      const isFirstPage = index === 0;
+      const isLastPage = index === handbookChapters.length - 1;
+
+      // Create the page card element
+      const pageCard = document.createElement('div');
+      pageCard.className = 'a4-page-card bg-white text-slate-900 border-none m-0 shadow-none';
+      pageCard.style.width = '210mm';
+      pageCard.style.height = '297mm';
+      pageCard.style.minHeight = '297mm';
+      pageCard.style.maxHeight = '297mm';
+      pageCard.style.display = 'flex';
+      pageCard.style.flexDirection = 'column';
+      pageCard.style.justifyContent = 'space-between';
+      pageCard.style.boxSizing = 'border-box';
+      pageCard.style.overflow = 'hidden';
+      pageCard.style.pageBreakAfter = 'always';
+      pageCard.style.pageBreakInside = 'avoid';
+
+      // 1. Render Header
+      const headerDiv = document.createElement('div');
+      headerDiv.className = 'relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.8in] overflow-hidden shrink-0';
+      headerDiv.innerHTML = `
+        <div class="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style="border-left: 6px solid #021835;"></div>
+        <div class="relative z-10 flex items-center gap-4">
+          <div class="flex items-center gap-3">
+            <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
+              <svg class="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6.5">
+                <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-white">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+            </div>
+            <div class="text-left font-sans">
+              <span class="text-3xl font-extrabold tracking-tight text-white" style="font-size: 20pt; font-weight: 900;">buy<span class="text-[#fbbc04]">Qk</span></span>
+              <span class="text-[7.5pt] block tracking-[0.25em] font-semibold text-[#fbbc04] uppercase" style="font-size: 7.5pt;">CORPORATE POLICIES</span>
+            </div>
+          </div>
+        </div>
+      `;
+      pageCard.appendChild(headerDiv);
+
+      // 2. Render Page Content
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'flex-1 flex flex-col justify-start px-[0.8in] py-4 overflow-hidden relative font-sans';
+      contentDiv.style.flex = '1';
+      contentDiv.style.display = 'flex';
+      contentDiv.style.flexDirection = 'column';
+      contentDiv.style.justifyContent = 'start';
+      contentDiv.style.padding = '16px 0.8in';
+      contentDiv.style.overflow = 'hidden';
+      contentDiv.style.boxSizing = 'border-box';
+
+      // Parse chapter content line by line
+      const lines = chapterContent.split('\n');
+      let parsedHTML = '<div style="flex: 1;">';
+
+      if (isFirstPage) {
+        parsedHTML += `
+          <div class="text-center my-6 flex flex-col items-center shrink-0" style="text-align: center; margin-bottom: 24px;">
+            <h1 class="text-[22pt] font-black tracking-tight text-[#021835] uppercase m-0 leading-tight" style="font-size: 22pt; font-weight: 900; color: #021835; text-transform: uppercase;">FOUNDING OWNERSHIP PROGRAM</h1>
+            <p class="text-[12pt] text-slate-500 font-bold mt-1" style="font-size: 11pt; color: #64748b; font-weight: bold; margin: 4px 0 0 0;">Policies, Guiding Principles & Oath Handbook</p>
+            <div style="display: flex; align-items: center; justify-content: center; width: 100%; max-width: 200px; margin: 12px auto 0 auto; position: relative;">
+              <div style="width: 100%; height: 2px; background-color: #fbbc04;"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      lines.forEach(lineStr => {
+        const line = lineStr.trim();
+        if (!line) return;
+
+        const isChapterTitle = /^CHAPTER\s+\d+/i.test(line);
+        const isMainTitle = /^[A-Z0-9\s&()’,.—]+$/.test(line) && line.length > 3 && line === line.toUpperCase();
+
+        let processedLine = line;
+        if (line.includes('Builder Name:')) {
+          processedLine = `Builder Name: <strong>${(name || "_____________________")}</strong>`;
+        } else if (line.includes('Corporate Role:')) {
+          processedLine = `Corporate Role: <strong>${(position || "_____________________")}</strong>`;
+        } else if (line.includes('Department / Team:')) {
+          processedLine = `Department / Team: <strong>Engineering / Operations</strong>`;
+        }
+
+        if (isChapterTitle) {
+          parsedHTML += `<h2 style="font-size: 12pt; font-weight: 900; color: #021835; text-transform: uppercase; margin-top: 16px; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; font-family: sans-serif;">${processedLine}</h2>`;
+        } else if (isMainTitle) {
+          parsedHTML += `<h3 style="font-size: 11pt; font-weight: 800; color: #021835; margin-top: 12px; margin-bottom: 6px; font-family: sans-serif;">${processedLine}</h3>`;
+        } else if (processedLine.startsWith('*') || processedLine.startsWith('•')) {
+          parsedHTML += `
+            <div style="display: flex; align-items: start; gap: 8px; font-size: 9.5pt; color: #334155; line-height: 1.5; margin-bottom: 4px; padding-left: 16px; font-family: sans-serif; text-align: justify;">
+              <span style="color: #fbbc04; font-weight: bold; margin-top: 2px; font-size: 10px;">•</span>
+              <span style="flex: 1;">${processedLine.replace(/^[\*•]\s*/, '')}</span>
+            </div>
+          `;
+        } else if (/^\d+\.\s*/.test(processedLine)) {
+          const matchedNum = processedLine.match(/^\d+\./)?.[0] || '';
+          parsedHTML += `
+            <div style="display: flex; align-items: start; gap: 8px; font-size: 9.5pt; color: #334155; line-height: 1.5; margin-bottom: 4px; padding-left: 16px; font-family: sans-serif; text-align: justify;">
+              <span style="color: #021835; font-weight: 900; margin-top: 2px; font-size: 10px;">${matchedNum}</span>
+              <span style="flex: 1;">${processedLine.replace(/^\d+\.\s*/, '')}</span>
+            </div>
+          `;
+        } else if (processedLine.includes('[BUILDER DETAILS]') || processedLine.includes('[AUTHORIZED CORPORATE SIGNATORIES]')) {
+          parsedHTML += `<h4 style="font-size: 10pt; font-weight: 900; color: #021835; text-transform: uppercase; margin-top: 16px; margin-bottom: 8px; border-top: 1px solid #cbd5e1; padding-top: 8px; font-family: sans-serif;">${processedLine}</h4>`;
+        } else {
+          parsedHTML += `<p style="font-size: 9.5pt; color: #334155; line-height: 1.5; margin-bottom: 8px; font-family: sans-serif; text-align: justify;">${processedLine}</p>`;
+        }
+      });
+
+      // Acknowledgement Signatures Block
+      if (isLastPage) {
+        parsedHTML += `
+          <div style="margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="font-family: sans-serif; font-size: 8.5pt; color: #475569;">
+              <p style="font-weight: bold; color: #0f172a; margin: 0 0 4px 0;">Ankit Shrivastava</p>
+              <p style="margin: 0 0 8px 0; font-size: 7.5pt;">Founder & CEO</p>
+              <div style="height: 35px; display: flex; align-items: end; margin-bottom: 4px;">
+                ${founderSign ? `<img src="${founderSign}" style="height: 30px; object-fit: contain; transform: translate(${founderXOffset}px, ${founderYOffset}px) scale(${founderScale}); image-rendering: ${founderPixelated ? 'pixelated' : 'auto'};" />` : '<span style="font-style: italic; color: #cbd5e1;">[Pending]</span>'}
+              </div>
+              <div style="border-top: 1.5px solid #021835; margin-top: 4px;"></div>
+              <p style="font-size: 7pt; uppercase; tracking-wider; font-weight: 800; color: #021835;">Signature of Authorized Signatory</p>
+            </div>
+            <div style="font-family: sans-serif; font-size: 8.5pt; color: #475569;">
+              <p style="font-weight: bold; color: #0f172a; margin: 0 0 4px 0;">Akshat Srivastava</p>
+              <p style="margin: 0 0 8px 0; font-size: 7.5pt;">Co-Founder & CTO</p>
+              <div style="height: 35px; display: flex; align-items: end; margin-bottom: 4px;">
+                ${cofounderSign ? `<img src="${cofounderSign}" style="height: 30px; object-fit: contain; transform: translate(${cofounderXOffset}px, ${cofounderYOffset}px) scale(${cofounderScale}); image-rendering: ${cofounderPixelated ? 'pixelated' : 'auto'};" />` : '<span style="font-style: italic; color: #cbd5e1;">[Pending]</span>'}
+              </div>
+              <div style="border-top: 1.5px solid #021835; margin-top: 4px;"></div>
+              <p style="font-size: 7pt; uppercase; tracking-wider; font-weight: 800; color: #021835;">Signature of Authorized Signatory</p>
+            </div>
+          </div>
+        `;
+      }
+
+      parsedHTML += '</div>';
+      contentDiv.innerHTML = parsedHTML;
+      pageCard.appendChild(contentDiv);
+
+      // 3. Render Footer
+      const footerDiv = document.createElement('div');
+      footerDiv.className = 'relative w-full h-[0.9in] bg-[#021835] text-white flex items-center justify-between pl-0 pr-[0.8in] overflow-hidden shrink-0';
+      footerDiv.innerHTML = `
+        <div class="relative h-full w-[20%] bg-[#fbbc04] flex items-center justify-center pr-3 shrink-0" style="clip-path: polygon(0 0, 82% 0, 100% 100%, 0 100%);">
+          <svg class="w-8 h-8 text-[#021835]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
+            <path d="M12 2C6.5 2 2 6.5 2 12c0 2 1 3.5 1 3.5s1.5-1 3.5-1c3 0 5.5-2.5 5.5-5.5" />
+            <path d="M22 2l-3 3-5-2-4 4 3 3-3 3 2 2 3-3 3 3 4-4-2-5 3-3z" />
+          </svg>
+        </div>
+        <div class="text-left leading-normal shrink-0 font-sans tracking-wide">
+          <span class="text-[7.5pt] font-black text-white" style="font-size: 7.5pt;">BUILD. BELIEVE. BELONG.<br/></span>
+          <span class="text-[7.5pt] font-black text-[#fbbc04]" style="font-size: 7.5pt;">BUYQK CORPORATE POLICIES.</span>
+        </div>
+        <div style="width: 1px; height: 36px; background-color: rgba(255, 255, 255, 0.1);"></div>
+        <div class="text-[#fbbc04] font-black text-xs font-mono tracking-wider shrink-0" style="font-size: 9pt; color: #fbbc04; font-weight: 900; font-family: monospace;">
+          PAGE ${index + 1} OF ${handbookChapters.length}
+        </div>
+      `;
+      pageCard.appendChild(footerDiv);
+
+      printContainer.appendChild(pageCard);
+    });
+
+    const handbookFilename = `BuyQK_Corporate_Handbook_${(name || "Candidate").trim().replace(/\s+/g, '_')}.pdf`;
+    const options = {
+      margin: [0, 0, 0, 0],
+      filename: handbookFilename,
+      image: { type: 'jpeg', quality: 1.0 },
+      html2canvas: { scale: 2.2, useCORS: true, letterRendering: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    const doDownload = () => {
+      (window as any).html2pdf().set(options).from(printContainer).save().then(() => {
+        document.body.removeChild(printContainer);
+      });
+    };
+
+    if (!(window as any).html2pdf) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = doDownload;
+      document.body.appendChild(script);
+    } else {
+      doDownload();
+    }
   };
 
   const renderPageContent = (pageText: string, isFirstPage: boolean, isLastPage: boolean) => {
@@ -1706,21 +1912,6 @@ export default function App() {
                 placeholder="Compose offer letter..."
               />
             </div>
-
-            {templateKey !== 'founding_ownership' && (
-              <div className="flex items-center gap-2 mt-1 bg-slate-950/40 p-2.5 rounded-xl border border-slate-900 select-none">
-                <input 
-                  type="checkbox" 
-                  id="attach-chapters-checkbox"
-                  checked={attachChapters} 
-                  onChange={e => setAttachChapters(e.target.checked)}
-                  className="rounded text-yellow-500 focus:ring-yellow-500 text-slate-950 w-3.5 h-3.5" 
-                />
-                <label htmlFor="attach-chapters-checkbox" className="text-xs text-slate-350 cursor-pointer font-bold select-none flex-1">
-                  Append Founding Ownership Program <span className="text-[10px] text-yellow-500/80 font-normal">(content.txt)</span>
-                </label>
-              </div>
-            )}
             
             <button 
               onClick={saveToHistory}
@@ -1971,6 +2162,22 @@ export default function App() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Corporate Policies Handbook Download Section */}
+          <div className="bg-slate-900/40 border border-[#0d3b22]/30 rounded-2xl p-5 shadow-premium flex flex-col gap-4 mb-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b border-slate-800 pb-3 font-sans">
+              <FileText className="w-4 h-4 text-emerald-450" /> 5. Corporate Policies Handbook
+            </h3>
+            <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+              Generate the separate 29-chapter **BuyQK Corporate Policies & Founding Oath Handbook** with built-in candidate details pre-filled.
+            </p>
+            <button 
+              onClick={handleDownloadHandbook}
+              className="flex items-center justify-center gap-2 bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-800/40 text-emerald-250 py-3 rounded-xl text-xs font-bold transition-all w-full cursor-pointer uppercase tracking-wider font-sans select-none"
+            >
+              <Download className="w-4 h-4 text-emerald-400 animate-pulse" /> Download Policies Handbook
+            </button>
           </div>
         </section>
 

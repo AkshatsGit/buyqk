@@ -340,7 +340,7 @@ export const auth = {
     return user;
   },
 
-  signInWithGoogle: async (defaultRole: 'customer' | 'seller' | 'admin' = 'customer') => {
+  signInWithGoogle: async (defaultRole: 'customer' | 'seller' | 'admin' | 'hr' = 'customer') => {
     const newSessionId = 'sess_' + id10();
     if (isBrowser) {
       localStorage.setItem('buyqk_session_id', newSessionId);

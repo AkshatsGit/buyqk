@@ -431,13 +431,13 @@ function AdminApp() {
           {/* Secret Ghost HR Trigger (3 clicks path to HR Portal) */}
           <button 
             onClick={handleGhostClick}
-            className="w-9 h-9 rounded-xl hover:bg-slate-900/40 flex items-center justify-center border border-transparent hover:border-blue-900/20 transition-all select-none active:scale-95"
-            title="System Security Node"
+            className="w-10 h-10 rounded-xl hover:bg-slate-900/60 flex items-center justify-center border border-blue-900/20 transition-all select-none active:scale-95 z-50 cursor-pointer"
+            title="buyQk System Terminal"
           >
             <img 
-              src="/assets/logoimg.png" 
-              alt="Node" 
-              className="w-4 h-4 opacity-15 hover:opacity-40 transition-opacity select-none pointer-events-none filter grayscale brightness-50"
+              src="/assets/logopng.png" 
+              alt="buyqk" 
+              className="w-7 h-7 object-contain opacity-80 hover:opacity-100 transition-opacity"
             />
           </button>
         </div>

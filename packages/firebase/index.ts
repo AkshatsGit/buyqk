@@ -253,13 +253,13 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
           // Logged in elsewhere!
           if (fbUser.email === 'akshat.srivastava098@gmail.com') {
             updateDoc(userRef, { currentSessionId: currentLocal }).catch(e => console.log("Session takeover error: ", e));
+          } else {
+            firebaseSignOut(firebaseAuth);
+            localStorage.removeItem('buyqk_session_id');
+            alert("Logged out: This account has been logged in on another device or browser tab.");
+            window.location.reload();
             return;
           }
-          firebaseSignOut(firebaseAuth);
-          localStorage.removeItem('buyqk_session_id');
-          alert("Logged out: This account has been logged in on another device or browser tab.");
-          window.location.reload();
-          return;
         }
 
         const normalized = normalizeDoc({ uid: fbUser.uid, ...data });

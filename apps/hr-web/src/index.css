@@ -51,5 +51,7 @@ body {
     height: auto !important;
     padding: 0 !important;
     page-break-after: always;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }

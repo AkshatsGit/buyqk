@@ -855,175 +855,320 @@ export default function App() {
           <div
             id="offer-letter-print-zone"
             ref={previewRef}
-            className="a4-page bg-white text-slate-950 shadow-2xl p-[0.75in] w-[8.27in] min-h-[11.69in] max-w-[8.27in] flex flex-col text-left font-serif relative overflow-hidden shrink-0"
+            className="a4-page bg-white text-slate-900 shadow-2xl p-0 w-[8.27in] min-h-[11.7in] max-w-[8.27in] flex flex-col justify-between text-left relative overflow-hidden shrink-0"
             style={{ 
               boxSizing: 'border-box',
-              fontFamily: "'Inter', 'Georgia', serif",
-              lineHeight: '1.6',
-              fontSize: '11pt'
+              fontFamily: "'Inter', sans-serif",
+              lineHeight: '1.5',
+              fontSize: '10.5pt'
             }}
           >
-            {/* Header Letterhead Background Line */}
-            {!useDarkHeader && (
-              <div className="absolute top-0 right-0 left-0 h-2 bg-gradient-to-r from-[#081C3A] via-yellow-500 to-[#0b2545] no-print" />
-            )}
-            
-            {/* Company Info Logo Header block */}
-            <div className={`flex items-start justify-between border-b pb-4 mb-6 ${
-              useDarkHeader 
-                ? 'bg-slate-950 text-white p-6 -mx-[0.75in] -mt-[0.75in] mb-6 border-none' 
-                : 'border-slate-200'
-            }`}>
-              <div className="flex flex-col text-left">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-8 h-8 bg-gradient-to-tr from-yellow-500 to-amber-600 rounded-lg flex items-center justify-center font-bold text-slate-950 font-sans text-lg tracking-tight select-none">
-                    q
-                  </div>
-                  <h2 className={`font-bold ${useDarkHeader ? 'text-white' : 'text-[#081C3A]'}`} style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: '15pt', letterSpacing: '0.05em' }}>
-                    {companyName.split(' ')[0]}
-                  </h2>
-                </div>
-                <p className={`text-[7pt] uppercase tracking-widest font-extrabold font-sans ${useDarkHeader ? 'text-yellow-500' : 'text-slate-400'}`}>
-                  {companyTagline}
-                </p>
+            {/* Header Block with Skewed Gold Slice */}
+            <div className="relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.8in] overflow-hidden shrink-0">
+              {/* Golden slanted corner highlight */}
+              <div className="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style={{ borderLeft: '6px solid #021835' }} />
+              
+              {/* Corner decor */}
+              <div className="absolute top-2 right-2 flex gap-1 z-20">
+                <div className="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
+                <div className="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
+                <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
               </div>
 
-              <div className={`text-right text-[8pt] font-sans leading-tight ${useDarkHeader ? 'text-slate-350' : 'text-slate-500'}`}>
-                <p className={`font-bold ${useDarkHeader ? 'text-white font-semibold' : 'text-slate-800'}`}>{companyName}</p>
-                <p>{companyCIN}</p>
-                {companyAddress && <p>{companyAddress}</p>}
-                <p>Email: {companyEmail} | Website: {companyWebsite}</p>
-                {companyPhone && <p>Phone: {companyPhone}</p>}
+              {/* Diagonal sweeping yellow/navy under-lines */}
+              <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style={{ clipPath: 'polygon(0 80%, 35% 0, 100% 100%, 0 100%)' }}></div>
+              <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#021835] transform" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
+
+              <div className="relative z-10 flex items-center gap-4">
+                {/* Logo Hexagon Outline */}
+                <div className="flex items-center gap-3">
+                  <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                    <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="6.5">
+                      <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+                    </svg>
+                    {/* Cart with lines */}
+                    <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M5 4h1.5l1.5 10h10l1.5-6H7.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <line x1="6" y1="9" x2="16" y2="9" strokeLinecap="round" />
+                      <circle cx="8" cy="18" r="1.5" fill="currentColor" />
+                      <circle cx="16" cy="18" r="1.5" fill="currentColor" />
+                    </svg>
+                  </div>
+                  {/* brand title */}
+                  <div className="text-left font-sans">
+                    <span className="text-3xl font-extrabold tracking-tight text-white">
+                      buy<span className="text-[#fbbc04]">Qk</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Vertical Divider line */}
+                <div className="w-[1.5px] h-9 bg-white/20"></div>
+
+                {/* Tagline stacked details */}
+                <div className="text-left leading-normal font-sans">
+                  <p className="text-[7pt] tracking-[0.18em] font-black uppercase text-slate-200">
+                    THE UNIVERSAL<br/>LOCAL SUPPLY<br/>NETWORK
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Content Body */}
-            <div className="flex-1 flex flex-col justify-start">
-              
-              {/* Reference and Date block */}
-              <div className="flex items-center justify-between text-[9pt] text-slate-500 mb-6 font-sans">
-                <div>
-                  <span className="font-bold text-slate-800">Ref:</span> {refNo || "BQ/2026/HR-XXX"}
+            {/* Reference and Date block */}
+            <div className="flex flex-col gap-2 items-end justify-start text-[9pt] text-slate-800 font-sans mt-[0.35in] px-[0.8in] w-full shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
+                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
                 </div>
-                <div>
-                  <span className="font-bold text-slate-800">Date:</span> {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                <span className="font-bold text-slate-800">Date:</span>
+                <span className="border-b border-slate-300 min-w-[200px] text-left pl-2 font-medium text-slate-900">
+                  {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 mt-1.5">
+                <div className="w-6 h-6 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
+                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </div>
+                <span className="font-bold text-slate-800">Ref:</span>
+                <span className="border-b border-slate-300 min-w-[200px] text-left pl-2 font-medium text-slate-900 font-mono">
+                  REF: {refNo || "BQ/"}
+                </span>
+              </div>
+            </div>
+
+            {/* Document Header Title block */}
+            <div className="text-center my-5 flex flex-col items-center shrink-0">
+              <h1 className="text-[23pt] font-black tracking-tight text-[#021835] font-sans m-0">OFFER LETTER</h1>
+              {/* Divider with hexagon */}
+              <div className="flex items-center justify-center w-full max-w-[200px] mt-1 relative">
+                <div className="w-full h-[1.5px] bg-[#fbbc04]"></div>
+                <div className="absolute bg-white px-2">
+                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
+                    <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+                  </svg>
                 </div>
               </div>
+            </div>
 
-              {/* Salutation */}
-              <div className="mb-4">
-                <p className="font-bold text-slate-800">To,</p>
-                <p className="font-bold text-[#081C3A] text-[11pt]">{name || "[Candidate Name]"}</p>
-                {(email || phone) && (
-                  <p className="text-[8.5pt] text-slate-500 font-sans mt-0.5">
-                    {email && <span>{email}</span>}
-                    {email && phone && <span> &bull; </span>}
-                    {phone && <span>{phone}</span>}
-                  </p>
-                )}
+            {/* Letter Body Area */}
+            <div className="flex-1 flex flex-col justify-start px-[0.8in] text-slate-800">
+              {/* Recipient details */}
+              <div className="mb-5 text-left text-[10.5pt]">
+                <p className="font-bold text-slate-700 m-0">Dear <span className="border-b border-slate-300 px-4 font-black text-[#021835]">{name || "____________________"}</span>,</p>
               </div>
 
-              <div className="mb-4 text-left">
-                <p className="font-bold text-slate-800 text-[10pt] border-b pb-1 inline-block uppercase tracking-wider border-slate-300">
-                  SUBJECT: OFFER OF EMPLOYMENT - {position ? position.toUpperCase() : "[POSITION]"}
-                </p>
+              {/* Main content paragraph */}
+              <div className="mb-4 text-left leading-relaxed text-justify text-[10pt] text-slate-700">
+                we are pleased to offer you the position of <span className="border-b border-slate-300 px-4 font-bold text-slate-950">{position || "____________________"}</span> at <span className="font-extrabold text-[#021835]">buyQk</span>.
               </div>
 
-              {/* Letter Paragraphs */}
               <div 
-                className="text-[10pt] text-slate-700 leading-relaxed text-justify mb-5 font-sans"
-                style={{ whiteSpace: 'pre-line', fontSize: '10pt' }}
+                className="text-[10pt] text-slate-750 leading-relaxed text-justify mb-5 font-sans"
+                style={{ whiteSpace: 'pre-line' }}
               >
                 {compiledText()}
               </div>
 
-              {/* Compensation Breakout block (if CTC entered) */}
+              {/* Optional CTC details overview grid table */}
               {ctc && (
-                <div className="mb-6 font-sans text-left">
-                  <h4 className="text-[9pt] font-semibold text-slate-800 uppercase tracking-wider mb-2">Compensation Overview</h4>
+                <div className="mb-5 font-sans text-left shrink-0">
+                  <h4 className="text-[8.5pt] font-extrabold text-slate-700 uppercase tracking-widest mb-1.5">Salary Breakup Guidelines</h4>
                   <table className="w-full border border-slate-200 text-[9pt] border-collapse bg-slate-50/20">
                     <thead>
-                      <tr className="bg-slate-100 text-slate-700">
-                        <th className="border border-slate-200 px-3 py-1.5 text-left font-bold font-sans">Component</th>
-                        <th className="border border-slate-200 px-3 py-1.5 text-right font-bold font-sans">Valuation ({currencySymbol})</th>
+                      <tr className="bg-slate-100/60 text-slate-700 border-b border-slate-200">
+                        <th className="border-r border-slate-200 px-3 py-1 text-left font-bold uppercase tracking-wider text-[7.5pt]">Designation / Package detail</th>
+                        <th className="px-3 py-1 text-right font-bold uppercase tracking-wider text-[7.5pt]">Structure ({currencySymbol})</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td className="border border-slate-200 px-3 py-1.5 text-slate-650">Job Designation</td>
-                        <td className="border border-slate-200 px-3 py-1.5 text-right text-slate-800 font-medium">{position || "TBD"}</td>
+                      <tr className="border-b border-slate-150">
+                        <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Assigned Corporate Role</td>
+                        <td className="px-3 py-1.5 text-right text-slate-900 font-bold">{position || "TBD"}</td>
                       </tr>
-                      <tr>
-                        <td className="border border-slate-200 px-3 py-1.5 text-slate-650">Offered Stated Package (CTC/Stipend)</td>
-                        <td className="border border-slate-200 px-3 py-1.5 text-right text-slate-800 font-bold">{ctc}</td>
+                      <tr className="border-b border-slate-150">
+                        <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Monthly Remuneration / Annual CTC</td>
+                        <td className="px-3 py-1.5 text-right text-slate-950 font-black">{ctc}</td>
                       </tr>
-                      <tr>
-                        <td className="border border-slate-200 px-3 py-1.5 text-slate-650">Joining Date</td>
-                        <td className="border border-slate-200 px-3 py-1.5 text-right text-slate-850 font-medium">
-                          {joiningDate ? new Date(joiningDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "On mutual agreement"}
-                        </td>
-                      </tr>
+                      {joiningDate && (
+                        <tr>
+                          <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Start Date / Date of Joining</td>
+                          <td className="px-3 py-1.5 text-right text-slate-900 font-semibold">
+                            {new Date(joiningDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
               )}
-
-              <p className="text-[9.5pt] text-slate-700 leading-relaxed italic mb-8 font-sans text-left">
-                Kindly sign and return a scanned copy of this letter token as a statement of acceptance of the offer guidelines.
-              </p>
             </div>
 
-            {/* Signature Block Area */}
-            <div className="mt-auto">
-              <p className="text-[9.5pt] font-sans text-slate-850 font-bold mb-8 text-left">For {companyName}</p>
-              
-              <div className="grid grid-cols-2 gap-8 items-end w-full">
-                
-                {/* Founder Sign Col */}
-                <div className="flex flex-col text-left font-sans">
-                  <div className="h-12 relative flex items-end mb-1">
+            {/* Signature Block Area with vertical separator line */}
+            <div className="mt-auto px-[0.8in] py-4 w-full shrink-0">
+              <div className="relative grid grid-cols-2 gap-12 w-full pt-8 border-t border-slate-200">
+                {/* Vertical Divider line with golden hexagon */}
+                <div className="absolute top-[10%] bottom-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center justify-center w-[1px] bg-slate-200">
+                  <svg className="w-3.5 h-3.5 text-[#fbbc04] bg-white rounded-full p-0.5" viewBox="0 0 100 100" fill="currentColor">
+                    <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+                  </svg>
+                </div>
+
+                {/* Founder Column */}
+                <div className="relative flex flex-col items-center text-center font-sans">
+                  {/* Silhouette icon on gold Hexagon */}
+                  <div className="absolute -top-[1.2in] left-4 w-11 h-11 flex items-center justify-center shrink-0">
+                    <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
+                      <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+                    </svg>
+                    <svg className="relative w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  
+                  {/* Name and Designation */}
+                  <div className="text-left w-full pl-2">
+                    <h3 className="text-[11pt] font-black text-slate-800 mb-0.5">Ankit Shrivastava</h3>
+                    <p className="text-[8.5pt] text-slate-500 font-semibold mb-3">Founder</p>
+                  </div>
+
+                  {/* Sign Image Zone */}
+                  <div className="h-14 flex items-end justify-center w-full relative mb-1">
                     {founderSign ? (
                       <img 
                         src={founderSign} 
-                        alt="Ankit Shrivastava Signature" 
-                        className="h-10 w-auto object-contain block max-w-full"
+                        alt="Ankit Signature" 
+                        className="h-12 w-auto object-contain block max-w-full z-10"
                       />
                     ) : (
-                      <div className="italic text-[15pt] text-slate-350 opacity-90 select-none pb-0.5" style={{ fontFamily: "'Playfair Display', serif" }}>
-                        Ankit Shrivastava
+                      <div className="italic text-[12pt] text-slate-350 select-none pb-1 font-serif">
+                        [Pending Signature]
                       </div>
                     )}
                   </div>
-                  <div className="w-full border-t border-slate-300 my-1" />
-                  <p className="text-[9pt] font-bold text-slate-800">Ankit Shrivastava</p>
-                  <p className="text-[7.5pt] text-slate-500">Founder & CEO</p>
+
+                  {/* Navy border and label */}
+                  <div className="w-full border-t-2 border-[#021835] my-1" />
+                  <p className="text-[8pt] uppercase tracking-widest text-[#021835] font-extrabold mt-1">Signature</p>
                 </div>
 
-                {/* Cofounder Sign Col */}
-                <div className="flex flex-col text-left font-sans">
-                  <div className="h-12 relative flex items-end mb-1">
+                {/* Co-Founder Column */}
+                <div className="relative flex flex-col items-center text-center font-sans">
+                  {/* Co-Founder Silhouette icon on gold Hexagon */}
+                  <div className="absolute -top-[1.2in] left-4 w-11 h-11 flex items-center justify-center shrink-0">
+                    <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
+                      <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
+                    </svg>
+                    <svg className="relative w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  
+                  {/* Name and Designation */}
+                  <div className="text-left w-full pl-2">
+                    <h3 className="text-[11pt] font-black text-slate-800 mb-0.5">Akshat Srivastava</h3>
+                    <p className="text-[8.5pt] text-slate-500 font-semibold mb-3">Co-Founder</p>
+                  </div>
+
+                  {/* Sign Image Zone */}
+                  <div className="h-14 flex items-end justify-center w-full relative mb-1">
                     {cofounderSign ? (
                       <img 
                         src={cofounderSign} 
-                        alt="Akshat Srivastava Signature" 
-                        className="h-10 w-auto object-contain block max-w-full"
+                        alt="Akshat Signature" 
+                        className="h-12 w-auto object-contain block max-w-full z-10"
                       />
                     ) : (
-                      <div className="italic text-[15.5pt] text-slate-350 opacity-90 select-none pb-0.5" style={{ fontFamily: "'Playfair Display', serif" }}>
-                        Akshat Srivastava
+                      <div className="italic text-[12pt] text-slate-350 select-none pb-1 font-serif">
+                        [Pending Signature]
                       </div>
                     )}
                   </div>
-                  <div className="w-full border-t border-slate-300 my-1" />
-                  <p className="text-[9pt] font-bold text-slate-800">Akshat Srivastava</p>
-                  <p className="text-[7.5pt] text-slate-500">Co-Founder & CFO</p>
+
+                  {/* Navy border and label */}
+                  <div className="w-full border-t-2 border-[#021835] my-1" />
+                  <p className="text-[8pt] uppercase tracking-widest text-[#021835] font-extrabold mt-1">Signature</p>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Footer Details */}
-            <div className="mt-8 border-t pt-2 text-center text-[7pt] text-slate-400 font-sans border-slate-200">
-              {companyName} &bull; Confidential &bull; Standard Employment Agreement
+            {/* Page Footer Block with metrics */}
+            <div className="relative w-full h-[0.9in] bg-[#021835] text-white flex items-center justify-between pl-0 pr-[0.8in] overflow-hidden shrink-0 mt-6">
+              
+              {/* Rocket yellow accent slant left */}
+              <div className="relative h-full w-[20%] bg-[#fbbc04] flex items-center justify-center pr-3 shrink-0" style={{ clipPath: 'polygon(0 0, 82% 0, 100% 100%, 0 100%)' }}>
+                <svg className="w-8 h-8 text-[#021835]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
+                  <path d="M12 2C6.5 2 2 6.5 2 12c0 2 1 3.5 1 3.5s1.5-1 3.5-1c3 0 5.5-2.5 5.5-5.5" />
+                  <path d="M22 2l-3 3-5-2-4 4 3 3-3 3 2 2 3-3 3 3 4-4-2-5 3-3z" />
+                </svg>
+              </div>
+
+              {/* Slogan details block */}
+              <div className="text-left leading-normal shrink-0 font-sans tracking-wide">
+                <span className="text-[7.5pt] font-black text-white">FIND ANYTHING.<br/></span>
+                <span className="text-[7.5pt] font-black text-[#fbbc04]">DELIVER ANYTHING.<br/></span>
+                <span className="text-[7.5pt] font-black text-white font-mono">INSTANTLY.</span>
+              </div>
+
+              {/* Gold vertical line separator */}
+              <div className="w-[1px] h-9 bg-white/10 shrink-0"></div>
+
+              {/* Metric links block */}
+              <div className="flex items-center gap-6 font-sans shrink-0">
+                {/* 1. Local Sellers */}
+                <div className="flex flex-col items-center gap-0.5">
+                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M3 11L12 2l9 9" />
+                  </svg>
+                  <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Local<br/>Sellers</span>
+                </div>
+
+                <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
+
+                {/* 2. Happy Customers */}
+                <div className="flex flex-col items-center gap-0.5">
+                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                  </svg>
+                  <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Happy<br/>Customers</span>
+                </div>
+
+                <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
+
+                {/* 3. Fast & Reliable */}
+                <div className="flex flex-col items-center gap-0.5">
+                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" />
+                    <path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="text-[5pt] font-black uppercase text-[#fbbc04] tracking-wider font-semibold">Fast & Reliable<br/>Delivery</span>
+                </div>
+
+                <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
+
+                {/* 4. Safe & Secure */}
+                <div className="flex flex-col items-center gap-0.5">
+                  <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Safe &<br/>Secure</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>

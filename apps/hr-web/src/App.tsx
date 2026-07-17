@@ -701,7 +701,7 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        if (user.email === 'akshat.srivastava098@gmail.com') {
+        if (user.email === 'akshat.srivastava098@gmail.com' || user.email === 'ankitsrigzb@gmail.com') {
           user.role = 'admin';
         }
         if (user.role === 'hr' || user.role === 'admin') {
@@ -772,8 +772,8 @@ export default function App() {
     setAuthLoading(true);
     setAuthError('');
     try {
-      if (authEmail !== 'akshat.srivastava098@gmail.com') {
-        throw new Error("Access Denied: Only akshat.srivastava098@gmail.com is authorized to access the HR Panel.");
+      if (authEmail !== 'akshat.srivastava098@gmail.com' && authEmail !== 'ankitsrigzb@gmail.com') {
+        throw new Error("Access Denied: You are not authorized to access the HR Panel.");
       }
       const u = await auth.signIn({ email: authEmail, password: authPassword });
       if (u.role !== 'hr' && u.role !== 'admin') {
@@ -793,8 +793,8 @@ export default function App() {
     setAuthError('');
     try {
       const u = await auth.signInWithGoogle('hr');
-      if (u.email !== 'akshat.srivastava098@gmail.com') {
-        throw new Error("Access Denied: Only akshat.srivastava098@gmail.com is authorized to access the HR Panel.");
+      if (u.email !== 'akshat.srivastava098@gmail.com' && u.email !== 'ankitsrigzb@gmail.com') {
+        throw new Error("Access Denied: You are not authorized to access the HR Panel.");
       }
       setCurrentUser({ ...u, role: 'admin' });
     } catch (err: any) {

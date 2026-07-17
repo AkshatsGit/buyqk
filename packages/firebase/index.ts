@@ -191,7 +191,7 @@ const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'unde
 async function hydrateUser(fbUser: any, role: string = 'customer', extra: any = {}): Promise<any> {
   const ref = doc(db, 'users', fbUser.uid);
   const snap = await getDoc(ref);
-  const isSuperAdmin = fbUser.email === 'akshat.srivastava098@gmail.com';
+  const isSuperAdmin = fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com';
   const targetRole = isSuperAdmin ? 'admin' : role;
 
   if (snap.exists()) {
@@ -251,7 +251,7 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
 
         if (isBrowser && firestoreSess && currentLocal && firestoreSess !== currentLocal) {
           // Logged in elsewhere!
-          if (fbUser.email === 'akshat.srivastava098@gmail.com') {
+          if (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com') {
             updateDoc(userRef, { currentSessionId: currentLocal }).catch(e => console.log("Session takeover error: ", e));
           } else {
             firebaseSignOut(firebaseAuth);
@@ -263,12 +263,12 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
         }
 
         const normalized = normalizeDoc({ uid: fbUser.uid, ...data });
-        if (fbUser.email === 'akshat.srivastava098@gmail.com') {
+        if (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com') {
           normalized.role = 'admin';
         }
         currentAuthUser = normalized;
       } else {
-        currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: fbUser.email === 'akshat.srivastava098@gmail.com' ? 'admin' : 'customer', name: fbUser.displayName || '' };
+        currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com') ? 'admin' : 'customer', name: fbUser.displayName || '' };
       }
       if (currentUserListener) currentUserListener(currentAuthUser);
     });
@@ -333,7 +333,7 @@ export const auth = {
       localStorage.setItem('buyqk_session_id', newSessionId);
     }
     const cred = await signInWithEmailAndPassword(firebaseAuth, form.email, form.password);
-    const targetRole = form.email === 'akshat.srivastava098@gmail.com' ? 'admin' : 'customer';
+    const targetRole = (form.email === 'akshat.srivastava098@gmail.com' || form.email === 'ankitsrigzb@gmail.com') ? 'admin' : 'customer';
     const user = await hydrateUser(cred.user, targetRole, { currentSessionId: newSessionId });
     currentAuthUser = user;
     if (currentUserListener) currentUserListener(user);
@@ -348,7 +348,7 @@ export const auth = {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(firebaseAuth, provider);
     const fbUser = result.user;
-    const role = fbUser.email === 'akshat.srivastava098@gmail.com' ? 'admin' : defaultRole;
+    const role = (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com') ? 'admin' : defaultRole;
     const user = await hydrateUser(fbUser, role, { currentSessionId: newSessionId });
     currentAuthUser = user;
     if (currentUserListener) currentUserListener(user);

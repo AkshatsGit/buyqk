@@ -14,6 +14,7 @@
     "dev:admin": "npm run dev --workspace=apps/admin-web",
     "dev:hr": "npm run dev --workspace=apps/hr-web",
     "dev:team": "npm run dev --workspace=apps/team-web",
+    "deploy:rules": "firebase deploy --only firestore:rules --project getitnow-4e178",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "tsc --noEmit --workspaces --if-present"
   },

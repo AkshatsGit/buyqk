@@ -2316,11 +2316,11 @@ export default function App() {
         </section>
       </div>
       ) : (
-        <div className="flex-1 w-full h-full bg-slate-950 overflow-hidden relative">
+        <div className="w-full h-[calc(100vh-4rem)] bg-slate-950 overflow-hidden relative">
           <iframe 
             src="/offerlettergenerater/index.html" 
             title="Offer letter generator V2" 
-            className="w-full h-full border-none bg-slate-950" 
+            className="w-full h-full border-none bg-slate-950 block" 
           />
         </div>
       )}

@@ -679,3 +679,12 @@ body::after {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* If embedded in an iframe, hide the V2 topbar and maximize app height */
+body.is-embedded .topbar {
+    display: none !important;
+}
+body.is-embedded .app-body {
+    height: 100vh !important;
+    margin-top: 0 !important;
+}

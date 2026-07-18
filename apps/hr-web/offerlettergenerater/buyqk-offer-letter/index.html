@@ -10,6 +10,14 @@
     <link rel="stylesheet" href="style.css" />
     <!-- jsPDF via CDN — runs entirely in the browser, no server needed -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+      if (window.self !== window.top) {
+        document.documentElement.classList.add('is-embedded');
+        document.addEventListener('DOMContentLoaded', () => {
+          document.body.classList.add('is-embedded');
+        });
+      }
+    </script>
 </head>
 <body>
 

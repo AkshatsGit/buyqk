@@ -13,6 +13,7 @@
     "dev:seller": "npm run dev --workspace=apps/seller-web",
     "dev:admin": "npm run dev --workspace=apps/admin-web",
     "dev:hr": "npm run dev --workspace=apps/hr-web",
+    "dev:team": "npm run dev --workspace=apps/team-web",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "tsc --noEmit --workspaces --if-present"
   },

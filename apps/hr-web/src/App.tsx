@@ -661,6 +661,7 @@ export default function App() {
   // Custom templates & body
   const [templateKey, setTemplateKey] = useState<keyof typeof DEFAULT_TEMPLATES>('tech');
   const [customText, setCustomText] = useState(DEFAULT_TEMPLATES.tech);
+  const [currentTab, setCurrentTab] = useState<'v1' | 'v2'>('v1');
 
   // Signatures State & Alignment Settings
   const [founderSign, setFounderSign] = useState<string>('');
@@ -1622,30 +1623,61 @@ export default function App() {
             <p className="text-[10px] text-yellow-500 font-semibold uppercase tracking-wider">Candidate Offer Center</p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3 font-sans">
+
+        {/* Premium switcher for V1 vs V2 */}
+        <div className="flex items-center gap-2 border border-blue-900/30 bg-slate-950/80 p-0.5 rounded-xl">
           <button 
-            onClick={createNewDraft} 
-            className="flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 px-3 py-1.5 rounded-lg border border-yellow-500/20 text-xs font-semibold hover:bg-yellow-500/20 transition-all"
+            type="button"
+            onClick={() => setCurrentTab('v1')}
+            className={`px-3 py-1.5 font-sans font-extrabold text-[10px] uppercase tracking-wider rounded-lg transition-all duration-300 cursor-pointer ${
+              currentTab === 'v1' 
+                ? 'bg-yellow-500 text-slate-950 shadow-gold-glow font-black' 
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/70'
+            }`}
           >
-            <Plus className="w-3.5 h-3.5" /> New Offer
+            Offer Generator V1
           </button>
           
           <button 
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 bg-slate-900 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-semibold hover:border-slate-700 transition-all z-20"
+            type="button"
+            onClick={() => setCurrentTab('v2')}
+            className={`px-3 py-1.5 font-sans font-extrabold text-[10px] uppercase tracking-wider rounded-lg transition-all duration-300 cursor-pointer ${
+              currentTab === 'v2' 
+                ? 'bg-yellow-500 text-slate-950 shadow-gold-glow font-black' 
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/70'
+            }`}
           >
-            <Printer className="w-3.5 h-3.5" /> Print Layout
+            Offer letter generator V2
           </button>
+        </div>
+        
+        <div className="flex items-center gap-3 font-sans">
+          {currentTab === 'v1' && (
+            <>
+              <button 
+                onClick={createNewDraft} 
+                className="flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 px-3 py-1.5 rounded-lg border border-yellow-500/20 text-xs font-semibold hover:bg-yellow-500/20 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" /> New Offer
+              </button>
+              
+              <button 
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 bg-slate-900 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-semibold hover:border-slate-700 transition-all z-20"
+              >
+                <Printer className="w-3.5 h-3.5" /> Print Layout
+              </button>
 
-          <button 
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold shadow-gold-glow transition-all"
-          >
-            <Download className="w-4 h-4" /> Download PDF
-          </button>
+              <button 
+                onClick={handleDownloadPDF}
+                className="flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold shadow-gold-glow transition-all"
+              >
+                <Download className="w-4 h-4" /> Download PDF
+              </button>
 
-          <div className="h-5 w-[1px] bg-slate-800 mx-1" />
+              <div className="h-5 w-[1px] bg-slate-800 mx-1" />
+            </>
+          )}
 
           {/* User Signout */}
           <button 
@@ -1659,7 +1691,8 @@ export default function App() {
       </header>
 
       {/* Main split dashboard content */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+      {currentTab === 'v1' ? (
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
         {/* Left Side: Form parameters & History */}
         <section className="no-print w-full lg:w-[42%] flex flex-col gap-6 overflow-y-auto p-6 border-r border-blue-900/10 bg-slate-950/40">
@@ -2282,6 +2315,15 @@ export default function App() {
           </div>
         </section>
       </div>
+      ) : (
+        <div className="flex-1 w-full h-full bg-slate-950 overflow-hidden relative">
+          <iframe 
+            src="/offerlettergenerater/index.html" 
+            title="Offer letter generator V2" 
+            className="w-full h-full border-none bg-slate-950" 
+          />
+        </div>
+      )}
     </div>
   );
 }

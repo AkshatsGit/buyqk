@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BuyQk HR Panel — Handbook Generator</title>
+    <meta name="description" content="BuyQk internal HR tool for generating employee handbook PDFs with branded header, footer, and founder signatures." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    <!-- jsPDF via CDN — runs entirely in the browser, no server needed -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  TOP BAR                                                        -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <header class="topbar" role="banner">
+        <div class="topbar-brand">
+            <div class="brand-hex" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <path d="M14 2L25 8V20L14 26L3 20V8L14 2Z" fill="#FFB800"/>
+                    <rect x="10" y="10" width="8" height="8" rx="1" fill="#0d1b2a"/>
+                </svg>
+            </div>
+            <span class="brand-name">buy<span class="brand-qk">Qk</span></span>
+            <div class="brand-divider" aria-hidden="true"></div>
+            <span class="brand-module">HR Panel</span>
+        </div>
+
+        <div class="topbar-right">
+            <div class="topbar-badge">
+                <span class="badge-dot"></span>
+                <span id="currentDate" class="topbar-date"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  APP BODY                                                       -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="app-body">
+
+        <!-- ─── LEFT PANEL ──────────────────────────────────────────── -->
+        <aside class="sidebar" role="complementary" aria-label="Document details form">
+            <div class="sidebar-inner">
+
+                <div class="sidebar-heading">
+                    <p class="sidebar-heading-label">DOCUMENT BUILDER</p>
+                    <h1 class="sidebar-heading-title">Handbook Generator</h1>
+                    <p class="sidebar-heading-sub">Fill in joinee details to generate a branded PDF handbook.</p>
+                </div>
+
+                <form id="handbookForm" class="hb-form" novalidate autocomplete="off">
+
+                    <div class="field-group">
+                        <label for="inp-name">Full Name</label>
+                        <div class="input-wrap">
+                            <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                            <input type="text" id="inp-name" placeholder="e.g. Rahul Sharma" required />
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="inp-role">Role / Designation</label>
+                        <div class="input-wrap">
+                            <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                            <input type="text" id="inp-role" placeholder="e.g. Software Intern — Engineering" required />
+                        </div>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label for="inp-refno">Reference No.</label>
+                            <div class="input-wrap">
+                                <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+                                <input type="text" id="inp-refno" placeholder="BQ/HR/2026/001" required />
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="inp-date">Issue Date</label>
+                            <div class="input-wrap">
+                                <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <input type="date" id="inp-date" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-group field-group--full">
+                        <label for="inp-content">Document Content</label>
+                        <div class="textarea-wrap">
+                            <textarea
+                                id="inp-content"
+                                rows="14"
+                                placeholder="Paste the full handbook content here...
+
+Use blank lines to separate paragraphs. The text will automatically flow across pages — a new page is created only when needed, keeping header, content, and footer from overlapping."
+                                required
+                            ></textarea>
+                        </div>
+                        <div class="char-hint" id="charHint">0 characters</div>
+                    </div>
+
+                    <div class="btn-stack">
+                        <button type="button" class="btn btn--generate" id="generateBtn">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <span>Generate PDF</span>
+                        </button>
+                        <button type="button" class="btn btn--download" id="downloadBtn" disabled>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span>Download PDF</span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </aside>
+
+        <!-- ─── RIGHT PANEL — PDF PREVIEW ───────────────────────────── -->
+        <main class="preview-panel" role="main" aria-label="PDF preview">
+            <div class="preview-topbar">
+                <div class="preview-topbar-left">
+                    <span class="preview-label">PDF Preview</span>
+                    <div class="preview-page-info" id="pageInfo" style="display:none">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span id="pageInfoText"></span>
+                    </div>
+                </div>
+                <div class="preview-status" id="previewStatus">
+                    <span class="status-dot status-dot--idle"></span>
+                    <span id="statusText">Awaiting input</span>
+                </div>
+            </div>
+
+            <div class="preview-body" id="previewBody">
+                <!-- Empty state -->
+                <div class="preview-empty" id="previewEmpty">
+                    <div class="empty-icon" aria-hidden="true">
+                        <svg width="60" height="72" viewBox="0 0 60 72" fill="none">
+                            <rect x="4" y="4" width="44" height="56" rx="4" fill="rgba(255,184,0,0.06)" stroke="rgba(255,184,0,0.15)" stroke-width="1.5"/>
+                            <rect x="12" y="20" width="28" height="2" rx="1" fill="rgba(255,184,0,0.2)"/>
+                            <rect x="12" y="28" width="22" height="2" rx="1" fill="rgba(255,255,255,0.08)"/>
+                            <rect x="12" y="36" width="26" height="2" rx="1" fill="rgba(255,255,255,0.08)"/>
+                            <rect x="12" y="44" width="18" height="2" rx="1" fill="rgba(255,255,255,0.08)"/>
+                            <circle cx="48" cy="56" r="12" fill="#FFB800"/>
+                            <polygon points="48,50 54,56 48,62 42,56" fill="#0d1b2a"/>
+                        </svg>
+                    </div>
+                    <h2 class="empty-title">No Document Yet</h2>
+                    <p class="empty-sub">Fill in the joinee details on the left and click<br/><strong>Generate PDF</strong> to see the preview here.</p>
+                </div>
+
+                <!-- PDF iframe (hidden until generated) -->
+                <iframe
+                    id="previewFrame"
+                    title="Generated PDF Preview"
+                    style="display:none"
+                    allow="fullscreen"
+                ></iframe>
+            </div>
+        </main>
+
+    </div><!-- /.app-body -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  LOADING OVERLAY                                                -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="loading-overlay" id="loadingOverlay" aria-live="polite" style="display:none">
+        <div class="loading-card">
+            <div class="loading-ring">
+                <svg class="ring-spinner" viewBox="0 0 44 44">
+                    <circle class="ring-track" cx="22" cy="22" r="18" fill="none" stroke-width="3"/>
+                    <circle class="ring-arc"   cx="22" cy="22" r="18" fill="none" stroke-width="3" stroke-dasharray="56 56" stroke-dashoffset="0"/>
+                </svg>
+            </div>
+            <p class="loading-title">Generating PDF</p>
+            <p class="loading-sub">Assembling pages with header, content &amp; footer…</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  TOAST NOTIFICATION                                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="toast" id="toast" role="alert" aria-live="assertive">
+        <span class="toast-icon" id="toastIcon"></span>
+        <span class="toast-msg" id="toastMsg"></span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

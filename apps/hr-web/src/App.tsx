@@ -1188,7 +1188,7 @@ export default function App() {
         parsedHTML += `
           <div style="margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div style="font-family: sans-serif; font-size: 8.5pt; color: #475569;">
-              <p style="font-weight: bold; color: #0f172a; margin: 0 0 4px 0;">Ankit Shrivastava</p>
+              <p style="font-weight: bold; color: #0f172a; margin: 0 0 4px 0;">Ankit Shrivastav</p>
               <p style="margin: 0 0 8px 0; font-size: 7.5pt;">Founder & CEO</p>
               <div style="height: 35px; display: flex; align-items: end; margin-bottom: 4px;">
                 ${founderSign ? `<img src="${founderSign}" style="height: 30px; object-fit: contain; transform: translate(${founderXOffset}px, ${founderYOffset}px) scale(${founderScale}); image-rendering: ${founderPixelated ? 'pixelated' : 'auto'};" />` : '<span style="font-style: italic; color: #cbd5e1;">[Pending]</span>'}
@@ -1441,7 +1441,7 @@ export default function App() {
                 </svg>
               </div>
               <div className="text-left w-full pl-2">
-                <h3 className="text-[10pt] font-black text-slate-800 mb-0.5">Ankit Shrivastava</h3>
+                <h3 className="text-[10pt] font-black text-slate-800 mb-0.5">Ankit Shrivastav</h3>
                 <p className="text-[8pt] text-slate-500 font-semibold mb-2">Founder & CEO</p>
               </div>
               <div className="h-12 flex items-end justify-center w-full relative mb-1">
@@ -2000,7 +2000,7 @@ export default function App() {
             {/* Founder Sign */}
             <div className="flex flex-col gap-3 p-4 bg-slate-950/40 rounded-xl border border-slate-900">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-300">Founder: Ankit Shrivastava</span>
+                <span className="text-xs font-bold text-slate-300">Founder: Ankit Shrivastav</span>
                 {founderSign && (
                   <button onClick={() => clearSignature('founder')} className="text-[10px] text-red-400 hover:text-red-300 font-semibold transition-colors">Clear</button>
                 )}

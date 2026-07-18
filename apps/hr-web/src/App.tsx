@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   FileText, Download, Printer, User, Calendar, DollarSign, 
   Briefcase, Upload, Plus, Trash2, Building, Mail, Phone, 
-  FileCheck, LogOut, Check, X, ShieldAlert, Layout
+  FileCheck, LogOut, Check, X, ShieldAlert, Layout, Sliders
 } from 'lucide-react';
 import { auth, db } from '@buyqk/firebase';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
@@ -678,7 +678,16 @@ export default function App() {
 
   // Chapters Policy Content from content.txt
   const [chaptersText, setChaptersText] = useState<string>('');
-  const [attachChapters, setAttachChapters] = useState<boolean>(true);
+  // Document customization state (Adjustable Font Size)
+  const [documentFontSize, setDocumentFontSize] = useState<number>(() => {
+    const val = localStorage.getItem('bq_doc_font_size');
+    return val ? parseFloat(val) : 9.5;
+  });
+
+  const updateDocumentFontSize = (size: number) => {
+    setDocumentFontSize(size);
+    localStorage.setItem('bq_doc_font_size', String(size));
+  };
 
   // Load content.txt once at mount
   useEffect(() => {
@@ -1149,7 +1158,7 @@ export default function App() {
         }
 
         if (isChapterTitle) {
-          parsedHTML += `<h2 style="font-size: 12pt; font-weight: 900; color: #021835; text-transform: uppercase; margin-top: 16px; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; font-family: sans-serif;">${processedLine}</h2>`;
+          parsedHTML += `<h2 style="font-size: 12pt; font-weight: 900; color: #021835; text-transform: uppercase; margin-top: 16px; margin-bottom: 8px; font-family: sans-serif;">${processedLine}</h2>`;
         } else if (isMainTitle) {
           parsedHTML += `<h3 style="font-size: 11pt; font-weight: 800; color: #021835; margin-top: 12px; margin-bottom: 6px; font-family: sans-serif;">${processedLine}</h3>`;
         } else if (processedLine.startsWith('*') || processedLine.startsWith('•')) {
@@ -1268,33 +1277,53 @@ export default function App() {
       
       if (isChapterTitle) {
         renderedElements.push(
-          <h2 key={keyCounter++} className="text-[12pt] font-black text-[#021835] uppercase tracking-wider mt-4 mb-2 font-sans border-b border-slate-100 pb-1">
+          <h2 
+            key={keyCounter++} 
+            style={{ fontSize: `${documentFontSize + 2.5}pt` }}
+            className="font-black text-[#021835] uppercase tracking-wider mt-3 mb-1.5 font-sans border-b border-slate-100 pb-0.5"
+          >
             {line}
           </h2>
         );
       } else if (isMainTitle) {
         renderedElements.push(
-          <h3 key={keyCounter++} className="text-[11pt] font-extrabold text-[#021835] mt-3 mb-1.5 font-sans">
+          <h3 
+            key={keyCounter++} 
+            style={{ fontSize: `${documentFontSize + 1.5}pt` }}
+            className="font-extrabold text-[#021835] mt-2 mb-1.5 font-sans"
+          >
             {line}
           </h3>
         );
       } else if (line.startsWith('*') || line.startsWith('•')) {
         renderedElements.push(
-          <div key={keyCounter++} className="flex items-start gap-2 text-[9.5pt] text-slate-700 leading-relaxed mb-1 pl-4 font-sans text-justify">
+          <div 
+            key={keyCounter++} 
+            style={{ fontSize: `${documentFontSize}pt` }}
+            className="flex items-start gap-2 text-slate-700 leading-hyper-tight mb-1 pl-4 font-sans text-justify"
+          >
             <span className="text-[#fbbc04] font-bold text-xs select-none mt-0.5">•</span>
             <span className="flex-1">{line.replace(/^[\*•]\s*/, '')}</span>
           </div>
         );
       } else if (/^\d+\.\s*/.test(line)) {
         renderedElements.push(
-          <div key={keyCounter++} className="flex items-start gap-2 text-[9.5pt] text-slate-700 leading-relaxed mb-1 pl-4 font-sans text-justify">
+          <div 
+            key={keyCounter++} 
+            style={{ fontSize: `${documentFontSize}pt` }}
+            className="flex items-start gap-2 text-slate-700 leading-hyper-tight mb-1 pl-4 font-sans text-justify"
+          >
             <span className="text-[#021835] font-extrabold text-xs select-none mt-0.5">{line.match(/^\d+\./)?.[0]}</span>
             <span className="flex-1">{line.replace(/^\d+\.\s*/, '')}</span>
           </div>
         );
       } else {
         renderedElements.push(
-          <p key={keyCounter++} className="text-[9.5pt] text-slate-700 leading-relaxed mb-2 font-sans text-justify">
+          <p 
+            key={keyCounter++} 
+            style={{ fontSize: `${documentFontSize}pt` }}
+            className="text-slate-700 leading-hyper-tight mb-1.5 font-sans text-justify"
+          >
             {line}
           </p>
         );
@@ -1307,35 +1336,38 @@ export default function App() {
           {isFirstPage && (
             <>
               {/* Reference and Date block */}
-              <div className="flex flex-col gap-2 items-end justify-start text-[9pt] text-[#021835] font-sans mt-[0.1in] mb-4 w-full shrink-0">
+              <div 
+                style={{ fontSize: `${documentFontSize - 0.5}pt` }}
+                className="flex flex-col gap-1 items-end justify-start text-[#021835] font-sans mt-[0.1in] mb-3 w-full shrink-0"
+              >
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
-                    <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <div className="w-5 h-5 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
+                    <svg className="w-3 h-3 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                     </svg>
                   </div>
                   <span className="font-bold text-slate-700">Date:</span>
-                  <span className="border-b border-slate-300 min-w-[200px] text-left pl-2 font-medium text-slate-900 font-mono">
+                  <span className="pl-1 font-medium text-slate-900 font-mono">
                     {date ? new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-6 h-6 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
-                    <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-[#021835] text-white rounded-md flex items-center justify-center shrink-0 shadow-sm">
+                    <svg className="w-3 h-3 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
                     </svg>
                   </div>
                   <span className="font-bold text-slate-700">Ref:</span>
-                  <span className="border-b border-slate-300 min-w-[200px] text-left pl-2 font-medium text-slate-900 font-mono">
+                  <span className="pl-1 font-medium text-slate-900 font-mono">
                     REF: {refNo || "BQ/"}
                   </span>
                 </div>
               </div>
               
               {/* Document Header Title block */}
-              <div className="text-center my-4 flex flex-col items-center shrink-0">
+              <div className="text-center my-3 flex flex-col items-center shrink-0">
                 <h1 className="text-[20pt] font-black tracking-tight text-[#021835] font-sans m-0">OFFER LETTER</h1>
-                <div className="flex items-center justify-center w-full max-w-[180px] mt-1 relative">
+                <div className="flex items-center justify-center w-full max-w-[180px] mt-0.5 relative">
                   <div className="w-full h-[1.5px] bg-[#fbbc04]"></div>
                   <div className="absolute bg-white px-2">
                     <svg className="w-3 h-3 text-[#fbbc04]" viewBox="0 0 100 100" fill="currentColor">
@@ -1346,8 +1378,8 @@ export default function App() {
               </div>
 
               {/* Recipient Details */}
-              <div className="mb-4 text-left text-[10pt]">
-                <p className="font-bold text-slate-755 m-0">Dear <span className="border-b border-slate-300 px-4 font-black text-[#021835]">{name || "____________________"}</span>,</p>
+              <div className="mb-3 text-left" style={{ fontSize: `${documentFontSize + 0.5}pt` }}>
+                <p className="font-bold text-slate-755 m-0">Dear <span className="font-black text-[#021835]">{name || "____________________"}</span>,</p>
               </div>
             </>
           )}
@@ -1356,28 +1388,36 @@ export default function App() {
 
           {/* Conditional CTC Breakup Table on Page 0 */}
           {isFirstPage && ctc && (
-            <div className="mt-4 font-sans text-left shrink-0">
-              <h4 className="text-[8.5pt] font-extrabold text-slate-700 uppercase tracking-widest mb-1.5">Salary Breakup Guidelines</h4>
-              <table className="w-full border border-slate-200 text-[9pt] border-collapse bg-slate-50/20">
+            <div className="mt-3 font-sans text-left shrink-0">
+              <h4 
+                style={{ fontSize: `${documentFontSize - 1.0}pt` }}
+                className="font-extrabold text-slate-700 uppercase tracking-widest mb-1.5"
+              >
+                Salary Breakup Guidelines
+              </h4>
+              <table 
+                className="w-full border border-slate-200 border-collapse bg-slate-50/20"
+                style={{ fontSize: `${documentFontSize - 0.5}pt` }}
+              >
                 <thead>
                   <tr className="bg-slate-100/60 text-slate-750 border-b border-slate-200">
-                    <th className="border-r border-slate-200 px-3 py-1.5 text-left font-bold uppercase tracking-wider text-[7.5pt]">Designation / Package detail</th>
-                    <th className="px-3 py-1.5 text-right font-bold uppercase tracking-wider text-[7.5pt]">Structure ({currencySymbol})</th>
+                    <th className="border-r border-slate-200 px-3 py-1 text-left font-bold uppercase tracking-wider" style={{ fontSize: `${documentFontSize - 2.0}pt` }}>Designation / Package detail</th>
+                    <th className="px-3 py-1 text-right font-bold uppercase tracking-wider" style={{ fontSize: `${documentFontSize - 2.0}pt` }}>Structure ({currencySymbol})</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b border-slate-150">
-                    <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Assigned Corporate Role</td>
-                    <td className="px-3 py-1.5 text-right text-slate-900 font-bold">{position || "TBD"}</td>
+                    <td className="border-r border-slate-200 px-3 py-1 text-slate-600">Assigned Corporate Role</td>
+                    <td className="px-3 py-1 text-right text-slate-900 font-bold">{position || "TBD"}</td>
                   </tr>
                   <tr className="border-b border-slate-150">
-                    <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Monthly Remuneration / Annual CTC</td>
-                    <td className="px-3 py-1.5 text-right text-slate-950 font-black">{ctc}</td>
+                    <td className="border-r border-slate-200 px-3 py-1 text-slate-600 font-sans">Monthly Remuneration / Annual CTC</td>
+                    <td className="px-3 py-1 text-right text-slate-950 font-black font-sans">{ctc}</td>
                   </tr>
                   {joiningDate && (
                     <tr>
-                      <td className="border-r border-slate-200 px-3 py-1.5 text-slate-600">Start Date / Date of Joining</td>
-                      <td className="px-3 py-1.5 text-right text-slate-900 font-semibold">
+                      <td className="border-r border-slate-200 px-3 py-1 text-slate-600 font-sans">Start Date / Date of Joining</td>
+                      <td className="px-3 py-1 text-right text-slate-900 font-semibold font-sans">
                         {new Date(joiningDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </td>
                     </tr>
@@ -1919,6 +1959,36 @@ export default function App() {
             >
               <FileCheck className="w-4 h-4 text-yellow-500" /> Save Offer to Firebase Cloud
             </button>
+          </div>
+
+          {/* Document Font & Layout Settings */}
+          <div className="bg-slate-900/40 border border-blue-900/20 rounded-2xl p-5 shadow-premium flex flex-col gap-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b border-slate-800 pb-3">
+              <Sliders className="w-4 h-4 text-[#fbbc04]" /> 3.5. Document Font & Spacing Settings
+            </h3>
+            
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center text-xs text-slate-300">
+                <span className="font-semibold">Offer Letter Font Size</span>
+                <span className="text-yellow-500 font-mono font-bold">{documentFontSize.toFixed(1)} pt</span>
+              </div>
+              <p className="text-[10px] text-slate-400 leading-relaxed font-sans mb-1">
+                Dynamically scale the font size to adjust page layout and avoid overflowing content to extra pages.
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] text-slate-500 font-bold">8.0 pt</span>
+                <input 
+                  type="range"
+                  min="8.0"
+                  max="12.5"
+                  step="0.5"
+                  value={documentFontSize}
+                  onChange={(e) => updateDocumentFontSize(parseFloat(e.target.value))}
+                  className="flex-1 h-1.5 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                />
+                <span className="text-[10px] text-slate-500 font-bold">12.5 pt</span>
+              </div>
+            </div>
           </div>
 
           {/* HR Signature Authorization */}

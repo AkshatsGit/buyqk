@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  auth, db
+  auth, db, HR_EMAILS
 } from '@buyqk/firebase';
 import { 
   collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy 
@@ -36,9 +36,9 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        if (user.email !== 'akshat.srivastava098@gmail.com') {
+        if (!user.email || !HR_EMAILS.includes(user.email)) {
           auth.signOut();
-          setErrorMsg("Access Denied. Only akshat.srivastava098@gmail.com is authorized to view the Team & Talent portal.");
+          setErrorMsg("Access Denied. You are not authorized to view the Team & Talent portal.");
           setCurrentUser(null);
         } else {
           setCurrentUser(user);
@@ -56,9 +56,9 @@ export default function App() {
     try {
       setErrorMsg('');
       const user = await auth.signInWithGoogle('admin');
-      if (user.email !== 'akshat.srivastava098@gmail.com') {
+      if (!user.email || !HR_EMAILS.includes(user.email)) {
         await auth.signOut();
-        setErrorMsg("Access Denied. Only akshat.srivastava098@gmail.com has credentials for the Team & Talent Hub.");
+        setErrorMsg("Access Denied. You are not authorized to access the Team & Talent Hub.");
       } else {
         setCurrentUser(user);
       }

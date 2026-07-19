@@ -4,6 +4,8 @@ import {
   Category, Brand, LatLng, Address, PaymentMethod, OrderStatus, PaymentStatus
 } from '@buyqk/types';
 
+import { ADMIN_EMAILS, HR_EMAILS } from './whitelist';
+
 import { initializeApp, getApps, FirebaseApp, deleteApp } from 'firebase/app';
 import {
   getAuth, signInWithPopup, GoogleAuthProvider,
@@ -233,11 +235,7 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
   if (fbUser) {
     const userRef = doc(db, 'users', fbUser.uid);
 
-    const isBypassedEmail = 
-      fbUser.email === 'akshat.srivastava098@gmail.com' ||
-      fbUser.email === 'ankitsrigzb@gmail.com' ||
-      fbUser.email === 'buyqk.namangoel@gmail.com' ||
-      fbUser.email === 'buyqk.aniketkumar@gmail.com';
+    const isBypassedEmail = !!(fbUser.email && (ADMIN_EMAILS.includes(fbUser.email) || HR_EMAILS.includes(fbUser.email)));
 
     // Initialize or verify local session ID (skipped for Admin / HR users to allow concurrency)
     if (isBrowser && !isBypassedEmail) {
@@ -267,12 +265,21 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
         }
 
         const normalized = normalizeDoc({ uid: fbUser.uid, ...data });
-        if (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com' || fbUser.email === 'buyqk.namangoel@gmail.com' || fbUser.email === 'buyqk.aniketkumar@gmail.com') {
+        if (fbUser.email && ADMIN_EMAILS.includes(fbUser.email)) {
           normalized.role = 'admin';
+        } else if (fbUser.email && HR_EMAILS.includes(fbUser.email)) {
+          normalized.role = 'hr';
         }
         currentAuthUser = normalized;
       } else {
-        currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com' || fbUser.email === 'buyqk.namangoel@gmail.com' || fbUser.email === 'buyqk.aniketkumar@gmail.com') ? 'admin' : 'customer', name: fbUser.displayName || '' };
+        const isAdmin = fbUser.email && ADMIN_EMAILS.includes(fbUser.email);
+        const isHr = fbUser.email && HR_EMAILS.includes(fbUser.email);
+        currentAuthUser = {
+          uid: fbUser.uid,
+          email: fbUser.email,
+          role: isAdmin ? 'admin' : (isHr ? 'hr' : 'customer'),
+          name: fbUser.displayName || ''
+        };
       }
       if (currentUserListener) currentUserListener(currentAuthUser);
     });
@@ -1011,3 +1018,5 @@ export const mockDb = {
   saveData: () => {},
   subscribe: () => () => {},
 };
+
+export * from './whitelist';

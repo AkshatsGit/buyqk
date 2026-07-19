@@ -233,8 +233,14 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
   if (fbUser) {
     const userRef = doc(db, 'users', fbUser.uid);
 
-    // Initialize or verify local session ID
-    if (isBrowser) {
+    const isBypassedEmail = 
+      fbUser.email === 'akshat.srivastava098@gmail.com' ||
+      fbUser.email === 'ankitsrigzb@gmail.com' ||
+      fbUser.email === 'buyqk.namangoel@gmail.com' ||
+      fbUser.email === 'buyqk.aniketkumar@gmail.com';
+
+    // Initialize or verify local session ID (skipped for Admin / HR users to allow concurrency)
+    if (isBrowser && !isBypassedEmail) {
       let localSess = localStorage.getItem('buyqk_session_id');
       if (!localSess) {
         localSess = 'sess_' + id10();
@@ -248,27 +254,25 @@ firebaseOnAuthStateChanged(firebaseAuth, async (fbUser) => {
         const data = snap.data();
         const firestoreSess = data.currentSessionId;
         const currentLocal = isBrowser ? localStorage.getItem('buyqk_session_id') : null;
+        
+        const isBypassedRole = data.role === 'admin' || data.role === 'hr';
 
-        if (isBrowser && firestoreSess && currentLocal && firestoreSess !== currentLocal) {
+        if (!isBypassedEmail && !isBypassedRole && isBrowser && firestoreSess && currentLocal && firestoreSess !== currentLocal) {
           // Logged in elsewhere!
-          if (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com') {
-            updateDoc(userRef, { currentSessionId: currentLocal }).catch(e => console.log("Session takeover error: ", e));
-          } else {
-            firebaseSignOut(firebaseAuth);
-            localStorage.removeItem('buyqk_session_id');
-            alert("Logged out: This account has been logged in on another device or browser tab.");
-            window.location.reload();
-            return;
-          }
+          firebaseSignOut(firebaseAuth);
+          localStorage.removeItem('buyqk_session_id');
+          alert("Logged out: This account has been logged in on another device or browser tab.");
+          window.location.reload();
+          return;
         }
 
         const normalized = normalizeDoc({ uid: fbUser.uid, ...data });
-        if (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com') {
+        if (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com' || fbUser.email === 'buyqk.namangoel@gmail.com' || fbUser.email === 'buyqk.aniketkumar@gmail.com') {
           normalized.role = 'admin';
         }
         currentAuthUser = normalized;
       } else {
-        currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com') ? 'admin' : 'customer', name: fbUser.displayName || '' };
+        currentAuthUser = { uid: fbUser.uid, email: fbUser.email, role: (fbUser.email === 'akshat.srivastava098@gmail.com' || fbUser.email === 'ankitsrigzb@gmail.com' || fbUser.email === 'buyqk.namangoel@gmail.com' || fbUser.email === 'buyqk.aniketkumar@gmail.com') ? 'admin' : 'customer', name: fbUser.displayName || '' };
       }
       if (currentUserListener) currentUserListener(currentAuthUser);
     });

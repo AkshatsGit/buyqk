@@ -98,7 +98,7 @@ function AdminApp() {
   const handleGoogleLogin = async () => {
     try {
       const user = await auth.signInWithGoogle('admin');
-      if (user.email !== 'akshat.srivastava098@gmail.com' && user.email !== 'ankitsrigzb@gmail.com') {
+      if (user.email !== 'akshat.srivastava098@gmail.com' && user.email !== 'ankitsrigzb@gmail.com' && user.email !== 'buyqk.namangoel@gmail.com') {
         await auth.signOut();
         throw new Error("Access Denied. You are not authorized to access the Admin Panel.");
       }
@@ -194,7 +194,7 @@ function AdminApp() {
 
   useEffect(() => {
     const unsubUser = auth.onAuthStateChanged((user) => {
-      if (user && (user.email === 'akshat.srivastava098@gmail.com' || user.email === 'ankitsrigzb@gmail.com')) {
+      if (user && (user.email === 'akshat.srivastava098@gmail.com' || user.email === 'ankitsrigzb@gmail.com' || user.email === 'buyqk.namangoel@gmail.com')) {
         user.role = 'admin';
       }
       setCurrentUser(user);
@@ -242,7 +242,7 @@ function AdminApp() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (authEmail !== 'akshat.srivastava098@gmail.com' && authEmail !== 'ankitsrigzb@gmail.com') {
+      if (authEmail !== 'akshat.srivastava098@gmail.com' && authEmail !== 'ankitsrigzb@gmail.com' && authEmail !== 'buyqk.namangoel@gmail.com') {
         throw new Error("Access Denied. You are not authorized to access the Admin Panel.");
       }
       const u = await auth.signIn({ email: authEmail, password: authPassword });

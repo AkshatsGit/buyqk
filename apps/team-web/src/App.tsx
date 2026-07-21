@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  auth, db, HR_EMAILS
+  auth, db, HR_EMAILS, storageService
 } from '@buyqk/firebase';
 import { 
   collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy 
@@ -32,6 +32,7 @@ interface TeamMember {
   details: string;
   bankDetails: string;
   photoBase64?: string;
+  photoTextFileUrl?: string;
   designation?: string;
   createdAt: string;
   updatedAt: string;
@@ -230,6 +231,7 @@ function TeamConsole() {
       details: '',
       bankDetails: '',
       photoBase64: '',
+      photoTextFileUrl: '',
       designation: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -260,6 +262,16 @@ function TeamConsole() {
     if (!editingMember || !editingMember.id || !editingMember.name || !editingMember.name.trim()) return;
 
     try {
+      let photoTextFileUrl = editingMember.photoTextFileUrl || '';
+      if (editingMember.photoBase64 && editingMember.photoBase64.startsWith('data:image')) {
+        try {
+          const filePath = `team_members/${editingMember.id}/photo_base64.txt`;
+          photoTextFileUrl = await storageService.uploadTextFile(filePath, editingMember.photoBase64);
+        } catch (storageErr) {
+          console.error("Failed uploading portrait text file to storage:", storageErr);
+        }
+      }
+
       const payload = {
         ...editingMember,
         name: editingMember.name.trim(),
@@ -273,6 +285,7 @@ function TeamConsole() {
         details: editingMember.details || '',
         bankDetails: editingMember.bankDetails || '',
         photoBase64: editingMember.photoBase64 || '',
+        photoTextFileUrl: photoTextFileUrl,
         designation: editingMember.designation || '',
         updatedAt: new Date().toISOString()
       };

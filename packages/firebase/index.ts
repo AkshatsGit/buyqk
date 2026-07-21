@@ -76,6 +76,16 @@ export const storageService = {
       console.error("Failed to upload base64 to storage, using fallback:", err);
       return base64OrDataUrl;
     }
+  },
+  uploadTextFile: async (filePath: string, textContent: string): Promise<string> => {
+    try {
+      const sRef = storageRef(storage, filePath);
+      await uploadString(sRef, textContent, 'raw');
+      return await getDownloadURL(sRef);
+    } catch (err) {
+      console.error("Failed to upload text file to storage, using fallback:", err);
+      return textContent;
+    }
   }
 };
 
@@ -1009,7 +1019,7 @@ export const geminiService = {
 };
 
 // Re-export db for any direct usage
-export { db, firebaseApp, firebaseAuth };
+export { db, firebaseApp, firebaseAuth, storage };
 export { CATEGORIES, BRANDS, DEFAULT_PLATFORM_SETTINGS };
 
 // Keep backward compat for legacy imports

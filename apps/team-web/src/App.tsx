@@ -420,22 +420,22 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <div className="flex-1 min-h-screen bg-navy-950 flex flex-col items-center justify-center font-sans px-4">
-        <div className="w-full max-w-sm bg-slate-900/60 border border-blue-900/30 rounded-3xl p-8 shadow-premium text-center relative overflow-hidden backdrop-blur-md">
+      <div className="flex-1 min-h-screen bg-navy-950 flex flex-col items-center justify-center font-sans px-4 py-8">
+        <div className="w-full max-w-md bg-slate-900/60 border border-blue-900/30 rounded-3xl p-8 shadow-premium text-center relative overflow-hidden backdrop-blur-md">
           <div className="absolute top-0 right-0 w-[40%] h-[3px] bg-gradient-to-r from-yellow-500 to-amber-600"></div>
           
-          <div className="relative w-18 h-18 mx-auto flex items-center justify-center mb-6">
-            <svg className="absolute w-full h-full text-yellow-500" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="5">
+          <div className="relative w-18 h-18 mx-auto flex items-center justify-center mb-5">
+            <svg className="absolute w-full h-full text-yellow-500 animate-pulse" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="4">
               <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
             </svg>
             <Users className="w-8 h-8 text-white relative z-10" />
           </div>
 
-          <h2 className="text-2xl font-black tracking-tight text-white mb-2 font-sans">
-            buy<span className="text-yellow-550 text-yellow-500">Qk</span> Team Hub
+          <h2 className="text-2xl font-black tracking-tight text-white mb-1 font-sans">
+            buy<span className="text-yellow-500">Qk</span> Team Hub
           </h2>
-          <p className="text-slate-400 text-xs tracking-wide leading-relaxed font-sans mb-6">
-            Authorized Administrator portal to manage candidate resumes, GitHub/LinkedIn references, employee codes, and payroll logs.
+          <p className="text-slate-400 text-xs tracking-wide leading-relaxed font-sans mb-7">
+            Secure unified portal. Staff registration, digital ID card issuance, and startup work transmission.
           </p>
 
           {errorMsg && (
@@ -445,12 +445,40 @@ export default function App() {
             </div>
           )}
 
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 bg-[#081C3A] hover:bg-blue-950/60 border border-blue-800/40 text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md select-none cursor-pointer"
-          >
-            <span className="text-yellow-500">G</span> Sign In With Google Account
-          </button>
+          <div className="flex flex-col gap-4">
+            {/* OPTION 1: EMPLOYEE ACCESS */}
+            <div className="bg-slate-950/50 border border-blue-900/20 p-4 rounded-2xl text-left hover:border-yellow-500/30 transition-all group">
+              <h3 className="text-xs font-black uppercase text-yellow-500 tracking-wider mb-1 flex items-center justify-between">
+                <span>Employee Hub</span>
+                <span className="bg-[#102A4C]/60 text-slate-350 text-[8px] font-mono font-bold px-1.5 py-0.5 rounded uppercase group-hover:bg-yellow-500 group-hover:text-slate-950 transition-all">Google Sign-in</span>
+              </h3>
+              <p className="text-[10px] text-slate-400 mb-3 leading-normal">
+                Register with your resume PDF & passport picture, download digital ID cards, or attach completed task logs.
+              </p>
+              <button
+                onClick={handleGoogleLogin}
+                className="w-full flex items-center justify-center gap-2 bg-[#081C3A] hover:bg-[#102A4C] border border-blue-800/40 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md select-none cursor-pointer"
+              >
+                <span className="text-yellow-500">G</span> Register or Log In
+              </button>
+            </div>
+
+            {/* OPTION 2: CONTROLLER PANEL ACCESS */}
+            <div className="bg-slate-950/50 border border-blue-900/20 p-4 rounded-2xl text-left hover:border-yellow-500/30 transition-all group">
+              <h3 className="text-xs font-black uppercase text-slate-300 tracking-wider mb-1">
+                Admin Console
+              </h3>
+              <p className="text-[10px] text-slate-405 text-slate-400 mb-3 leading-normal">
+                Whitelisted human resources & developer administrators panel configuration access.
+              </p>
+              <button
+                onClick={handleGoogleLogin}
+                className="w-full flex items-center justify-center gap-2 bg-transparent hover:bg-slate-900 border border-slate-800 text-slate-300 hover:text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all select-none cursor-pointer"
+              >
+                🔒 Authorized Panel Login
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

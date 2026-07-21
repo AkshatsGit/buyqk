@@ -325,10 +325,22 @@ export default function App() {
   useEffect(() => {
     if (currentUser) {
       const emailLower = currentUser.email?.toLowerCase() || '';
-      if (emailLower && (HR_EMAILS.includes(emailLower) || ADMIN_EMAILS.includes(emailLower))) {
+      const isPrivileged = HR_EMAILS.includes(emailLower) || ADMIN_EMAILS.includes(emailLower);
+      if (isPrivileged) {
         setEmployeeProfile(null);
         return;
       }
+
+      const isBuyqkEmail = /^buyqk\.[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailLower);
+      if (!isBuyqkEmail) {
+        setEmployeeProfile(null);
+        setErrorMsg("Access Denied: Standard employee registrations require a custom 'buyqk.employee@gmail.com' credential address.");
+        auth.signOut().then(() => {
+          setCurrentUser(null);
+        });
+        return;
+      }
+
       setProfileLoading(true);
       const q = query(collection(db, 'team_members'), where('email', '==', emailLower));
       getDocs(q).then((snap) => {

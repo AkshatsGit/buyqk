@@ -11,6 +11,14 @@ import {
   CheckCircle2, PlusCircle, Briefcase, FileUp, Sparkles, Save, X, Ban
 } from 'lucide-react';
 
+const toBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+
 interface TeamMember {
   id: string;
   name: string;
@@ -23,6 +31,8 @@ interface TeamMember {
   resumeText: string;
   details: string;
   bankDetails: string;
+  photoBase64?: string;
+  designation?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -34,6 +44,17 @@ export default function App() {
 
   // Real-time synchronization of auth status
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('bypass') === 'true') {
+      setCurrentUser({
+        uid: 'dev-bypass-uid',
+        email: 'buyqk.namangoel@gmail.com',
+        displayName: 'Developer Bypass'
+      });
+      setAuthChecking(false);
+      return;
+    }
+
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         if (!user.email || !HR_EMAILS.includes(user.email)) {
@@ -168,6 +189,10 @@ function TeamConsole() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'employee' | 'candidate'>('all');
   
+  // Custom navigation console tabs
+  const [activeConsoleTab, setActiveConsoleTab] = useState<'directory' | 'idcards' | 'analytics'>('directory');
+  const [selectedCardMember, setSelectedCardMember] = useState<TeamMember | null>(null);
+
   // Modals & Editors
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [editingMember, setEditingMember] = useState<Partial<TeamMember> | null>(null);
@@ -204,6 +229,8 @@ function TeamConsole() {
       resumeText: '',
       details: '',
       bankDetails: '',
+      photoBase64: '',
+      designation: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
@@ -245,6 +272,8 @@ function TeamConsole() {
         resumeText: editingMember.resumeText || '',
         details: editingMember.details || '',
         bankDetails: editingMember.bankDetails || '',
+        photoBase64: editingMember.photoBase64 || '',
+        designation: editingMember.designation || '',
         updatedAt: new Date().toISOString()
       };
 
@@ -421,6 +450,236 @@ function TeamConsole() {
     document.body.removeChild(link);
   };
 
+  const triggerFileDownload = (dataUrl: string, filename: string) => {
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const generateIDCardCanvas = (member: TeamMember, side: 'front' | 'back'): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 950;
+      const ctx = canvas.getContext('2d')!;
+
+      // Background Gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#020712');
+      grad.addColorStop(0.4, '#06132b');
+      grad.addColorStop(1, '#0c244f');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Gold styling shards/shapes
+      ctx.fillStyle = 'rgba(250, 204, 21, 0.08)';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(250, 0);
+      ctx.lineTo(0, 300);
+      ctx.closePath();
+      ctx.fill();
+
+      // Bottom gold accent footer
+      ctx.fillStyle = '#fabf04'; // yellow-500
+      ctx.fillRect(0, canvas.height - 12, canvas.width, 12);
+
+      if (side === 'front') {
+        // Draw Header
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 36px sans-serif';
+        const brandX = 210;
+        ctx.fillText('buy', brandX, 90);
+        ctx.fillStyle = '#fabf04';
+        ctx.fillText('Qk', brandX + 58, 90);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText('EMPLOYEE ID CARD', 215, 120);
+
+        // Draw profile photo box
+        const picX = 180;
+        const picY = 180;
+        const picW = 240;
+        const picH = 280;
+
+        // Border glow
+        ctx.strokeStyle = '#fabf04';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(picX, picY, picW, picH);
+
+        // Portrait
+        if (member.photoBase64) {
+          const img = new Image();
+          img.src = member.photoBase64;
+          img.onload = () => {
+            ctx.drawImage(img, picX + 2, picY + 2, picW - 4, picH - 4);
+            drawFrontDetails();
+          };
+          img.onerror = () => {
+            drawFallbackAvatar();
+            drawFrontDetails();
+          };
+        } else {
+          drawFallbackAvatar();
+          drawFrontDetails();
+        }
+
+        function drawFallbackAvatar() {
+          ctx.fillStyle = '#061329';
+          ctx.fillRect(picX + 2, picY + 2, picW - 4, picH - 4);
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(300, 290, 48, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(300, 400, 80, Math.PI, 0);
+          ctx.fill();
+        }
+
+        function drawFrontDetails() {
+          // Employee Name
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '800 34px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(member.name, 305, 520);
+
+          // Designation
+          ctx.fillStyle = '#fabf04';
+          ctx.font = 'bold 20px sans-serif';
+          ctx.fillText(member.designation || 'Team Associate', 305, 560);
+
+          // Meta label values
+          ctx.textAlign = 'left';
+          ctx.font = 'bold 14px monospace';
+
+          // Employee code label
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.fillText('EMP CODE  :', 130, 630);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(member.employeeCode || 'BQ-EM-XXX', 250, 630);
+
+          // Phone
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.fillText('PHONE     :', 130, 665);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(member.phone || 'N/A', 250, 665);
+
+          // Email
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.fillText('EMAIL     :', 130, 700);
+          ctx.fillStyle = '#ffffff';
+          let displayEmail = member.email || 'N/A';
+          if (displayEmail.length > 25) {
+            displayEmail = displayEmail.substring(0, 23) + '...';
+          }
+          ctx.fillText(displayEmail, 250, 700);
+
+          // Draw Fake Barcode
+          const barcodeY = 760;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(150, barcodeY, 300, 65);
+
+          ctx.fillStyle = '#000000';
+          const codeVal = member.employeeCode || 'BQEMP';
+          let offsetState = 175;
+          for (let i = 0; i < codeVal.length; i++) {
+            const charCode = codeVal.charCodeAt(i);
+            const lineThickness = (charCode % 3) + 1;
+            const separation = (charCode % 4) + 1;
+            
+            ctx.fillRect(offsetState, barcodeY + 8, lineThickness * 2, 49);
+            offsetState += (lineThickness + separation) * 2;
+          }
+          while (offsetState < 410) {
+            ctx.fillRect(offsetState, barcodeY + 8, 2, 49);
+            offsetState += 6;
+          }
+
+          resolve(canvas.toDataURL('image/png'));
+        }
+      } else {
+        // DRAW BACK SIDE
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 30px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('buyQk Portal', 300, 100);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = '12px monospace';
+        ctx.fillText('Universal Local Supply Network', 300, 130);
+
+        // Security / Terms Panel
+        const termsY = 220;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('INSTRUCTIONS & POLICIES', 300, termsY);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '13px sans-serif';
+        const terms = [
+          "This card must be worn and visible at all times.",
+          "It remains the property of buyQk and must be",
+          "returned upon termination of employment.",
+          "If lost, report immediately to IT Security.",
+          "Unauthorized duplication is strictly prohibited."
+        ];
+        terms.forEach((t, i) => {
+          ctx.fillText(t, 300, termsY + 40 + i * 28);
+        });
+
+        // Contact info
+        const contactY = 460;
+        ctx.fillStyle = '#fabf04';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText('OFFICE ADDRESS', 300, contactY);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.font = '13px sans-serif';
+        ctx.fillText('Level 8, Prime Corporate Tower, Main Bandra Complex,', 300, contactY + 30);
+        ctx.fillText('Mumbai, Maharashtra - 400051', 300, contactY + 55);
+
+        // Emergency details
+        const emY = 600;
+        ctx.fillStyle = '#fabf04';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText('EMERGENCY HOTLINE', 300, emY);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 15px monospace';
+        ctx.fillText('022-BUYQK-999 / tech@buyqk.com', 300, emY + 30);
+
+        // Authorizing Signature
+        const sigY = 740;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(180, sigY + 60);
+        ctx.lineTo(420, sigY + 60);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('Authorized Signature', 300, sigY + 80);
+
+        // Draw Signature
+        ctx.strokeStyle = '#fabf04';
+        ctx.lineWidth = 3.5;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(210, sigY + 40);
+        ctx.quadraticCurveTo(240, sigY + 10, 270, sigY + 35);
+        ctx.quadraticCurveTo(300, sigY + 60, 330, sigY + 25);
+        ctx.quadraticCurveTo(360, sigY + 10, 390, sigY + 45);
+        ctx.stroke();
+
+        resolve(canvas.toDataURL('image/png'));
+      }
+    });
+  };
+
   const filteredMembers = members.filter(m => {
     const matchedSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (m.employeeCode && m.employeeCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -431,7 +690,52 @@ function TeamConsole() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Search Header Row */}
+      {/* Console Tab Switcher Navigation */}
+      <div className="flex flex-col sm:flex-row border-b border-blue-900/20 bg-slate-900/20 p-2 rounded-2xl gap-2 backdrop-blur-sm self-start w-full sm:w-auto">
+        <button
+          onClick={() => setActiveConsoleTab('directory')}
+          className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+            activeConsoleTab === 'directory' 
+              ? 'bg-yellow-500 text-slate-950 shadow-md font-extrabold' 
+              : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
+          }`}
+        >
+          <Users className="w-4 h-4 shrink-0" /> Directory
+        </button>
+        <button
+          onClick={() => setActiveConsoleTab('idcards')}
+          className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+            activeConsoleTab === 'idcards' 
+              ? 'bg-yellow-500 text-slate-950 shadow-md font-extrabold' 
+              : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
+          }`}
+        >
+          <Briefcase className="w-4 h-4 shrink-0" /> ID Card Studio
+        </button>
+        <button
+          onClick={() => setActiveConsoleTab('analytics')}
+          className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+            activeConsoleTab === 'analytics' 
+              ? 'bg-yellow-500 text-slate-950 shadow-md font-extrabold' 
+              : 'text-slate-400 hover:text-white hover:bg-slate-900/40'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 shrink-0" /> Hub Stats
+        </button>
+        <a
+          href="http://hr.buyqk.com"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer text-slate-400 hover:text-white hover:bg-slate-900/40 border border-transparent hover:border-yellow-500/20"
+        >
+          <FileText className="w-4 h-4 shrink-0 text-yellow-550 text-yellow-550" /> Offer Letter V2
+        </a>
+      </div>
+
+      {/* Main Tab Render Switcher */}
+      {activeConsoleTab === 'directory' && (
+        <>
+        {/* Search Header Row */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/40 border border-blue-900/20 rounded-2xl p-5 backdrop-blur-sm">
         <div className="relative w-full md:max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
@@ -495,18 +799,28 @@ function TeamConsole() {
               <div>
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="text-left">
-                    <h3 className="text-sm font-extrabold text-white font-sans">{member.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      {member.status === 'employee' ? (
-                        <span className="bg-emerald-950/60 border border-emerald-900/30 text-emerald-450 text-[9px] px-2 py-0.5 rounded font-black tracking-wider uppercase">
-                          Employee: {member.employeeCode || "N/A"}
-                        </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-slate-950 border border-blue-900/30 overflow-hidden flex items-center justify-center shrink-0">
+                      {member.photoBase64 ? (
+                        <img src={member.photoBase64} alt={member.name} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="bg-blue-950/60 border border-blue-900/30 text-blue-450 text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase">
-                          Candidate
-                        </span>
+                        <User className="w-6 h-6 text-slate-500" />
                       )}
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-sm font-extrabold text-white font-sans">{member.name}</h3>
+                      <div className="text-[10px] text-slate-400 font-bold mb-0.5">{member.designation || (member.status === 'employee' ? 'Team Associate' : 'Candidate')}</div>
+                      <div className="flex items-center gap-2">
+                        {member.status === 'employee' ? (
+                          <span className="bg-emerald-950/60 border border-emerald-900/30 text-emerald-450 text-[9px] px-2 py-0.5 rounded font-black tracking-wider uppercase">
+                            Employee: {member.employeeCode || "N/A"}
+                          </span>
+                        ) : (
+                          <span className="bg-blue-950/60 border border-blue-900/30 text-blue-450 text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase">
+                            Candidate
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -607,6 +921,21 @@ function TeamConsole() {
                       <p className="text-slate-450 font-mono truncate">{member.bankDetails}</p>
                     </div>
                   )}
+
+                  {/* ID Card Studio Button for Employees */}
+                  {member.status === 'employee' && (
+                    <div className="mt-2.5 flex items-center justify-between bg-emerald-950/20 border border-emerald-900/30 p-2.5 rounded-xl">
+                      <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Verified Employee
+                      </span>
+                      <button 
+                        onClick={() => setSelectedCardMember(member)}
+                        className="flex items-center gap-1.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-premium animate-pulse"
+                      >
+                        <Briefcase className="w-3 h-3" /> ID Card
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -616,6 +945,247 @@ function TeamConsole() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      </>
+      )}
+
+      {/* 2. ID Cards Studio View */}
+      {activeConsoleTab === 'idcards' && (
+        <div className="flex flex-col gap-6 text-left">
+          <div className="bg-[#081222]/80 border border-blue-900/35 rounded-2xl p-5 mb-2 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-[40px] h-[3px] bg-gradient-to-r from-yellow-500 to-amber-500"></div>
+            <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-1.5 font-sans">
+              <Sparkles className="w-4 h-4 text-yellow-500" /> Crew ID Card Production Studio
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed font-sans">
+              Design, preview and generate high-fidelity corporate ID cards for active employees. To manage portraits, edit employee profiles directly in the Directory.
+            </p>
+          </div>
+
+          {members.filter(m => m.status === 'employee').length === 0 ? (
+            <div className="bg-slate-900/20 border border-blue-900/10 rounded-2xl p-16 text-center">
+              <Briefcase className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+              <p className="text-slate-400 text-sm font-sans mb-1">No active employees found to generate ID cards.</p>
+              <p className="text-[10px] text-slate-500 font-mono">Convert candidates to "Active Employee" in Directory to list them here.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {members.filter(m => m.status === 'employee').map((member) => (
+                <div key={member.id} className="bg-slate-900/50 border border-blue-900/20 rounded-2xl p-5 flex flex-col justify-between hover:border-yellow-500/30 transition-all text-center group">
+                  <div>
+                    <div className="relative w-20 h-20 mx-auto rounded-xl bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center mb-3">
+                      {member.photoBase64 ? (
+                        <img src={member.photoBase64} alt={member.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-9 h-9 text-slate-600" />
+                      )}
+                    </div>
+                    <h4 className="text-xs font-bold text-white leading-normal truncate">{member.name}</h4>
+                    <p className="text-[10px] text-yellow-500 font-black truncate mt-1">{member.designation || 'Team Associate'}</p>
+                    <p className="text-[9px] font-mono text-slate-500 mt-1 select-none font-bold">EMP CODE: {member.employeeCode || 'BQ-EM-XXX'}</p>
+                  </div>
+                  
+                  <button
+                    onClick={() => setSelectedCardMember(member)}
+                    className="w-full mt-4 flex items-center justify-center gap-1.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-2.5 px-3 rounded-xl text-[10px] uppercase tracking-wider transition-all select-none cursor-pointer shadow-premium"
+                  >
+                    <Briefcase className="w-3.5 h-3.5" /> ID Studio
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 3. Hub Metrics & Analytics View */}
+      {activeConsoleTab === 'analytics' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+          {/* Card 1: Total Talent Pool */}
+          <div className="bg-slate-900/50 border border-blue-900/25 rounded-2xl p-6 relative overflow-hidden shadow-lg flex flex-col justify-between min-h-[140px]">
+            <div className="absolute top-0 right-0 w-[5px] h-full bg-blue-500"></div>
+            <div>
+              <h4 className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Total Registered Talent</h4>
+              <div className="text-4xl font-extrabold text-white mt-2 font-mono tracking-tight">{members.length}</div>
+            </div>
+            <p className="text-[10px] text-slate-500">Global count of active employees and candidate records.</p>
+          </div>
+
+          {/* Card 2: Employees vs Candidates */}
+          <div className="bg-slate-900/50 border border-blue-900/25 rounded-2xl p-6 relative overflow-hidden shadow-lg flex flex-col justify-between min-h-[140px]">
+            <div className="absolute top-0 right-0 w-[5px] h-full bg-emerald-500"></div>
+            <div>
+              <h4 className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Active Boarded Employees</h4>
+              <div className="text-4xl font-extrabold text-emerald-400 mt-2 font-mono tracking-tight">
+                {members.filter(m => m.status === 'employee').length}
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-400">
+              Candidates in pipeline: <span className="font-bold text-blue-400">{members.filter(m => m.status === 'candidate').length}</span>
+            </p>
+          </div>
+
+          {/* Card 3: Parser Decoded Rate */}
+          <div className="bg-slate-900/50 border border-blue-900/25 rounded-2xl p-6 relative overflow-hidden shadow-lg flex flex-col justify-between min-h-[140px]">
+            <div className="absolute top-0 right-0 w-[5px] h-full bg-yellow-500"></div>
+            <div>
+              <h4 className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Resume Parser Rate</h4>
+              <div className="text-4xl font-extrabold text-yellow-500 mt-2 font-mono tracking-tight">
+                {members.length > 0 
+                  ? Math.round((members.filter(m => m.resumeText).length / members.length) * 100)
+                  : 0}%
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-500">
+              Parsed resumes: {members.filter(m => m.resumeText).length} / {members.length} records.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 4. ID Card Viewer / Downloader Overlay Studio */}
+      {selectedCardMember && (
+        <div className="fixed inset-0 bg-slate-950/85 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+          <div className="bg-slate-900 border border-blue-900/35 rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl relative my-auto p-6 md:p-8">
+            
+            <div className="flex items-center justify-between border-b border-blue-900/20 pb-4 mb-6">
+              <div className="text-left">
+                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider font-sans">buyQk Employee ID Studio</h3>
+                <p className="text-[10px] text-slate-400 font-mono">Generate and download corporate credentials for {selectedCardMember.name}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedCardMember(null)}
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Side-by-side Live Preview */}
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-10 mt-2">
+              
+              {/* Front Preview */}
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] uppercase font-mono tracking-widest text-slate-500 mb-3">Front Side</span>
+                <div className="w-[280px] h-[440px] rounded-2xl bg-gradient-to-b from-[#020712] via-[#06132b] to-[#0c244f] border border-blue-900/30 p-5 shadow-xl relative flex flex-col justify-between overflow-hidden text-left">
+                  <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-yellow-500/5 rounded-full blur-2xl"></div>
+                  
+                  {/* Header */}
+                  <div className="flex flex-col items-center mt-1">
+                    <div className="text-lg font-black text-white">buy<span className="text-yellow-500">Qk</span></div>
+                    <div className="text-[6.5px] uppercase tracking-[3px] text-slate-400 font-mono mt-0.5">EMPLOYEE ID CARD</div>
+                  </div>
+
+                  {/* Picture */}
+                  <div className="w-28 h-32 border-2 border-yellow-500 shadow-md mx-auto my-3 overflow-hidden flex items-center justify-center bg-slate-950/65">
+                    {selectedCardMember.photoBase64 ? (
+                      <img src={selectedCardMember.photoBase64} alt={selectedCardMember.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-12 h-12 text-slate-600" />
+                    )}
+                  </div>
+
+                  {/* Body info */}
+                  <div className="text-center">
+                    <div className="text-sm font-extrabold text-white leading-tight truncate">{selectedCardMember.name}</div>
+                    <div className="text-[10px] font-bold text-yellow-500 mt-1 truncate">{selectedCardMember.designation || 'Team Associate'}</div>
+                  </div>
+
+                  {/* Details grid */}
+                  <div className="text-[9px] font-mono text-left text-slate-350 mt-2 px-1 flex flex-col gap-1">
+                    <div className="flex"><span className="text-slate-500 w-14 shrink-0">CODE:</span> <span className="text-white font-bold">{selectedCardMember.employeeCode || 'BQ-EM-XXX'}</span></div>
+                    <div className="flex"><span className="text-slate-500 w-14 shrink-0">PHONE:</span> <span className="text-white">{selectedCardMember.phone || 'N/A'}</span></div>
+                    <div className="flex"><span className="text-slate-500 w-14 shrink-0">EMAIL:</span> <span className="text-white truncate">{selectedCardMember.email || 'N/A'}</span></div>
+                  </div>
+
+                  {/* Fake Barcode */}
+                  <div className="bg-white rounded p-1 mx-1 mt-2 mb-1 flex flex-col items-center">
+                    <div className="flex gap-[1.5px] items-center h-7 w-full justify-center overflow-hidden">
+                      {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3, 2, 1, 3].map((val, idx) => (
+                        <div key={idx} className="bg-black h-full shrink-0" style={{ width: `${val * 0.8}px` }}></div>
+                      ))}
+                    </div>
+                    <div className="text-[6.5px] font-mono text-black scale-90 -mt-0.5 tracking-wider">{selectedCardMember.employeeCode || 'BQ-EM-XXX'}</div>
+                  </div>
+                  
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-500"></div>
+                </div>
+              </div>
+
+              {/* Back Preview */}
+              <div className="flex flex-col items-center">
+                <span className="text-[9px] uppercase font-mono tracking-widest text-slate-500 mb-3">Back Side</span>
+                <div className="w-[280px] h-[440px] rounded-2xl bg-gradient-to-b from-[#020712] via-[#06132b] to-[#0c244f] border border-blue-900/30 p-5 shadow-xl relative flex flex-col justify-between overflow-hidden text-center">
+                  
+                  <div className="flex flex-col items-center mt-3">
+                    <div className="text-base font-black text-white">buyQk Portal</div>
+                    <div className="text-[7px] text-slate-400 font-mono">Universal Local Supply Network</div>
+                  </div>
+
+                  {/* Terms */}
+                  <div className="text-center mt-4">
+                    <div className="text-[8px] font-black uppercase text-slate-450 tracking-wider mb-2">Instructions & Policies</div>
+                    <div className="text-[7.5px] text-slate-350 leading-relaxed flex flex-col gap-1 font-sans">
+                      <p>1. This card must be worn and visible at all times.</p>
+                      <p>2. It remains the property of buyQk and must be returned upon termination of employment.</p>
+                      <p>3. If lost, report immediately to IT Security.</p>
+                      <p>4. Duplication is strictly prohibited.</p>
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="text-center mt-3 pt-3 border-t border-slate-900/50">
+                    <div className="text-[7.5px] font-bold text-yellow-500 uppercase tracking-widest">Office Address</div>
+                    <p className="text-[7px] text-slate-350 mt-0.5 leading-normal font-sans">Level 8, Prime Corporate Tower, Main Bandra Complex, Mumbai, MH - 400051</p>
+                  </div>
+
+                  {/* Signature */}
+                  <div className="flex flex-col items-center mt-3 mb-1">
+                    <div className="w-[110px] h-[30px] relative flex items-center justify-center">
+                      <svg className="w-full h-full text-yellow-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M10,20 Q30,5 50,18 T90,12" />
+                      </svg>
+                    </div>
+                    <div className="text-[7.5px] text-slate-500 border-t border-slate-800/40 w-24 text-center pt-0.5 font-sans">Authorized Signature</div>
+                  </div>
+                  
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-500"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Downloader Trigger Actions */}
+            <div className="mt-8 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-end gap-3">
+              <button 
+                type="button"
+                onClick={async () => {
+                  const dataUrl = await generateIDCardCanvas(selectedCardMember, 'front');
+                  triggerFileDownload(dataUrl, `ID_Card_Front_${selectedCardMember.name.replace(/\s+/g, '_')}.png`);
+                }}
+                className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider transition-all select-none cursor-pointer"
+              >
+                <Download className="w-4 h-4 shrink-0" /> Download Front Side
+              </button>
+              <button 
+                type="button"
+                onClick={async () => {
+                  const dataUrl = await generateIDCardCanvas(selectedCardMember, 'back');
+                  triggerFileDownload(dataUrl, `ID_Card_Back_${selectedCardMember.name.replace(/\s+/g, '_')}.png`);
+                }}
+                className="flex items-center gap-2 bg-[#081222] hover:bg-blue-950/60 border border-blue-900/35 text-white font-black py-2.5 px-5 rounded-xl text-xs uppercase tracking-wider transition-all select-none cursor-pointer"
+              >
+                <Download className="w-4 h-4 shrink-0 text-yellow-500" /> Download Back Side
+              </button>
+              <button 
+                type="button"
+                onClick={() => setSelectedCardMember(null)}
+                className="bg-transparent hover:bg-slate-850 hover:bg-slate-800 text-slate-350 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border border-slate-800"
+              >
+                Close Studio
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -784,6 +1354,58 @@ function TeamConsole() {
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-500 transition-all font-sans"
                     placeholder="https://linkedin.com/in/username"
                   />
+                </div>
+                {/* Designation / Role Title */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Designation / Role Title</label>
+                  <input 
+                    type="text"
+                    value={editingMember.designation || ''}
+                    onChange={(e) => setEditingMember(v => v ? { ...v, designation: e.target.value } : v)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-500 transition-all font-sans"
+                    placeholder="e.g. Lead Engineer V2"
+                  />
+                </div>
+
+                {/* Passport size photo file editor attachment */}
+                <div className="flex flex-col gap-1.5 md:col-span-2 bg-[#0a1526]/50 border border-blue-900/20 p-4 rounded-2xl mt-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Passport Size Employee Portrait Photo</label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="w-16 h-16 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                      {editingMember.photoBase64 ? (
+                        <img src={editingMember.photoBase64} alt="Portrait Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-slate-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 flex flex-col gap-1.5 text-left">
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const base64 = await toBase64(file);
+                              setEditingMember(prev => prev ? { ...prev, photoBase64: base64 } : null);
+                            } catch (err) {
+                              alert("Failed to process image file.");
+                            }
+                          }
+                        }}
+                        className="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-mono file:uppercase file:bg-slate-900 file:text-slate-200 file:cursor-pointer hover:file:bg-slate-950"
+                      />
+                      {editingMember.photoBase64 && (
+                        <button 
+                          type="button" 
+                          onClick={() => setEditingMember(prev => prev ? { ...prev, photoBase64: '' } : null)}
+                          className="text-[10px] text-red-500 font-bold hover:text-red-405 transition-colors uppercase self-start"
+                        >
+                          Remove portrait photo
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 

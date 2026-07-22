@@ -186,12 +186,12 @@ async function createV1HeaderBase64() {
         // Slogan text inside right yellow section
         ctx.fillStyle = '#010f24';
         ctx.textAlign = 'right';
-        ctx.font = '900 24px Inter, sans-serif';
-        ctx.fillText('THE', canvas.width - 70, 110);
-        ctx.font = '900 46px Inter, sans-serif';
-        ctx.fillText('UNIVERSAL', canvas.width - 70, 168);
-        ctx.font = '900 26px Inter, sans-serif';
-        ctx.fillText('LOCAL SUPPLY NETWORK', canvas.width - 70, 218);
+        ctx.font = '900 20px Inter, sans-serif';
+        ctx.fillText('THE', canvas.width - 120, 110);
+        ctx.font = '900 36px Inter, sans-serif';
+        ctx.fillText('UNIVERSAL', canvas.width - 120, 160);
+        ctx.font = '900 20px Inter, sans-serif';
+        ctx.fillText('LOCAL SUPPLY NETWORK', canvas.width - 120, 205);
 
         // Load and draw /assets/image.png logo on top-left
         const logoImg = new Image();

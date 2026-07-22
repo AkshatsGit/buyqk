@@ -980,10 +980,10 @@ export default function App() {
           className="h-[1.15in] w-auto object-contain" 
         />
       </div>
-      <div className="relative z-20 flex flex-col items-end justify-center h-full pt-1 pb-5 font-sans text-right select-none">
-        <span className="text-[8.5pt] font-black tracking-[0.32em] uppercase text-[#010f24] leading-none block mb-0.5">THE</span>
-        <span className="text-[14pt] font-black tracking-[0.16em] uppercase text-[#010f24] leading-none block mb-1">UNIVERSAL</span>
-        <span className="text-[9pt] font-black tracking-[0.14em] uppercase text-[#010f24] leading-none block">LOCAL SUPPLY NETWORK</span>
+      <div className="relative z-20 flex flex-col items-end justify-center h-full pt-1 pb-5 pr-6 font-sans text-right select-none">
+        <span className="text-[7pt] font-black tracking-[0.25em] uppercase text-[#010f24] leading-none block mb-1">THE</span>
+        <span className="text-[11pt] font-black tracking-[0.18em] uppercase text-[#010f24] leading-none block mb-1">UNIVERSAL</span>
+        <span className="text-[7pt] font-black tracking-[0.12em] uppercase text-[#010f24] leading-none block">LOCAL SUPPLY NETWORK</span>
       </div>
     </div>
   );
@@ -1132,10 +1132,10 @@ export default function App() {
         <div class="relative z-20 flex items-start h-full pt-2.5 pb-5">
           <img src="/assets/image.png" alt="buyQk Logo" style="height: 1.15in; width: auto; object-fit: contain;" />
         </div>
-        <div class="relative z-20 flex flex-col items-end justify-center h-full pt-1 pb-5 font-sans text-right">
-          <span style="font-size: 8.5pt; font-weight: 900; letter-spacing: 0.32em; text-transform: uppercase; color: #010f24; line-height: 1; display: block; margin-bottom: 2px;">THE</span>
-          <span style="font-size: 14pt; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; color: #010f24; line-height: 1; display: block; margin-bottom: 4px;">UNIVERSAL</span>
-          <span style="font-size: 9pt; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: #010f24; line-height: 1; display: block;">LOCAL SUPPLY NETWORK</span>
+        <div class="relative z-20 flex flex-col items-end justify-center h-full pt-1 pb-5 pr-6 font-sans text-right">
+          <span style="font-size: 7pt; font-weight: 900; letter-spacing: 0.25em; text-transform: uppercase; color: #010f24; line-height: 1; display: block; margin-bottom: 3px;">THE</span>
+          <span style="font-size: 11pt; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; color: #010f24; line-height: 1; display: block; margin-bottom: 3px;">UNIVERSAL</span>
+          <span style="font-size: 7pt; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; color: #010f24; line-height: 1; display: block;">LOCAL SUPPLY NETWORK</span>
         </div>
       `;
       pageCard.appendChild(headerDiv);

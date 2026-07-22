@@ -961,10 +961,10 @@ export default function App() {
   const renderDocumentHeader = () => (
     <div className="relative w-full h-[1.55in] bg-[#010f24] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0">
       <div className="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style={{ borderLeft: '6px solid #010f24' }} />
-      <div className="absolute top-2 right-2 flex gap-1 z-20">
-        <div className="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
-        <div className="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
-        <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
+      <div className="absolute top-2.5 right-3 flex gap-1 z-20">
+        <div className="w-1.5 h-1.5 bg-[#010f24]/30 rounded-full"></div>
+        <div className="w-1.5 h-1.5 bg-[#010f24]/40 rounded-full"></div>
+        <div className="w-1.5 h-1.5 bg-[#010f24]/50 rounded-full"></div>
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform z-10" style={{ clipPath: 'polygon(0 80%, 35% 0, 100% 100%, 0 100%)' }}></div>
       <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#010f24] transform z-10" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
@@ -974,6 +974,11 @@ export default function App() {
           alt="buyQk Logo" 
           className="h-[1.15in] w-auto object-contain" 
         />
+      </div>
+      <div className="relative z-20 flex flex-col items-end justify-center h-full pt-1 pb-6 font-sans text-right">
+        <span className="text-[7.5pt] font-black tracking-[0.18em] uppercase text-[#010f24] leading-tight block">THE UNIVERSAL</span>
+        <span className="text-[7.5pt] font-black tracking-[0.18em] uppercase text-[#010f24] leading-tight block">LOCAL SUPPLY</span>
+        <span className="text-[7.5pt] font-black tracking-[0.18em] uppercase text-[#010f24] leading-tight block">NETWORK</span>
       </div>
     </div>
   );
@@ -1090,15 +1095,20 @@ export default function App() {
       headerDiv.className = 'relative w-full h-[1.55in] bg-[#010f24] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0';
       headerDiv.innerHTML = `
         <div class="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style="border-left: 6px solid #010f24;"></div>
-        <div class="absolute top-2 right-2 flex gap-1 z-20">
-          <div class="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
-          <div class="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
-          <div class="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
+        <div class="absolute top-2.5 right-3 flex gap-1 z-20">
+          <div class="w-1.5 h-1.5 bg-[#010f24]/30 rounded-full"></div>
+          <div class="w-1.5 h-1.5 bg-[#010f24]/40 rounded-full"></div>
+          <div class="w-1.5 h-1.5 bg-[#010f24]/50 rounded-full"></div>
         </div>
         <div class="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform z-10" style="clip-path: polygon(0 80%, 35% 0, 100% 100%, 0 100%);"></div>
         <div class="absolute bottom-0 left-0 right-0 h-3 bg-[#010f24] transform z-10" style="clip-path: polygon(0 85%, 33% 20%, 100% 100%, 0 100%);"></div>
         <div class="relative z-20 flex items-start h-full pt-2.5 pb-5">
           <img src="/assets/image.png" alt="buyQk Logo" style="height: 1.15in; width: auto; object-fit: contain;" />
+        </div>
+        <div class="relative z-20 flex flex-col items-end justify-center h-full pt-1 pb-6 font-sans text-right">
+          <span style="font-size: 7.5pt; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; color: #010f24; line-height: 1.2; display: block;">THE UNIVERSAL</span>
+          <span style="font-size: 7.5pt; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; color: #010f24; line-height: 1.2; display: block;">LOCAL SUPPLY</span>
+          <span style="font-size: 7.5pt; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; color: #010f24; line-height: 1.2; display: block;">NETWORK</span>
         </div>
       `;
       pageCard.appendChild(headerDiv);

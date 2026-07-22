@@ -64,41 +64,53 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
   const [statusText, setStatusText] = useState<string>('');
   const [error, setError] = useState<string>('');
 
-  // AI / Local Regex Parsers
-  const parsePdfText = async (file: File): Promise<string> => {
+  // Dynamic loader for PDF.js library to guarantee client-side text scanning
+  const ensurePdfJsLoaded = async (): Promise<any> => {
+    if ((window as any).pdfjsLib) {
+      const lib = (window as any).pdfjsLib;
+      if (!lib.GlobalWorkerOptions?.workerSrc) {
+        lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+      return lib;
+    }
+
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const arrayBuffer = event.target?.result as ArrayBuffer;
-          if (!arrayBuffer) {
-            reject(new Error("Empty buffer"));
-            return;
-          }
-          const pdfjsLib = (window as any).pdfjsLib;
-          if (!pdfjsLib) {
-            resolve("");
-            return;
-          }
-          const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-          const pdf = await loadingTask.promise;
-          
-          let fullText = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            const pageText = content.items.map((item: any) => item.str).join(' ');
-            fullText += pageText + '\n';
-          }
-          resolve(fullText);
-        } catch (err) {
-          console.warn("PDF text parsing warning:", err);
-          resolve("");
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.onload = () => {
+        const lib = (window as any).pdfjsLib;
+        if (lib) {
+          lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
+        resolve(lib);
       };
-      reader.onerror = (err) => reject(err);
-      reader.readAsArrayBuffer(file);
+      script.onerror = () => reject(new Error("Failed to load PDF.js parser library"));
+      document.body.appendChild(script);
     });
+  };
+
+  // Client-side PDF text extraction via PDF.js worker
+  const parsePdfText = async (file: File): Promise<string> => {
+    try {
+      const pdfjsLib = await ensurePdfJsLoaded();
+      if (!pdfjsLib) return "";
+
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map((item: any) => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+      return fullText;
+    } catch (err) {
+      console.error("PDF.js text parsing error:", err);
+      return "";
+    }
   };
 
   const extractDataFromText = (text: string): ExtractedData => {
@@ -108,7 +120,7 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     // 1. Name Extraction
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     for (const line of lines) {
-      const match = line.match(/^Name\s*:\s*(.+)$/i);
+      const match = line.match(/^(?:Name|Candidate Name|Full Name)\s*:\s*(.+)$/i);
       if (match) {
         extracted.fullName = match[1].trim();
         break;
@@ -118,7 +130,7 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
       for (const line of lines) {
         const val = line.toLowerCase();
         if (val.includes('@') || val.includes('/') || val.includes(':') || /\d{5,}/.test(line)) continue;
-        if (val.includes('resume') || val.includes('curriculum') || val.includes('experience') || val.includes('education')) continue;
+        if (val.includes('resume') || val.includes('curriculum') || val.includes('experience') || val.includes('education') || val.includes('skills')) continue;
         if (line.length > 3 && line.length < 32 && /^[a-zA-Z\s]{4,30}$/.test(line)) {
           extracted.fullName = line;
           break;
@@ -130,7 +142,7 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     if (emailMatch) extracted.email = emailMatch[0];
 
-    const phoneMatch = text.match(/(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}/);
+    const phoneMatch = text.match(/(?:\+?\d{1,3}[- ]?)?\(?\d{3,4}\)?[- ]?\d{3,4}[- ]?\d{3,4}/);
     if (phoneMatch) extracted.phone = phoneMatch[0];
 
     // 3. Socials
@@ -144,12 +156,23 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     const knownSkills = [
       'React', 'React.js', 'TypeScript', 'JavaScript', 'Node.js', 'Express',
       'Python', 'Java', 'C++', 'TailwindCSS', 'Firebase', 'Next.js', 'SQL',
-      'MongoDB', 'Docker', 'Kubernetes', 'AWS', 'Git', 'Redux', 'GraphQL'
+      'MongoDB', 'Docker', 'Kubernetes', 'AWS', 'Git', 'Redux', 'GraphQL',
+      'HTML', 'CSS', 'Figma', 'Go', 'Rust', 'Flutter', 'REST API', 'Vite'
     ];
     const foundSkills = knownSkills.filter(sk => 
       new RegExp(`\\b${sk}\\b`, 'i').test(text)
     );
     if (foundSkills.length > 0) extracted.skills = foundSkills;
+
+    // 5. Education & Experience excerpts
+    if (text.toLowerCase().includes('education')) {
+      const eduIdx = text.toLowerCase().indexOf('education');
+      extracted.education = text.substring(eduIdx, eduIdx + 150).replace(/\s+/g, ' ').trim();
+    }
+    if (text.toLowerCase().includes('experience')) {
+      const expIdx = text.toLowerCase().indexOf('experience');
+      extracted.experience = text.substring(expIdx, expIdx + 180).replace(/\s+/g, ' ').trim();
+    }
 
     return extracted;
   };

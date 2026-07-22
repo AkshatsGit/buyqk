@@ -959,20 +959,20 @@ export default function App() {
   };
 
   const renderDocumentHeader = () => (
-    <div className="relative w-full h-[1.3in] bg-[#010f24] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0">
+    <div className="relative w-full h-[1.55in] bg-[#010f24] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0">
       <div className="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style={{ borderLeft: '6px solid #010f24' }} />
       <div className="absolute top-2 right-2 flex gap-1 z-20">
         <div className="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
         <div className="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
         <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style={{ clipPath: 'polygon(0 80%, 35% 0, 100% 100%, 0 100%)' }}></div>
-      <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#010f24] transform" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
-      <div className="relative z-10 flex items-center h-full py-1">
+      <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform z-10" style={{ clipPath: 'polygon(0 80%, 35% 0, 100% 100%, 0 100%)' }}></div>
+      <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#010f24] transform z-10" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
+      <div className="relative z-20 flex items-start h-full pt-2.5 pb-5">
         <img 
           src="/assets/image.png" 
           alt="buyQk Logo" 
-          className="h-[1.12in] w-auto object-contain" 
+          className="h-[1.15in] w-auto object-contain" 
         />
       </div>
     </div>
@@ -1087,7 +1087,7 @@ export default function App() {
 
       // 1. Render Header
       const headerDiv = document.createElement('div');
-      headerDiv.className = 'relative w-full h-[1.3in] bg-[#010f24] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0';
+      headerDiv.className = 'relative w-full h-[1.55in] bg-[#010f24] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0';
       headerDiv.innerHTML = `
         <div class="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style="border-left: 6px solid #010f24;"></div>
         <div class="absolute top-2 right-2 flex gap-1 z-20">
@@ -1095,10 +1095,10 @@ export default function App() {
           <div class="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
           <div class="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
         </div>
-        <div class="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style="clip-path: polygon(0 80%, 35% 0, 100% 100%, 0 100%);"></div>
-        <div class="absolute bottom-0 left-0 right-0 h-3 bg-[#010f24] transform" style="clip-path: polygon(0 85%, 33% 20%, 100% 100%, 0 100%);"></div>
-        <div class="relative z-10 flex items-center h-full py-1">
-          <img src="/assets/image.png" alt="buyQk Logo" style="height: 1.12in; width: auto; object-fit: contain;" />
+        <div class="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform z-10" style="clip-path: polygon(0 80%, 35% 0, 100% 100%, 0 100%);"></div>
+        <div class="absolute bottom-0 left-0 right-0 h-3 bg-[#010f24] transform z-10" style="clip-path: polygon(0 85%, 33% 20%, 100% 100%, 0 100%);"></div>
+        <div class="relative z-20 flex items-start h-full pt-2.5 pb-5">
+          <img src="/assets/image.png" alt="buyQk Logo" style="height: 1.15in; width: auto; object-fit: contain;" />
         </div>
       `;
       pageCard.appendChild(headerDiv);

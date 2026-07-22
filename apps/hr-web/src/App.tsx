@@ -1054,14 +1054,14 @@ export default function App() {
 
   const estimateVisualLines = (line: string): number => {
     const trimmed = line.trim();
-    if (!trimmed) return 0.2;
-    if (trimmed.startsWith('# ') || /^CHAPTER\s+\d+/i.test(trimmed)) return 1.8;
-    if (trimmed.startsWith('## ') || trimmed.startsWith('### ') || (/^[A-Z0-9\s&()’,.—]+$/.test(trimmed) && trimmed.length > 3 && trimmed === trimmed.toUpperCase())) return 1.4;
+    if (!trimmed) return 0.3;
+    if (trimmed.startsWith('# ') || /^CHAPTER\s+\d+/i.test(trimmed)) return 2.0;
+    if (trimmed.startsWith('## ') || trimmed.startsWith('### ') || (/^[A-Z0-9\s&()’,.—]+$/.test(trimmed) && trimmed.length > 3 && trimmed === trimmed.toUpperCase())) return 1.6;
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ') || /^\d+\.\s*/.test(trimmed)) {
       const textOnly = trimmed.replace(/^[-*•\d\.]+\s*/, '');
-      return Math.max(1, Math.ceil(textOnly.length / 90)) + 0.15;
+      return Math.max(1, Math.ceil(textOnly.length / 85)) + 0.2;
     }
-    return Math.max(1, Math.ceil(trimmed.length / 95)) + 0.2;
+    return Math.max(1, Math.ceil(trimmed.length / 90)) + 0.25;
   };
 
   const getPagesList = () => {
@@ -1077,11 +1077,11 @@ export default function App() {
 
       lines.forEach((line) => {
         const lineWeight = estimateVisualLines(line);
-        // Page 1 capacity: 50 visual lines (or 42 with CTC table)
-        // Subsequent pages capacity: 58 visual lines
+        // Page 1 capacity: 42 visual lines (or 34 with CTC table) for clean 0.4in bottom margin
+        // Subsequent pages capacity: 48 visual lines
         const hasCtcTable = !!ctc;
-        const page1Limit = hasCtcTable ? 42 : 50;
-        const activeCapacity = (finalPages.length === 0) ? page1Limit : 58;
+        const page1Limit = hasCtcTable ? 34 : 42;
+        const activeCapacity = (finalPages.length === 0) ? page1Limit : 48;
 
         if (currentVisualLines + lineWeight > activeCapacity && currentChunk.length > 0) {
           finalPages.push(currentChunk.join('\n'));
@@ -1431,7 +1431,7 @@ export default function App() {
     }
 
     return (
-      <div className="flex-1 flex flex-col justify-start px-[0.75in] py-3.5 overflow-hidden relative">
+      <div className="flex-1 flex flex-col justify-start px-[0.75in] pt-3.5 pb-6 overflow-hidden relative">
         <div className="flex-1">
           {isFirstPage && (
             <>

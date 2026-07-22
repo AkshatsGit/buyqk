@@ -19,7 +19,7 @@ export const isAllowedEmail = (email: string | null | undefined): boolean => {
   if (!email) return false;
   const cleanEmail = email.toLowerCase().trim();
   if (cleanEmail === SUPER_ADMIN_EMAIL.toLowerCase()) return true;
-  return /^buyq\..*@gmail\.com$/.test(cleanEmail);
+  return /^buyqk.*@gmail\.com$/.test(cleanEmail);
 };
 
 interface AuthContextType {

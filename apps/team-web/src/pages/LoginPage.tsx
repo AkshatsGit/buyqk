@@ -32,7 +32,7 @@ export const LoginPage: React.FC = () => {
 
           <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl text-left w-full text-xs text-slate-400 space-y-1.5 font-mono">
             <p className="font-bold text-yellow-400 uppercase tracking-wider text-[10px]">Access Policy:</p>
-            <p className="text-slate-300">&bull; Only official company Gmail accounts matching pattern <span className="text-yellow-400 font-bold">buyq.*@gmail.com</span> can log in.</p>
+            <p className="text-slate-300">&bull; Only official company Gmail accounts matching pattern <span className="text-yellow-400 font-bold">buyqk.*@gmail.com</span> can log in.</p>
             <p className="text-slate-300">&bull; Super Admin account: <span className="text-yellow-400 font-bold">akshat.srivastava098@gmail.com</span></p>
           </div>
 
@@ -105,7 +105,7 @@ export const LoginPage: React.FC = () => {
           </button>
 
           <p className="text-[11px] text-slate-400 font-medium">
-            Authorized Domain Policy: Only <span className="font-mono text-yellow-400 font-bold">buyq.*@gmail.com</span> emails are granted access.
+            Authorized Domain Policy: Only <span className="font-mono text-yellow-400 font-bold">buyqk.*@gmail.com</span> emails are granted access.
           </p>
         </div>
 

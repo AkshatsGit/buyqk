@@ -19,6 +19,43 @@ interface Props {
   onResumeUploaded: (resumeUrl: string, fileName: string, parsedData?: ExtractedData) => void;
 }
 
+// Smoothening Tool: Cleans, sanitizes and compresses extracted PDF text into a lightweight text file format
+export const smoothAndCleanResumeText = (rawText: string, originalFileName: string): string => {
+  if (!rawText || rawText.trim().length === 0) {
+    return `==================================================
+ BUYQK RESUME TEXT DOCUMENT (${originalFileName})
+ Generated: ${new Date().toISOString()}
+==================================================
+
+[Notice: PDF contained no readable text layer.]`;
+  }
+
+  // 1. Strip non-printable control characters
+  let cleaned = rawText.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ');
+
+  // 2. Normalize whitespace, remove double tabs and spaces
+  cleaned = cleaned.replace(/[ \t]+/g, ' ');
+
+  // 3. Remove excessive empty lines
+  cleaned = cleaned.replace(/\n\s*\n\s*\n+/g, '\n\n');
+
+  // 4. Split lines and filter noise
+  const lines = cleaned
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+
+  // 5. Add structured header metadata
+  const header = [
+    `==================================================`,
+    ` BUYQK SMOOTHED RESUME TEXT DOCUMENT (${originalFileName})`,
+    ` Processed & Storage-Optimized on ${new Date().toLocaleDateString('en-US', { dateStyle: 'full' })}`,
+    `==================================================\n`
+  ].join('\n');
+
+  return header + lines.join('\n');
+};
+
 export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResumeUploaded }) => {
   const [mode, setMode] = useState<'upload' | 'link'>('upload');
   const [resumeLink, setResumeLink] = useState<string>(initialResumeUrl || '');
@@ -40,7 +77,6 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
           }
           const pdfjsLib = (window as any).pdfjsLib;
           if (!pdfjsLib) {
-            // Fallback if pdf.js script is not loaded in window
             resolve("");
             return;
           }
@@ -57,7 +93,7 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
           resolve(fullText);
         } catch (err) {
           console.warn("PDF text parsing warning:", err);
-          resolve(""); // Gracefully resolve without failing upload
+          resolve("");
         }
       };
       reader.onerror = (err) => reject(err);
@@ -130,30 +166,31 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     setError('');
     setFile(selectedFile);
     setUploading(true);
-    setStatusText('Parsing Resume & Extracting AI Profile Details...');
+    setStatusText('Extracting PDF text & auto-filling profile...');
 
     try {
       // 1. Extract text via pdf.js
-      const fullText = await parsePdfText(selectedFile);
-      const parsedData = extractDataFromText(fullText);
+      const rawText = await parsePdfText(selectedFile);
+      const parsedData = extractDataFromText(rawText);
 
-      // 2. Upload PDF file to Firebase Storage as Base64
-      setStatusText('Uploading Resume PDF to Secure Firebase Storage...');
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64 = event.target?.result as string;
-        const filePath = `resumes/${uid}_${Date.now()}_${selectedFile.name}`;
-        const downloadUrl = await storageService.uploadBase64(filePath, base64);
+      // 2. Smoothen PDF text into lightweight clean text format
+      setStatusText('Smoothening & Compressing PDF Text Document...');
+      const smoothedText = smoothAndCleanResumeText(rawText, selectedFile.name);
 
-        setUploading(false);
-        setStatusText('');
-        onResumeUploaded(downloadUrl, selectedFile.name, parsedData);
-      };
-      reader.readAsDataURL(selectedFile);
+      // 3. Upload lightweight text file (.txt) to Firebase Storage
+      setStatusText('Storing Smoothened Text File into Firebase Storage...');
+      const txtFileName = selectedFile.name.replace(/\.pdf$/i, '') + '_resume.txt';
+      const filePath = `resumes/${uid}_${Date.now()}_${txtFileName}`;
+      
+      const downloadUrl = await storageService.uploadTextFile(filePath, smoothedText);
+
+      setUploading(false);
+      setStatusText('');
+      onResumeUploaded(downloadUrl, txtFileName, parsedData);
 
     } catch (err: any) {
       console.error("Resume upload/parsing error:", err);
-      setError(err.message || 'Error uploading resume. Please try again.');
+      setError(err.message || 'Error processing resume. Please try again.');
       setUploading(false);
     }
   };

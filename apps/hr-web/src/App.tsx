@@ -1052,33 +1052,47 @@ export default function App() {
     </div>
   );
 
+  const estimateVisualLines = (line: string): number => {
+    const trimmed = line.trim();
+    if (!trimmed) return 0.4;
+    if (trimmed.startsWith('# ') || /^CHAPTER\s+\d+/i.test(trimmed)) return 2.2;
+    if (trimmed.startsWith('## ') || trimmed.startsWith('### ') || (/^[A-Z0-9\s&()’,.—]+$/.test(trimmed) && trimmed.length > 3 && trimmed === trimmed.toUpperCase())) return 1.8;
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ') || /^\d+\.\s*/.test(trimmed)) {
+      const textOnly = trimmed.replace(/^[-*•\d\.]+\s*/, '');
+      return Math.max(1, Math.ceil(textOnly.length / 80)) + 0.3;
+    }
+    return Math.max(1, Math.ceil(trimmed.length / 85)) + 0.35;
+  };
+
   const getPagesList = () => {
     const basic = compiledText();
     const explicitPages = basic.split('⸻').map(p => p.trim()).filter(p => p.length > 0);
     
     const finalPages: string[] = [];
+
     explicitPages.forEach((page) => {
       const lines = page.split('\n');
-      const firstPageLimit = 42;
-      const nextPageLimit = 52;
-      
-      let initialLimit = (finalPages.length === 0) ? firstPageLimit : nextPageLimit;
+      let currentChunk: string[] = [];
+      let currentVisualLines = 0;
 
-      if (lines.length > initialLimit) {
-        let currentChunk: string[] = [];
-        lines.forEach((line) => {
-          currentChunk.push(line);
-          const activeLimit = (finalPages.length === 0) ? firstPageLimit : nextPageLimit;
-          if (currentChunk.length >= activeLimit) {
-            finalPages.push(currentChunk.join('\n'));
-            currentChunk = [];
-          }
-        });
-        if (currentChunk.length > 0) {
+      lines.forEach((line) => {
+        const lineWeight = estimateVisualLines(line);
+        // Page 1 capacity is ~32 visual lines (due to date, ref, header title, CTC table).
+        // Middle/later pages capacity is ~44 visual lines.
+        const activeCapacity = (finalPages.length === 0) ? 32 : 44;
+
+        if (currentVisualLines + lineWeight > activeCapacity && currentChunk.length > 0) {
           finalPages.push(currentChunk.join('\n'));
+          currentChunk = [line];
+          currentVisualLines = lineWeight;
+        } else {
+          currentChunk.push(line);
+          currentVisualLines += lineWeight;
         }
-      } else {
-        finalPages.push(page);
+      });
+
+      if (currentChunk.length > 0) {
+        finalPages.push(currentChunk.join('\n'));
       }
     });
 

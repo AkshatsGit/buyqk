@@ -959,7 +959,7 @@ export default function App() {
   };
 
   const renderDocumentHeader = () => (
-    <div className="relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.8in] overflow-hidden shrink-0">
+    <div className="relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0">
       <div className="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style={{ borderLeft: '6px solid #021835' }} />
       <div className="absolute top-2 right-2 flex gap-1 z-20">
         <div className="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
@@ -968,30 +968,12 @@ export default function App() {
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style={{ clipPath: 'polygon(0 80%, 35% 0, 100% 100%, 0 100%)' }}></div>
       <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#021835] transform" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
-      <div className="relative z-10 flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-            <svg className="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="6.5">
-              <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
-            </svg>
-            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 4h1.5l1.5 10h10l1.5-6H7.5" strokeLinecap="round" strokeLinejoin="round" />
-              <line x1="6" y1="9" x2="16" y2="9" strokeLinecap="round" />
-              <circle cx="8" cy="18" r="1.5" fill="currentColor" />
-              <circle cx="16" cy="18" r="1.5" fill="currentColor" />
-            </svg>
-          </div>
-          <div className="text-left font-sans">
-            <span className="text-3xl font-extrabold tracking-tight text-white">buy<span className="text-[#fbbc04]">Qk</span></span>
-            <span className="text-[7.5pt] block tracking-[0.25em] font-semibold text-[#fbbc04] uppercase">BUILDERS GATEWAY</span>
-          </div>
-        </div>
-        <div className="w-[1.5px] h-9 bg-white/20"></div>
-        <div className="text-left leading-normal font-sans">
-          <p className="text-[7pt] tracking-[0.18em] font-black uppercase text-slate-200">
-            THE UNIVERSAL<br/>LOCAL SUPPLY<br/>NETWORK
-          </p>
-        </div>
+      <div className="relative z-10 flex items-center h-full py-2">
+        <img 
+          src="/assets/image.png" 
+          alt="buyQk Logo" 
+          className="h-[1.05in] w-auto object-contain rounded-lg shadow-md" 
+        />
       </div>
     </div>
   );
@@ -1093,25 +1075,18 @@ export default function App() {
 
       // 1. Render Header
       const headerDiv = document.createElement('div');
-      headerDiv.className = 'relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.8in] overflow-hidden shrink-0';
+      headerDiv.className = 'relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0';
       headerDiv.innerHTML = `
         <div class="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style="border-left: 6px solid #021835;"></div>
-        <div class="relative z-10 flex items-center gap-4">
-          <div class="flex items-center gap-3">
-            <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
-              <svg class="absolute w-full h-full text-[#fbbc04]" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="6.5">
-                <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" />
-              </svg>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-white">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-              </svg>
-            </div>
-            <div class="text-left font-sans">
-              <span class="text-3xl font-extrabold tracking-tight text-white" style="font-size: 20pt; font-weight: 900;">buy<span class="text-[#fbbc04]">Qk</span></span>
-              <span class="text-[7.5pt] block tracking-[0.25em] font-semibold text-[#fbbc04] uppercase" style="font-size: 7.5pt;">CORPORATE POLICIES</span>
-            </div>
-          </div>
+        <div class="absolute top-2 right-2 flex gap-1 z-20">
+          <div class="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
+          <div class="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
+          <div class="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style="clip-path: polygon(0 80%, 35% 0, 100% 100%, 0 100%);"></div>
+        <div class="absolute bottom-0 left-0 right-0 h-3 bg-[#021835] transform" style="clip-path: polygon(0 85%, 33% 20%, 100% 100%, 0 100%);"></div>
+        <div class="relative z-10 flex items-center h-full py-2">
+          <img src="/assets/image.png" alt="buyQk Logo" style="height: 1.05in; width: auto; object-fit: contain; border-radius: 8px;" />
         </div>
       `;
       pageCard.appendChild(headerDiv);

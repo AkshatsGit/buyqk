@@ -681,6 +681,8 @@ export default function App() {
 
   // Chapters Policy Content from content.txt
   const [chaptersText, setChaptersText] = useState<string>('');
+  const [textAlign, setTextAlign] = useState<'justify' | 'left'>('justify');
+  
   // Document customization state (Adjustable Font Size)
   const [documentFontSize, setDocumentFontSize] = useState<number>(() => {
     const val = localStorage.getItem('bq_doc_font_size');
@@ -1055,13 +1057,19 @@ export default function App() {
     const explicitPages = basic.split('⸻').map(p => p.trim()).filter(p => p.length > 0);
     
     const finalPages: string[] = [];
-    explicitPages.forEach(page => {
+    explicitPages.forEach((page) => {
       const lines = page.split('\n');
-      if (lines.length > 34) {
+      const firstPageLimit = 42;
+      const nextPageLimit = 52;
+      
+      let initialLimit = (finalPages.length === 0) ? firstPageLimit : nextPageLimit;
+
+      if (lines.length > initialLimit) {
         let currentChunk: string[] = [];
         lines.forEach((line) => {
           currentChunk.push(line);
-          if (currentChunk.length >= 26) {
+          const activeLimit = (finalPages.length === 0) ? firstPageLimit : nextPageLimit;
+          if (currentChunk.length >= activeLimit) {
             finalPages.push(currentChunk.join('\n'));
             currentChunk = [];
           }
@@ -1290,6 +1298,22 @@ export default function App() {
     }
   };
 
+  const renderFormattedText = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*.*?\*\*|__.*?__|`.*?`)/g);
+    return parts.map((part, index) => {
+      if ((part.startsWith('**') && part.endsWith('**')) || (part.startsWith('__') && part.endsWith('__'))) {
+        const inner = part.slice(2, -2);
+        return <strong key={index} className="font-black text-[#021835]">{inner}</strong>;
+      }
+      if (part.startsWith('`') && part.endsWith('`')) {
+        const inner = part.slice(1, -1);
+        return <code key={index} className="font-mono bg-slate-100 text-slate-900 px-1 py-0.5 rounded text-[0.9em]">{inner}</code>;
+      }
+      return part;
+    });
+  };
+
   const renderPageContent = (pageText: string, isFirstPage: boolean, isLastPage: boolean) => {
     const lines = pageText.split('\n');
     const renderedElements: React.ReactNode[] = [];
@@ -1299,17 +1323,50 @@ export default function App() {
       const line = lines[i].trim();
       if (!line) continue;
       
+      const isH1 = line.startsWith('# ');
+      const isH2 = line.startsWith('## ');
+      const isH3 = line.startsWith('### ');
       const isChapterTitle = /^CHAPTER\s+\d+/i.test(line);
       const isMainTitle = /^[A-Z0-9\s&()’,.—]+$/.test(line) && line.length > 3 && line === line.toUpperCase();
       
-      if (isChapterTitle) {
+      if (isH1) {
+        renderedElements.push(
+          <h1 
+            key={keyCounter++} 
+            style={{ fontSize: `${documentFontSize + 3.5}pt` }}
+            className="font-black text-[#021835] uppercase tracking-wide mt-3 mb-1.5 font-sans border-b border-slate-200 pb-0.5"
+          >
+            {renderFormattedText(line.replace(/^#\s+/, ''))}
+          </h1>
+        );
+      } else if (isH2) {
+        renderedElements.push(
+          <h2 
+            key={keyCounter++} 
+            style={{ fontSize: `${documentFontSize + 2}pt` }}
+            className="font-black text-[#021835] uppercase tracking-wider mt-2.5 mb-1 font-sans"
+          >
+            {renderFormattedText(line.replace(/^##\s+/, ''))}
+          </h2>
+        );
+      } else if (isH3) {
+        renderedElements.push(
+          <h3 
+            key={keyCounter++} 
+            style={{ fontSize: `${documentFontSize + 1}pt` }}
+            className="font-extrabold text-[#021835] mt-2 mb-1 font-sans"
+          >
+            {renderFormattedText(line.replace(/^###\s+/, ''))}
+          </h3>
+        );
+      } else if (isChapterTitle) {
         renderedElements.push(
           <h2 
             key={keyCounter++} 
             style={{ fontSize: `${documentFontSize + 2.5}pt` }}
             className="font-black text-[#021835] uppercase tracking-wider mt-3 mb-1.5 font-sans border-b border-slate-100 pb-0.5"
           >
-            {line}
+            {renderFormattedText(line)}
           </h2>
         );
       } else if (isMainTitle) {
@@ -1319,18 +1376,18 @@ export default function App() {
             style={{ fontSize: `${documentFontSize + 1.5}pt` }}
             className="font-extrabold text-[#021835] mt-2 mb-1.5 font-sans"
           >
-            {line}
+            {renderFormattedText(line)}
           </h3>
         );
-      } else if (line.startsWith('*') || line.startsWith('•')) {
+      } else if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('• ')) {
         renderedElements.push(
           <div 
             key={keyCounter++} 
             style={{ fontSize: `${documentFontSize}pt` }}
-            className="flex items-start gap-2 text-slate-700 leading-hyper-tight mb-1 pl-4 font-sans text-justify"
+            className={`flex items-start gap-2 text-slate-700 leading-hyper-tight mb-1 pl-3 font-sans ${textAlign === 'left' ? 'text-left' : 'text-justify'}`}
           >
-            <span className="text-[#fbbc04] font-bold text-xs select-none mt-0.5">•</span>
-            <span className="flex-1">{line.replace(/^[\*•]\s*/, '')}</span>
+            <span className="text-[#fbbc04] font-black text-xs select-none mt-0.5">•</span>
+            <span className="flex-1">{renderFormattedText(line.replace(/^[-*•]\s*/, ''))}</span>
           </div>
         );
       } else if (/^\d+\.\s*/.test(line)) {
@@ -1338,10 +1395,10 @@ export default function App() {
           <div 
             key={keyCounter++} 
             style={{ fontSize: `${documentFontSize}pt` }}
-            className="flex items-start gap-2 text-slate-700 leading-hyper-tight mb-1 pl-4 font-sans text-justify"
+            className={`flex items-start gap-2 text-slate-700 leading-hyper-tight mb-1 pl-3 font-sans ${textAlign === 'left' ? 'text-left' : 'text-justify'}`}
           >
             <span className="text-[#021835] font-extrabold text-xs select-none mt-0.5">{line.match(/^\d+\./)?.[0]}</span>
-            <span className="flex-1">{line.replace(/^\d+\.\s*/, '')}</span>
+            <span className="flex-1">{renderFormattedText(line.replace(/^\d+\.\s*/, ''))}</span>
           </div>
         );
       } else {
@@ -1349,16 +1406,16 @@ export default function App() {
           <p 
             key={keyCounter++} 
             style={{ fontSize: `${documentFontSize}pt` }}
-            className="text-slate-700 leading-hyper-tight mb-1.5 font-sans text-justify"
+            className={`text-slate-700 leading-hyper-tight mb-1 font-sans ${textAlign === 'left' ? 'text-left' : 'text-justify'}`}
           >
-            {line}
+            {renderFormattedText(line)}
           </p>
         );
       }
     }
 
     return (
-      <div className="flex-1 flex flex-col justify-start px-[0.8in] py-4 overflow-hidden relative">
+      <div className="flex-1 flex flex-col justify-start px-[0.75in] py-3.5 overflow-hidden relative">
         <div className="flex-1">
           {isFirstPage && (
             <>
@@ -2072,6 +2129,34 @@ export default function App() {
                   className="flex-1 h-1.5 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-yellow-500"
                 />
                 <span className="text-[10px] text-slate-500 font-bold">12.5 pt</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2 border-t border-slate-800">
+              <span className="text-xs font-semibold text-slate-300">Paragraph Text Alignment</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTextAlign('justify')}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${
+                    textAlign === 'justify'
+                      ? 'bg-yellow-500 text-slate-950 border-yellow-400 font-extrabold shadow-gold-glow'
+                      : 'bg-slate-950/60 text-slate-400 border-blue-900/30 hover:text-white'
+                  }`}
+                >
+                  Justified Align
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTextAlign('left')}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${
+                    textAlign === 'left'
+                      ? 'bg-yellow-500 text-slate-950 border-yellow-400 font-extrabold shadow-gold-glow'
+                      : 'bg-slate-950/60 text-slate-400 border-blue-900/30 hover:text-white'
+                  }`}
+                >
+                  Left Align
+                </button>
               </div>
             </div>
           </div>

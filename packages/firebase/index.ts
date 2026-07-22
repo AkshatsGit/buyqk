@@ -23,6 +23,7 @@ import {
   serverTimestamp, Timestamp, writeBatch
 } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
+import { getDatabase, Database } from 'firebase/database';
 
 // ==========================================
 // FIREBASE INIT
@@ -44,6 +45,7 @@ let firebaseApp: FirebaseApp;
 let firebaseAuth: Auth;
 let db: Firestore;
 let storage: ReturnType<typeof getStorage>;
+let rtdb: Database;
 
 if (getApps().length === 0) {
   firebaseApp = initializeApp(firebaseConfig);
@@ -53,6 +55,7 @@ if (getApps().length === 0) {
 firebaseAuth = getAuth(firebaseApp);
 db = getFirestore(firebaseApp);
 storage = getStorage(firebaseApp);
+rtdb = getDatabase(firebaseApp);
 
 // ==========================================
 // STORAGE SERVICE
@@ -1018,8 +1021,8 @@ export const geminiService = {
   },
 };
 
-// Re-export db for any direct usage
-export { db, firebaseApp, firebaseAuth, storage };
+// Re-export db and rtdb for direct usage
+export { db, firebaseApp, firebaseAuth, storage, rtdb };
 export { CATEGORIES, BRANDS, DEFAULT_PLATFORM_SETTINGS };
 
 // Keep backward compat for legacy imports

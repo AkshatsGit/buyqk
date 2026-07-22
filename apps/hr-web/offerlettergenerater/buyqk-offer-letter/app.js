@@ -143,6 +143,72 @@ function formatDate(isoDate) {
 }
 
 
+async function createV1HeaderBase64() {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2100;
+        canvas.height = 380;
+        const ctx = canvas.getContext('2d');
+
+        // Background #010f24
+        ctx.fillStyle = '#010f24';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Yellow skewed polygon on right #fbbc04
+        ctx.fillStyle = '#fbbc04';
+        ctx.beginPath();
+        ctx.moveTo(canvas.width * 0.62, 0);
+        ctx.lineTo(canvas.width, 0);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(canvas.width * 0.76, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Bottom yellow accent polygon
+        ctx.fillStyle = '#fbbc04';
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 20);
+        ctx.lineTo(canvas.width * 0.35, canvas.height - 35);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#010f24';
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 12);
+        ctx.lineTo(canvas.width * 0.33, canvas.height - 25);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+
+        // Slogan text inside right yellow section
+        ctx.fillStyle = '#010f24';
+        ctx.textAlign = 'right';
+        ctx.font = '900 24px Inter, sans-serif';
+        ctx.fillText('THE', canvas.width - 70, 110);
+        ctx.font = '900 46px Inter, sans-serif';
+        ctx.fillText('UNIVERSAL', canvas.width - 70, 168);
+        ctx.font = '900 26px Inter, sans-serif';
+        ctx.fillText('LOCAL SUPPLY NETWORK', canvas.width - 70, 218);
+
+        // Load and draw /assets/image.png logo on top-left
+        const logoImg = new Image();
+        logoImg.onload = () => {
+            const aspect = logoImg.naturalWidth / logoImg.naturalHeight;
+            const logoH = 280;
+            const logoW = logoH * aspect;
+            ctx.drawImage(logoImg, 100, 20, logoW, logoH);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        logoImg.onerror = () => {
+            resolve(canvas.toDataURL('image/png'));
+        };
+        logoImg.src = '/assets/image.png';
+    });
+}
+
 // ════════════════════════════════════════════════════════════════
 //  CORE PDF BUILDER
 // ════════════════════════════════════════════════════════════════
@@ -151,7 +217,7 @@ async function buildPDF(fields) {
 
     // 1. Pre-load all images concurrently
     const [headerB64, footerB64, sigB64] = await Promise.all([
-        loadImageBase64('header.png'),
+        createV1HeaderBase64().catch(() => loadImageBase64('header.png')),
         loadImageBase64('footer.png'),
         loadImageBase64('signatures.png'),
     ]);

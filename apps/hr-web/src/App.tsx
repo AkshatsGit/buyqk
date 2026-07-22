@@ -19,6 +19,7 @@ interface CandidateRecord {
   date: string;
   refNo: string;
   customText: string;
+  headerTitle?: string;
   companyName?: string;
   companyCIN?: string;
   companyEmail?: string;
@@ -661,7 +662,8 @@ export default function App() {
   // Custom templates & body
   const [templateKey, setTemplateKey] = useState<keyof typeof DEFAULT_TEMPLATES>('tech');
   const [customText, setCustomText] = useState(DEFAULT_TEMPLATES.tech);
-  const [currentTab, setCurrentTab] = useState<'v1' | 'v2'>('v1');
+  const [headerTitle, setHeaderTitle] = useState('OFFER LETTER');
+  const [currentTab, setCurrentTab] = useState<'v1' | 'v2' | 'v3'>('v1');
 
   // Signatures State & Alignment Settings
   const [founderSign, setFounderSign] = useState<string>('');
@@ -828,6 +830,7 @@ export default function App() {
       expiryDate,
       date,
       refNo,
+      headerTitle: headerTitle || 'OFFER LETTER',
       customText,
       companyName,
       companyCIN,
@@ -862,6 +865,7 @@ export default function App() {
     setExpiryDate(rec.expiryDate || '');
     setDate(rec.date || '');
     setRefNo(rec.refNo || '');
+    setHeaderTitle(rec.headerTitle || 'OFFER LETTER');
     setCustomText(rec.customText || '');
     if (rec.companyName) setCompanyName(rec.companyName);
     if (rec.companyCIN) setCompanyCIN(rec.companyCIN);
@@ -885,6 +889,7 @@ export default function App() {
     setExpiryDate('');
     setDate(new Date().toISOString().split('T')[0]);
     setRefNo(`BQ/${new Date().getFullYear()}/HR-${Math.floor(100 + Math.random() * 900)}`);
+    setHeaderTitle('OFFER LETTER');
     setCustomText(DEFAULT_TEMPLATES.tech);
   };
 
@@ -1047,7 +1052,29 @@ export default function App() {
 
   const getPagesList = () => {
     const basic = compiledText();
-    return basic.split('⸻').map(p => p.trim()).filter(p => p.length > 0);
+    const explicitPages = basic.split('⸻').map(p => p.trim()).filter(p => p.length > 0);
+    
+    const finalPages: string[] = [];
+    explicitPages.forEach(page => {
+      const lines = page.split('\n');
+      if (lines.length > 34) {
+        let currentChunk: string[] = [];
+        lines.forEach((line) => {
+          currentChunk.push(line);
+          if (currentChunk.length >= 26) {
+            finalPages.push(currentChunk.join('\n'));
+            currentChunk = [];
+          }
+        });
+        if (currentChunk.length > 0) {
+          finalPages.push(currentChunk.join('\n'));
+        }
+      } else {
+        finalPages.push(page);
+      }
+    });
+
+    return finalPages.length > 0 ? finalPages : [''];
   };
 
   const handleDownloadHandbook = () => {
@@ -1366,7 +1393,9 @@ export default function App() {
               
               {/* Document Header Title block */}
               <div className="text-center my-3 flex flex-col items-center shrink-0">
-                <h1 className="text-[20pt] font-black tracking-tight text-[#021835] font-sans m-0">OFFER LETTER</h1>
+                <h1 className="text-[20pt] font-black tracking-tight text-[#021835] font-sans m-0 uppercase">
+                  {headerTitle || "OFFER LETTER"}
+                </h1>
                 <div className="flex items-center justify-center w-full max-w-[180px] mt-0.5 relative">
                   <div className="w-full h-[1.5px] bg-[#fbbc04]"></div>
                   <div className="absolute bg-white px-2">
@@ -1507,7 +1536,8 @@ export default function App() {
   };
 
   const executePDFDownload = (element: HTMLElement) => {
-    const filename = `Offer_Letter_${(name || "Candidate").trim().replace(/\s+/g, '_')}.pdf`;
+    const titlePrefix = (headerTitle || "Offer_Letter").trim().replace(/\s+/g, '_');
+    const filename = `${titlePrefix}_${(name || "Candidate").trim().replace(/\s+/g, '_')}.pdf`;
     const options = {
       margin: [0.3, 0.4, 0.4, 0.4],
       filename: filename,
@@ -1623,8 +1653,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Premium switcher for V1 vs V2 */}
-        <div className="flex items-center gap-2 border border-blue-900/30 bg-slate-950/80 p-0.5 rounded-xl">
+        {/* Premium switcher for V1, V2, V3 */}
+        <div className="flex items-center gap-1 border border-blue-900/30 bg-slate-950/80 p-1 rounded-xl">
           <button 
             type="button"
             onClick={() => setCurrentTab('v1')}
@@ -1648,10 +1678,22 @@ export default function App() {
           >
             Offer letter generator V2
           </button>
+
+          <button 
+            type="button"
+            onClick={() => setCurrentTab('v3')}
+            className={`px-3 py-1.5 font-sans font-extrabold text-[10px] uppercase tracking-wider rounded-lg transition-all duration-300 cursor-pointer ${
+              currentTab === 'v3' 
+                ? 'bg-yellow-500 text-slate-950 shadow-gold-glow font-black' 
+                : 'text-slate-400 hover:text-white hover:bg-slate-900/70'
+            }`}
+          >
+            Offer letter generator V3
+          </button>
         </div>
         
         <div className="flex items-center gap-3 font-sans">
-          {currentTab === 'v1' && (
+          {(currentTab === 'v1' || currentTab === 'v3') && (
             <>
               <button 
                 onClick={createNewDraft} 
@@ -1690,7 +1732,7 @@ export default function App() {
       </header>
 
       {/* Main split dashboard content */}
-      {currentTab === 'v1' ? (
+      {(currentTab === 'v1' || currentTab === 'v3') ? (
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
         {/* Left Side: Form parameters & History */}
@@ -1745,6 +1787,17 @@ export default function App() {
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 border-b border-slate-800 pb-3">
               <User className="w-4 h-4 text-yellow-500" /> 1. Candidate Custom Fields
             </h3>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] uppercase font-bold text-slate-455">Document Header Title (e.g. OFFER LETTER)</label>
+              <input 
+                type="text" 
+                value={headerTitle} 
+                placeholder="e.g. OFFER LETTER, APPOINTMENT LETTER, AGREEMENT"
+                onChange={e => setHeaderTitle(e.target.value)}
+                className="w-full bg-slate-950/60 border border-blue-900/30 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500/60 text-xs font-semibold uppercase tracking-wider"
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">

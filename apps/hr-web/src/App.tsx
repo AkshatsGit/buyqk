@@ -959,72 +959,84 @@ export default function App() {
   };
 
   const renderDocumentHeader = () => (
-    <div className="relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0">
-      <div className="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style={{ borderLeft: '6px solid #021835' }} />
+    <div className="relative w-full h-[1.3in] bg-[#010f24] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0">
+      <div className="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style={{ borderLeft: '6px solid #010f24' }} />
       <div className="absolute top-2 right-2 flex gap-1 z-20">
         <div className="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
         <div className="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
         <div className="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style={{ clipPath: 'polygon(0 80%, 35% 0, 100% 100%, 0 100%)' }}></div>
-      <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#021835] transform" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
-      <div className="relative z-10 flex items-center h-full py-2">
+      <div className="absolute bottom-0 left-0 right-0 h-3 bg-[#010f24] transform" style={{ clipPath: 'polygon(0 85%, 33% 20%, 100% 100%, 0 100%)' }} />
+      <div className="relative z-10 flex items-center h-full py-1">
         <img 
           src="/assets/image.png" 
           alt="buyQk Logo" 
-          className="h-[1.05in] w-auto object-contain rounded-lg shadow-md" 
+          className="h-[1.12in] w-auto object-contain" 
         />
       </div>
     </div>
   );
 
-  const renderDocumentFooter = () => (
-    <div className="relative w-full h-[0.9in] bg-[#021835] text-white flex items-center justify-between pl-0 pr-[0.8in] overflow-hidden shrink-0 mt-auto">
-      <div className="relative h-full w-[20%] bg-[#fbbc04] flex items-center justify-center pr-3 shrink-0" style={{ clipPath: 'polygon(0 0, 82% 0, 100% 100%, 0 100%)' }}>
-        <svg className="w-8 h-8 text-[#021835]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
-          <path d="M12 2C6.5 2 2 6.5 2 12c0 2 1 3.5 1 3.5s1.5-1 3.5-1c3 0 5.5-2.5 5.5-5.5" />
-          <path d="M22 2l-3 3-5-2-4 4 3 3-3 3 2 2 3-3 3 3 4-4-2-5 3-3z" />
-        </svg>
-      </div>
-      <div className="text-left leading-normal shrink-0 font-sans tracking-wide">
-        <span className="text-[7.5pt] font-black text-white">FIND ANYTHING.<br/></span>
-        <span className="text-[7.5pt] font-black text-[#fbbc04]">DELIVER ANYTHING.<br/></span>
-        <span className="text-[7.5pt] font-black text-white font-mono">INSTANTLY.</span>
-      </div>
-      <div className="w-[1px] h-9 bg-white/10 shrink-0"></div>
-      <div className="flex items-center gap-6 font-sans shrink-0">
-        <div className="flex flex-col items-center gap-0.5">
-          <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" />
-            <path d="M3 11L12 2l9 9" />
+  const renderDocumentFooter = (pageNumber?: number, totalPages?: number) => (
+    <div className="relative w-full h-[0.9in] bg-[#010f24] text-white flex items-center justify-between pl-0 pr-[0.6in] overflow-hidden shrink-0 mt-auto">
+      <div className="relative h-full w-[22%] bg-[#fbbc04] flex items-center justify-center pr-3 shrink-0" style={{ clipPath: 'polygon(0 0, 84% 0, 100% 100%, 0 100%)' }}>
+        <div className="flex items-center gap-1.5 text-[#010f24] font-sans">
+          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
-          <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Local<br/>Sellers</span>
+          <span className="font-black text-xs uppercase tracking-wider">buyQk</span>
+        </div>
+      </div>
+      <div className="text-left leading-tight shrink-0 font-sans">
+        <span className="text-[7.5pt] font-black text-white block">FIND ANYTHING.</span>
+        <span className="text-[7.5pt] font-black text-[#fbbc04] block">DELIVER ANYTHING.</span>
+        <span className="text-[7.5pt] font-black text-white font-mono tracking-wider block">INSTANTLY.</span>
+      </div>
+      <div className="w-[1px] h-8 bg-white/15 shrink-0"></div>
+      <div className="flex items-center gap-5 font-sans shrink-0">
+        <div className="flex flex-col items-center text-center gap-0.5">
+          <svg className="w-4 h-4 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span className="text-[5.5pt] font-bold uppercase text-slate-200 tracking-wider leading-tight">Local<br/>Sellers</span>
         </div>
         <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
-        <div className="flex flex-col items-center gap-0.5">
-          <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="flex flex-col items-center text-center gap-0.5">
+          <svg className="w-4 h-4 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
           </svg>
-          <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Happy<br/>Customers</span>
+          <span className="text-[5.5pt] font-bold uppercase text-slate-200 tracking-wider leading-tight">Happy<br/>Customers</span>
         </div>
         <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
-        <div className="flex flex-col items-center gap-0.5">
-          <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="2" y="7" width="20" height="14" rx="2" />
-            <path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" strokeLinecap="round" strokeLinejoin="round" />
+        <div className="flex flex-col items-center text-center gap-0.5">
+          <svg className="w-4 h-4 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="1" y="3" width="15" height="13" rx="2" />
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+            <circle cx="5.5" cy="18.5" r="2.5" />
+            <circle cx="18.5" cy="18.5" r="2.5" />
           </svg>
-          <span className="text-[5pt] font-black uppercase text-[#fbbc04] tracking-wider font-semibold">Fast & Reliable<br/>Delivery</span>
+          <span className="text-[5.5pt] font-bold uppercase text-[#fbbc04] tracking-wider leading-tight">Fast & Reliable<br/>Delivery</span>
         </div>
         <div className="w-[1px] h-7 bg-white/10 shrink-0"></div>
-        <div className="flex flex-col items-center gap-0.5">
-          <svg className="w-3.5 h-3.5 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="flex flex-col items-center text-center gap-0.5">
+          <svg className="w-4 h-4 text-[#fbbc04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
-          <span className="text-[5pt] font-black uppercase text-slate-300 tracking-wider">Safe &<br/>Secure</span>
+          <span className="text-[5.5pt] font-bold uppercase text-slate-200 tracking-wider leading-tight">Safe &<br/>Secure</span>
         </div>
       </div>
+      {pageNumber && totalPages && (
+        <>
+          <div className="w-[1px] h-8 bg-white/15 shrink-0"></div>
+          <div className="text-right font-sans font-mono shrink-0">
+            <span className="text-[7pt] font-extrabold text-[#fbbc04] block">PAGE {pageNumber} OF {totalPages}</span>
+            <span className="text-[5pt] font-bold text-slate-400 block tracking-widest uppercase">CONFIDENTIAL</span>
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -1075,18 +1087,18 @@ export default function App() {
 
       // 1. Render Header
       const headerDiv = document.createElement('div');
-      headerDiv.className = 'relative w-full h-[1.3in] bg-[#021835] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0';
+      headerDiv.className = 'relative w-full h-[1.3in] bg-[#010f24] text-white flex items-center justify-between px-[0.6in] overflow-hidden shrink-0';
       headerDiv.innerHTML = `
-        <div class="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style="border-left: 6px solid #021835;"></div>
+        <div class="absolute top-0 right-0 w-[38%] h-full bg-[#fbbc04] transform skew-x-[-30deg] translate-x-[20%]" style="border-left: 6px solid #010f24;"></div>
         <div class="absolute top-2 right-2 flex gap-1 z-20">
           <div class="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
           <div class="w-1.5 h-1.5 bg-white/25 rounded-full"></div>
           <div class="w-1.5 h-1.5 bg-white/30 rounded-full"></div>
         </div>
         <div class="absolute bottom-0 left-0 right-0 h-4 bg-[#fbbc04] transform" style="clip-path: polygon(0 80%, 35% 0, 100% 100%, 0 100%);"></div>
-        <div class="absolute bottom-0 left-0 right-0 h-3 bg-[#021835] transform" style="clip-path: polygon(0 85%, 33% 20%, 100% 100%, 0 100%);"></div>
-        <div class="relative z-10 flex items-center h-full py-2">
-          <img src="/assets/image.png" alt="buyQk Logo" style="height: 1.05in; width: auto; object-fit: contain; border-radius: 8px;" />
+        <div class="absolute bottom-0 left-0 right-0 h-3 bg-[#010f24] transform" style="clip-path: polygon(0 85%, 33% 20%, 100% 100%, 0 100%);"></div>
+        <div class="relative z-10 flex items-center h-full py-1">
+          <img src="/assets/image.png" alt="buyQk Logo" style="height: 1.12in; width: auto; object-fit: contain;" />
         </div>
       `;
       pageCard.appendChild(headerDiv);
@@ -1192,21 +1204,22 @@ export default function App() {
 
       // 3. Render Footer
       const footerDiv = document.createElement('div');
-      footerDiv.className = 'relative w-full h-[0.9in] bg-[#021835] text-white flex items-center justify-between pl-0 pr-[0.8in] overflow-hidden shrink-0';
+      footerDiv.className = 'relative w-full h-[0.9in] bg-[#010f24] text-white flex items-center justify-between pl-0 pr-[0.6in] overflow-hidden shrink-0';
       footerDiv.innerHTML = `
-        <div class="relative h-full w-[20%] bg-[#fbbc04] flex items-center justify-center pr-3 shrink-0" style="clip-path: polygon(0 0, 82% 0, 100% 100%, 0 100%);">
-          <svg class="w-8 h-8 text-[#021835]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
-            <path d="M12 2C6.5 2 2 6.5 2 12c0 2 1 3.5 1 3.5s1.5-1 3.5-1c3 0 5.5-2.5 5.5-5.5" />
-            <path d="M22 2l-3 3-5-2-4 4 3 3-3 3 2 2 3-3 3 3 4-4-2-5 3-3z" />
-          </svg>
+        <div class="relative h-full w-[22%] bg-[#fbbc04] flex items-center justify-center pr-3 shrink-0" style="clip-path: polygon(0 0, 84% 0, 100% 100%, 0 100%);">
+          <div class="flex items-center gap-1.5 text-[#010f24] font-sans">
+            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <span class="font-black text-xs uppercase tracking-wider">buyQk</span>
+          </div>
         </div>
-        <div class="text-left leading-normal shrink-0 font-sans tracking-wide">
-          <span class="text-[7.5pt] font-black text-white" style="font-size: 7.5pt;">BUILD. BELIEVE. BELONG.<br/></span>
-          <span class="text-[7.5pt] font-black text-[#fbbc04]" style="font-size: 7.5pt;">BUYQK CORPORATE POLICIES.</span>
+        <div class="text-left leading-tight shrink-0 font-sans">
+          <span class="text-[7.5pt] font-black text-white block">BUILD. BELIEVE. BELONG.</span>
+          <span class="text-[7.5pt] font-black text-[#fbbc04] block">BUYQK CORPORATE POLICIES.</span>
         </div>
-        <div style="width: 1px; height: 36px; background-color: rgba(255, 255, 255, 0.1);"></div>
-        <div class="text-[#fbbc04] font-black text-xs font-mono tracking-wider shrink-0" style="font-size: 9pt; color: #fbbc04; font-weight: 900; font-family: monospace;">
+        <div style="width: 1px; height: 32px; background-color: rgba(255, 255, 255, 0.15);"></div>
+        <div class="text-[#fbbc04] font-black text-xs font-mono tracking-wider shrink-0" style="font-size: 8.5pt; color: #fbbc04; font-weight: 900; font-family: monospace;">
           PAGE ${index + 1} OF ${handbookChapters.length}
         </div>
       `;
@@ -2284,7 +2297,7 @@ export default function App() {
                 >
                   {renderDocumentHeader()}
                   {renderPageContent(pageText, isFirstPage, isLastPage)}
-                  {renderDocumentFooter()}
+                  {renderDocumentFooter(pageIndex + 1, pages.length)}
                 </div>
               );
             })}

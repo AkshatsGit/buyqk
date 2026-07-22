@@ -155,13 +155,19 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     // 4. Skills Tags
     const knownSkills = [
       'React', 'React.js', 'TypeScript', 'JavaScript', 'Node.js', 'Express',
-      'Python', 'Java', 'C++', 'TailwindCSS', 'Firebase', 'Next.js', 'SQL',
+      'Python', 'Java', 'C++', 'C#', 'TailwindCSS', 'Firebase', 'Next.js', 'SQL',
       'MongoDB', 'Docker', 'Kubernetes', 'AWS', 'Git', 'Redux', 'GraphQL',
       'HTML', 'CSS', 'Figma', 'Go', 'Rust', 'Flutter', 'REST API', 'Vite'
     ];
-    const foundSkills = knownSkills.filter(sk => 
-      new RegExp(`\\b${sk}\\b`, 'i').test(text)
-    );
+    const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const foundSkills = knownSkills.filter(sk => {
+      try {
+        const escaped = escapeRegExp(sk);
+        return new RegExp(`(?:^|[^a-zA-Z0-9+#.])${escaped}(?:$|[^a-zA-Z0-9+#.])`, 'i').test(text);
+      } catch (_) {
+        return text.toLowerCase().includes(sk.toLowerCase());
+      }
+    });
     if (foundSkills.length > 0) extracted.skills = foundSkills;
 
     // 5. Education & Experience excerpts

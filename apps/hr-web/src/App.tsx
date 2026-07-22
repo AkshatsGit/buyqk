@@ -1052,49 +1052,31 @@ export default function App() {
     </div>
   );
 
-  const estimateVisualLines = (line: string): number => {
-    const trimmed = line.trim();
-    if (!trimmed) return 0.3;
-    if (trimmed.startsWith('# ') || /^CHAPTER\s+\d+/i.test(trimmed)) return 2.0;
-    if (trimmed.startsWith('## ') || trimmed.startsWith('### ') || (/^[A-Z0-9\s&()’,.—]+$/.test(trimmed) && trimmed.length > 3 && trimmed === trimmed.toUpperCase())) return 1.6;
-    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ') || /^\d+\.\s*/.test(trimmed)) {
-      const textOnly = trimmed.replace(/^[-*•\d\.]+\s*/, '');
-      return Math.max(1, Math.ceil(textOnly.length / 85)) + 0.2;
-    }
-    return Math.max(1, Math.ceil(trimmed.length / 90)) + 0.25;
-  };
-
   const getPagesList = () => {
     const basic = compiledText();
     const explicitPages = basic.split('⸻').map(p => p.trim()).filter(p => p.length > 0);
     
     const finalPages: string[] = [];
-
     explicitPages.forEach((page) => {
       const lines = page.split('\n');
-      let currentChunk: string[] = [];
-      let currentVisualLines = 0;
+      const firstPageLimit = 26;
+      const nextPageLimit = 30;
 
-      lines.forEach((line) => {
-        const lineWeight = estimateVisualLines(line);
-        // Page 1 capacity: 42 visual lines (or 34 with CTC table) for clean 0.4in bottom margin
-        // Subsequent pages capacity: 48 visual lines
-        const hasCtcTable = !!ctc;
-        const page1Limit = hasCtcTable ? 34 : 42;
-        const activeCapacity = (finalPages.length === 0) ? page1Limit : 48;
-
-        if (currentVisualLines + lineWeight > activeCapacity && currentChunk.length > 0) {
-          finalPages.push(currentChunk.join('\n'));
-          currentChunk = [line];
-          currentVisualLines = lineWeight;
-        } else {
+      if (lines.length > (finalPages.length === 0 ? firstPageLimit : nextPageLimit)) {
+        let currentChunk: string[] = [];
+        lines.forEach((line) => {
           currentChunk.push(line);
-          currentVisualLines += lineWeight;
+          const limit = (finalPages.length === 0) ? firstPageLimit : nextPageLimit;
+          if (currentChunk.length >= limit) {
+            finalPages.push(currentChunk.join('\n'));
+            currentChunk = [];
+          }
+        });
+        if (currentChunk.length > 0) {
+          finalPages.push(currentChunk.join('\n'));
         }
-      });
-
-      if (currentChunk.length > 0) {
-        finalPages.push(currentChunk.join('\n'));
+      } else {
+        finalPages.push(page);
       }
     });
 
@@ -1431,7 +1413,7 @@ export default function App() {
     }
 
     return (
-      <div className="flex-1 flex flex-col justify-start px-[0.75in] pt-3.5 pb-6 overflow-hidden relative">
+      <div className="flex-1 flex flex-col justify-start px-[0.8in] pt-[0.4in] pb-[0.8in] overflow-hidden relative">
         <div className="flex-1">
           {isFirstPage && (
             <>

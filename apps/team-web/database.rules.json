@@ -13,6 +13,10 @@
     "messages": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "calls": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }

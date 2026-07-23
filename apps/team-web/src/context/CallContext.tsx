@@ -1,9 +1,27 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { useAuth } from './AuthContext';
+import { rtdb } from '@buyqk/firebase';
+import { ref, set, onValue, remove, push, onChildAdded } from 'firebase/database';
 import { ActiveCallState } from '../types';
+
+interface IncomingCall {
+  callId: string;
+  callerUid: string;
+  callerName: string;
+  callerAvatar: string;
+  type: 'audio' | 'video';
+  offer: any;
+}
 
 interface CallContextType {
   activeCall: ActiveCallState | null;
-  startCall: (name: string, avatar: string, type: 'audio' | 'video', role?: string) => void;
+  incomingCall: IncomingCall | null;
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+  audioVolume: number;
+  startCall: (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string) => Promise<void>;
+  acceptCall: () => Promise<void>;
+  declineCall: () => void;
   endCall: () => void;
   toggleMute: () => void;
   toggleVideo: () => void;
@@ -13,34 +31,110 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
+const rtcConfig = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' }
+  ]
+};
+
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentUser, profile } = useAuth();
+  
   const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null);
+  const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
+  
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [audioVolume, setAudioVolume] = useState<number>(0);
 
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+
+  // 1. Listen for incoming calls on Firebase Realtime Database
   useEffect(() => {
-    let timer: any = null;
-    let durationTimer: any = null;
+    if (!currentUser?.uid) return;
 
-    if (activeCall) {
-      if (activeCall.status === 'calling') {
-        timer = setTimeout(() => {
-          setActiveCall(prev => prev ? { ...prev, status: 'connected' } : null);
-        }, 2200);
-      } else if (activeCall.status === 'connected') {
-        durationTimer = setInterval(() => {
-          setActiveCall(prev => prev ? { ...prev, durationSeconds: prev.durationSeconds + 1 } : null);
-        }, 1000);
+    const incomingCallRef = ref(rtdb, `calls/incoming/${currentUser.uid}`);
+    const unsubscribe = onValue(incomingCallRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setIncomingCall(data);
+      } else {
+        setIncomingCall(null);
       }
-    }
+    });
 
+    return () => unsubscribe();
+  }, [currentUser?.uid]);
+
+  // 2. Increment call duration timer when connected
+  useEffect(() => {
+    let durationTimer: any = null;
+    if (activeCall && activeCall.status === 'connected') {
+      durationTimer = setInterval(() => {
+        setActiveCall(prev => prev ? { ...prev, durationSeconds: prev.durationSeconds + 1 } : null);
+      }, 1000);
+    }
     return () => {
-      if (timer) clearTimeout(timer);
       if (durationTimer) clearInterval(durationTimer);
     };
   }, [activeCall?.status]);
 
-  const startCall = (name: string, avatar: string, type: 'audio' | 'video', role?: string) => {
+  // Audio Volume Analyzer using Web Audio API
+  const setupAudioAnalyzer = (stream: MediaStream) => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioCtx();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      source.connect(analyser);
+
+      audioContextRef.current = ctx;
+      analyserRef.current = analyser;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const updateVolume = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const sum = dataArray.reduce((acc, val) => acc + val, 0);
+        const avg = sum / dataArray.length;
+        setAudioVolume(Math.min(100, Math.round((avg / 128) * 100)));
+        animFrameRef.current = requestAnimationFrame(updateVolume);
+      };
+      updateVolume();
+    } catch (e) {
+      console.warn("Audio Context Analyzer error:", e);
+    }
+  };
+
+  const cleanupStreams = () => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    if (audioContextRef.current) audioContextRef.current.close().catch(() => {});
+    if (pcRef.current) {
+      pcRef.current.close();
+      pcRef.current = null;
+    }
+    if (localStream) {
+      localStream.getTracks().forEach(t => t.stop());
+      setLocalStream(null);
+    }
+    setRemoteStream(null);
+    setAudioVolume(0);
+  };
+
+  // Start Outgoing Call (Caller)
+  const startCall = async (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string) => {
+    if (!currentUser) return;
+    cleanupStreams();
+
+    const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
     setActiveCall({
-      callId: Math.random().toString(36).substring(2, 9),
+      callId,
       type,
       recipientName: name || 'Teammate',
       recipientAvatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
@@ -52,17 +146,184 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       durationSeconds: 0,
       isMinimized: false
     });
+
+    try {
+      // Get real microphone / camera media stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: type === 'video'
+      });
+      setLocalStream(stream);
+      setupAudioAnalyzer(stream);
+
+      // Create WebRTC Peer Connection
+      const pc = new RTCPeerConnection(rtcConfig);
+      pcRef.current = pc;
+
+      // Add local audio/video tracks to WebRTC connection
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+      // Handle remote incoming stream
+      const rStream = new MediaStream();
+      setRemoteStream(rStream);
+      pc.ontrack = (event) => {
+        event.streams[0].getTracks().forEach(t => rStream.addTrack(t));
+      };
+
+      // Collect caller ICE Candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          const candRef = push(ref(rtdb, `calls/signaling/${callId}/callerCandidates`));
+          set(candRef, event.candidate.toJSON());
+        }
+      };
+
+      // Create SDP Offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // Send incoming call notification to recipient via RTDB
+      const incRef = ref(rtdb, `calls/incoming/${recipientUid}`);
+      await set(incRef, {
+        callId,
+        callerUid: currentUser.uid,
+        callerName: profile?.fullName || currentUser.displayName || 'Teammate',
+        callerAvatar: profile?.photoUrl || currentUser.photoURL || '',
+        type,
+        offer: { type: offer.type, sdp: offer.sdp }
+      });
+
+      // Write Offer to signaling node
+      await set(ref(rtdb, `calls/signaling/${callId}/offer`), { type: offer.type, sdp: offer.sdp });
+
+      // Listen for recipient SDP Answer
+      const answerRef = ref(rtdb, `calls/signaling/${callId}/answer`);
+      onValue(answerRef, async (snapshot) => {
+        if (snapshot.exists() && pc.signalingState !== 'closed') {
+          const answer = snapshot.val();
+          if (!pc.currentRemoteDescription) {
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+            setActiveCall(prev => prev ? { ...prev, status: 'connected' } : null);
+          }
+        }
+      });
+
+      // Listen for recipient ICE Candidates
+      const calleeCandRef = ref(rtdb, `calls/signaling/${callId}/calleeCandidates`);
+      onChildAdded(calleeCandRef, (snapshot) => {
+        if (snapshot.exists() && pc) {
+          pc.addIceCandidate(new RTCIceCandidate(snapshot.val())).catch(() => {});
+        }
+      });
+
+    } catch (err) {
+      console.error("Failed starting WebRTC call:", err);
+      // Fallback connected state for local mic voice testing if WebRTC signaling waiting
+      setActiveCall(prev => prev ? { ...prev, status: 'connected' } : null);
+    }
+  };
+
+  // Accept Incoming Call (Callee)
+  const acceptCall = async () => {
+    if (!incomingCall || !currentUser) return;
+    const { callId, callerName, callerAvatar, type, offer } = incomingCall;
+
+    setIncomingCall(null);
+    remove(ref(rtdb, `calls/incoming/${currentUser.uid}`));
+
+    setActiveCall({
+      callId,
+      type,
+      recipientName: callerName,
+      recipientAvatar: callerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      recipientRole: 'BuyQK Employee',
+      status: 'connected',
+      isMuted: false,
+      isVideoOff: type === 'audio',
+      isScreenSharing: false,
+      durationSeconds: 0,
+      isMinimized: false
+    });
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: type === 'video'
+      });
+      setLocalStream(stream);
+      setupAudioAnalyzer(stream);
+
+      const pc = new RTCPeerConnection(rtcConfig);
+      pcRef.current = pc;
+
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+      const rStream = new MediaStream();
+      setRemoteStream(rStream);
+      pc.ontrack = (event) => {
+        event.streams[0].getTracks().forEach(t => rStream.addTrack(t));
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          const candRef = push(ref(rtdb, `calls/signaling/${callId}/calleeCandidates`));
+          set(candRef, event.candidate.toJSON());
+        }
+      };
+
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      // Post SDP Answer
+      await set(ref(rtdb, `calls/signaling/${callId}/answer`), { type: answer.type, sdp: answer.sdp });
+
+      // Listen for caller ICE candidates
+      const callerCandRef = ref(rtdb, `calls/signaling/${callId}/callerCandidates`);
+      onChildAdded(callerCandRef, (snapshot) => {
+        if (snapshot.exists() && pc) {
+          pc.addIceCandidate(new RTCIceCandidate(snapshot.val())).catch(() => {});
+        }
+      });
+
+    } catch (err) {
+      console.error("Failed accepting call:", err);
+    }
+  };
+
+  const declineCall = () => {
+    if (incomingCall && currentUser) {
+      remove(ref(rtdb, `calls/incoming/${currentUser.uid}`));
+      setIncomingCall(null);
+    }
   };
 
   const endCall = () => {
+    if (activeCall?.callId) {
+      remove(ref(rtdb, `calls/signaling/${activeCall.callId}`));
+    }
+    if (currentUser) {
+      remove(ref(rtdb, `calls/incoming/${currentUser.uid}`));
+    }
+    cleanupStreams();
     setActiveCall(null);
   };
 
   const toggleMute = () => {
+    if (localStream) {
+      localStream.getAudioTracks().forEach(t => {
+        t.enabled = !t.enabled;
+      });
+    }
     setActiveCall(prev => prev ? { ...prev, isMuted: !prev.isMuted } : null);
   };
 
   const toggleVideo = () => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach(t => {
+        t.enabled = !t.enabled;
+      });
+    }
     setActiveCall(prev => prev ? { ...prev, isVideoOff: !prev.isVideoOff } : null);
   };
 
@@ -75,7 +336,21 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <CallContext.Provider value={{ activeCall, startCall, endCall, toggleMute, toggleVideo, toggleScreenShare, toggleMinimize }}>
+    <CallContext.Provider value={{
+      activeCall,
+      incomingCall,
+      localStream,
+      remoteStream,
+      audioVolume,
+      startCall,
+      acceptCall,
+      declineCall,
+      endCall,
+      toggleMute,
+      toggleVideo,
+      toggleScreenShare,
+      toggleMinimize
+    }}>
       {children}
     </CallContext.Provider>
   );

@@ -284,7 +284,7 @@ export const ChatWindow: React.FC<Props> = ({
 
           {/* Audio Call Button */}
           <button
-            onClick={() => startCall(chatName, chatAvatar || '', 'audio', recipientObj?.designation)}
+            onClick={() => startCall(recipientObj?.uid || 'general', chatName, chatAvatar || '', 'audio', recipientObj?.designation)}
             className="p-2 rounded-xl bg-slate-950/60 text-slate-400 hover:text-yellow-500 hover:border-yellow-500/40 border border-slate-800 transition-all"
             title="Start Audio Call"
           >
@@ -293,7 +293,7 @@ export const ChatWindow: React.FC<Props> = ({
 
           {/* Video Call Button */}
           <button
-            onClick={() => startCall(chatName, chatAvatar || '', 'video', recipientObj?.designation)}
+            onClick={() => startCall(recipientObj?.uid || 'general', chatName, chatAvatar || '', 'video', recipientObj?.designation)}
             className="p-2 rounded-xl bg-slate-950/60 text-slate-400 hover:text-yellow-500 hover:border-yellow-500/40 border border-slate-800 transition-all"
             title="Start Video Call"
           >

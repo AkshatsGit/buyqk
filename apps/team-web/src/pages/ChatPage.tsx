@@ -32,7 +32,7 @@ export const ChatPage: React.FC = () => {
     const unsubscribeEmployees = onSnapshot(collection(db, 'users'), (snap) => {
       const list: EmployeeProfile[] = [];
       snap.forEach(d => list.push(d.data() as EmployeeProfile));
-      setEmployees(list.filter(e => e.uid !== currentUser?.uid));
+      setEmployees(list.filter(e => e && e.uid && e.uid !== currentUser?.uid && e.fullName && e.fullName.trim().length > 0));
     });
 
     // 2. Listen to groups

@@ -14,13 +14,14 @@ const fmt = (s: number) =>
 interface VideoTileProps {
   stream: MediaStream | null;
   label: string;
-  muted?: boolean;
+  muted?: boolean;       // Mutes HTML video element playback (for local self-view loopback prevention)
+  isMuted?: boolean;     // Controls whether the red MicOff badge icon is displayed on the tile
   avatar?: string;
   isVideoOff?: boolean;
   pip?: boolean;               // picture-in-picture self-view
 }
 
-const VideoTile: React.FC<VideoTileProps> = ({ stream, label, muted, avatar, isVideoOff, pip }) => {
+const VideoTile: React.FC<VideoTileProps> = ({ stream, label, muted, isMuted, avatar, isVideoOff, pip }) => {
   const vidRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -61,10 +62,10 @@ const VideoTile: React.FC<VideoTileProps> = ({ stream, label, muted, avatar, isV
         </div>
       )}
 
-      {/* Name label */}
+      {/* Name label & mic badge */}
       <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-slate-950/70 backdrop-blur-sm px-2 py-0.5 rounded-lg">
         <span className="text-[10px] font-bold text-white truncate max-w-[100px]">{label}</span>
-        {muted && <MicOff className="w-2.5 h-2.5 text-red-400" />}
+        {isMuted && <MicOff className="w-2.5 h-2.5 text-red-400" />}
       </div>
     </div>
   );
@@ -235,6 +236,7 @@ export const CallModal: React.FC = () => {
                       stream={localStream}
                       label="You"
                       muted={true}
+                      isMuted={activeCall.isMuted}
                       isVideoOff={activeCall.isVideoOff}
                       pip={true}
                     />

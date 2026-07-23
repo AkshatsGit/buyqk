@@ -18,7 +18,12 @@ export const EmployeeDirectoryPage: React.FC = () => {
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'users'), (snap) => {
       const list: EmployeeProfile[] = [];
-      snap.forEach(d => list.push(d.data() as EmployeeProfile));
+      snap.forEach(d => {
+        const data = d.data() as EmployeeProfile;
+        if (data && data.fullName && data.fullName.trim().length > 0) {
+          list.push({ ...data, uid: d.id });
+        }
+      });
       setEmployees(list);
     });
     return () => unsubscribe();

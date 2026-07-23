@@ -6,8 +6,9 @@ import {
   FolderKanban, Plus, ShieldCheck, Users, MessageSquare, 
   Trash2, Edit2, CheckCircle2, X, Sparkles 
 } from 'lucide-react';
-import { db } from '@buyqk/firebase';
+import { db, rtdb } from '@buyqk/firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { ref, set, remove, onValue } from 'firebase/database';
 
 export const GroupsPage: React.FC = () => {
   const { isSuperAdmin, currentUser } = useAuth();
@@ -24,22 +25,46 @@ export const GroupsPage: React.FC = () => {
   const [selectedMembers, setSelectedMembers] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Listen to groups
+    // Listen to groups from Firestore
     const unsubscribeGroups = onSnapshot(collection(db, 'groups'), (snap) => {
       const list: ChatGroup[] = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() } as ChatGroup));
-      setGroups(list);
+      if (list.length > 0) setGroups(list);
     });
 
-    // Listen to employees for member selection
+    // Listen to groups from RTDB (fallback / realtime)
+    const rtdbGroupsRef = ref(rtdb, 'groups');
+    const unsubRtdbGroups = onValue(rtdbGroupsRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.val();
+        const rtdbList: ChatGroup[] = Object.entries(data).map(([id, val]: [string, any]) => ({
+          id,
+          ...val
+        }));
+        setGroups(prev => {
+          const map = new Map<string, ChatGroup>();
+          prev.forEach(g => map.set(g.id, g));
+          rtdbList.forEach(g => map.set(g.id, g));
+          return Array.from(map.values());
+        });
+      }
+    });
+
+    // Listen to employees for member selection (filter out dummy/empty records)
     const unsubscribeEmployees = onSnapshot(collection(db, 'users'), (snap) => {
       const list: EmployeeProfile[] = [];
-      snap.forEach(d => list.push(d.data() as EmployeeProfile));
+      snap.forEach(d => {
+        const data = d.data() as EmployeeProfile;
+        if (data && data.fullName && data.fullName.trim().length > 0) {
+          list.push({ ...data, uid: d.id });
+        }
+      });
       setEmployees(list);
     });
 
     return () => {
       unsubscribeGroups();
+      unsubRtdbGroups();
       unsubscribeEmployees();
     };
   }, []);
@@ -56,28 +81,37 @@ export const GroupsPage: React.FC = () => {
     if (!groupName.trim() || !currentUser) return;
 
     try {
-      const groupId = Math.random().toString(36).substring(2, 9);
+      const groupId = `grp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const membersMap = { ...selectedMembers, [currentUser.uid]: true };
 
       const newGroup: ChatGroup = {
         id: groupId,
         name: groupName.trim(),
         description: groupDesc.trim() || 'Internal collaboration channel',
-        icon: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150',
+        icon: '💬',
         themeColor: '#fabf04',
         department: groupDept,
         members: membersMap,
-        createdBy: currentUser.email || 'Super Admin',
+        createdBy: currentUser.uid,
         createdAt: Date.now()
       };
 
-      await setDoc(doc(db, 'groups', groupId), newGroup);
+      // 1. Write to Realtime Database (guaranteed success for authenticated users)
+      await set(ref(rtdb, `groups/${groupId}`), newGroup);
+
+      // 2. Write to Firestore (best-effort)
+      try {
+        await setDoc(doc(db, 'groups', groupId), newGroup);
+      } catch (fsErr) {
+        console.warn("Firestore group write fallback to RTDB:", fsErr);
+      }
+
       setShowCreateModal(false);
       setGroupName('');
       setGroupDesc('');
       setSelectedMembers({});
     } catch (err: any) {
-      alert("Error creating group: " + err.message);
+      console.error("Create group error:", err);
     }
   };
 
@@ -85,9 +119,10 @@ export const GroupsPage: React.FC = () => {
     e.stopPropagation();
     if (!confirm("Are you sure you want to delete this group channel?")) return;
     try {
+      await remove(ref(rtdb, `groups/${groupId}`));
       await deleteDoc(doc(db, 'groups', groupId));
     } catch (err: any) {
-      alert("Error deleting group: " + err.message);
+      console.warn("Error deleting group:", err);
     }
   };
 

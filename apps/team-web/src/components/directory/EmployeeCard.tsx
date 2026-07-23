@@ -34,12 +34,16 @@ export const EmployeeCard: React.FC<Props> = ({ member, onQuickChat }) => {
       {/* Top Header & Avatar */}
       <div className="flex items-start gap-3.5">
         <div className="relative shrink-0">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden border border-yellow-500/40 bg-slate-800 shadow-md">
-            <img 
-              src={member.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} 
-              alt={member.fullName} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
+          <div className="w-14 h-14 rounded-2xl overflow-hidden border border-yellow-500/40 bg-slate-800 shadow-md flex items-center justify-center font-black text-xl text-yellow-400">
+            {member.photoUrl ? (
+              <img 
+                src={member.photoUrl} 
+                alt={member.fullName} 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <span>{(member.fullName || '?').charAt(0).toUpperCase()}</span>
+            )}
           </div>
           <span 
             className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-slate-950 ${
@@ -70,7 +74,7 @@ export const EmployeeCard: React.FC<Props> = ({ member, onQuickChat }) => {
       <div className="grid grid-cols-2 gap-2 bg-slate-950/60 p-2.5 rounded-xl border border-blue-900/10 text-[10px] font-mono">
         <div className="flex flex-col">
           <span className="text-slate-500 uppercase">EMP ID</span>
-          <span className="font-bold text-yellow-400">#{member.employeeId || '089'}</span>
+          <span className="font-bold text-yellow-400">{member.employeeId ? `#${member.employeeId}` : '-'}</span>
         </div>
         <div className="flex flex-col truncate">
           <span className="text-slate-500 uppercase">LOCATION</span>

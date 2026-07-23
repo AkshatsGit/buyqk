@@ -256,19 +256,31 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ─── Get media stream ─────────────────────────────────────────────────────
   const getStream = async (type: 'audio' | 'video') => {
+    // Step 1: Try the ideal config (audio + optional video)
+    // NOTE: Do NOT use sampleRate constraint — it causes OverconstrainedError on many
+    // devices that don't support that exact rate, which kills the mic along with the camera.
     try {
       return await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 },
-        video: type === 'video' ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' } : false
+        audio: { echoCancellation: true, noiseSuppression: true },
+        video: type === 'video'
+          ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+          : false
       });
-    } catch (err: any) {
-      if (type === 'video' && err.name !== 'NotAllowedError') {
-        // Camera unavailable but mic is ok — fall back to audio-only
-        const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-        setPermissionError('Camera blocked — joined audio-only. Tap the 📷 button to retry.');
-        return s;
+    } catch (firstErr: any) {
+      // Step 2: For video calls where the camera failed for ANY reason,
+      // always attempt audio-only fallback before giving up.
+      if (type === 'video') {
+        try {
+          const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true });
+          setPermissionError('Camera unavailable — joined with audio only. Tap 📷 to enable camera.');
+          return audioOnly;
+        } catch (audioErr: any) {
+          // Neither camera nor mic is available — surface the mic error
+          throw audioErr;
+        }
       }
-      throw err;
+      // Audio-only call failed completely
+      throw firstErr;
     }
   };
 

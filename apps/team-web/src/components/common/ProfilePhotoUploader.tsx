@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Upload, Image as ImageIcon, CheckCircle, RefreshCw } from 'lucide-react';
-import { storageService, db } from '@buyqk/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import React, { useState, useRef } from 'react';
+import { Upload, Image as ImageIcon, CheckCircle, RefreshCw, AlertTriangle } from 'lucide-react';
+import { db, storage } from '@buyqk/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface Props {
   uid: string;
@@ -9,42 +10,39 @@ interface Props {
   onUploadSuccess: (url: string) => void;
 }
 
-const compressImage = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
+/** Resize + compress the image to max 400px / 0.82 quality JPEG before uploading */
+const compressImage = (file: File, maxPx = 400, quality = 0.82): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxSize = 300;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxSize) {
-            height = Math.round((height * maxSize) / width);
-            width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
-            width = Math.round((width * maxSize) / height);
-            height = maxSize;
+        let { width, height } = img;
+        if (width > maxPx || height > maxPx) {
+          if (width > height) {
+            height = Math.round((height * maxPx) / width);
+            width = maxPx;
+          } else {
+            width = Math.round((width * maxPx) / height);
+            height = maxPx;
           }
         }
-
+        const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.85));
-        } else {
-          resolve(e.target?.result as string);
-        }
+        if (!ctx) { reject(new Error('Canvas ctx unavailable')); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('toBlob failed')),
+          'image/jpeg',
+          quality
+        );
       };
-      img.onerror = () => resolve(e.target?.result as string);
+      img.onerror = () => reject(new Error('Image load error'));
       img.src = e.target?.result as string;
     };
+    reader.onerror = () => reject(new Error('FileReader error'));
     reader.readAsDataURL(file);
   });
 };
@@ -54,6 +52,7 @@ export const ProfilePhotoUploader: React.FC<Props> = ({ uid, initialUrl, onUploa
   const [uploading, setUploading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string>('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,33 +65,46 @@ export const ProfilePhotoUploader: React.FC<Props> = ({ uid, initialUrl, onUploa
 
     setError('');
     setUploading(true);
-    setProgress(30);
+    setProgress(10);
 
     try {
-      // 1. Compress image down to ~20KB to avoid Firestore document payload limits
-      const compressedDataUrl = await compressImage(file);
-      setPreview(compressedDataUrl);
-      setProgress(60);
+      // Step 1: Compress image
+      const blob = await compressImage(file);
+      setProgress(30);
 
-      // 2. Upload to Firebase Storage
+      // Step 2: Show local preview immediately
+      const localPreview = URL.createObjectURL(blob);
+      setPreview(localPreview);
+      setProgress(50);
+
+      // Step 3: Upload compressed blob to Firebase Storage using the app's storage instance
       const filePath = `profile_pictures/${uid}_${Date.now()}.jpg`;
-      const downloadUrl = await storageService.uploadBase64(filePath, compressedDataUrl);
-      const finalUrl = downloadUrl || compressedDataUrl;
+      const sRef = storageRef(storage, filePath);
 
-      // 3. Immediately update Firestore user profile if uid exists
+      await uploadBytes(sRef, blob, { contentType: 'image/jpeg' });
+      setProgress(80);
+
+      const downloadUrl = await getDownloadURL(sRef);
+      setProgress(95);
+
+      // Step 4: Update Firestore user doc with the real download URL
+      // Use setDoc with merge:true so it works even if the doc doesn't exist yet
       if (uid && uid !== 'temp') {
-        try {
-          await updateDoc(doc(db, 'users', uid), { photoUrl: finalUrl });
-        } catch (_) {}
+        await setDoc(doc(db, 'users', uid), { photoUrl: downloadUrl }, { merge: true });
       }
 
       setProgress(100);
       setUploading(false);
-      onUploadSuccess(finalUrl);
+      setPreview(downloadUrl);
+      onUploadSuccess(downloadUrl);
+
     } catch (err: any) {
-      console.error("Upload photo error:", err);
-      setError(err.message || 'Failed uploading photo. Please try again.');
+      console.error('Upload photo error:', err);
+      setError('Photo upload failed — check internet connection and try again.');
       setUploading(false);
+      setProgress(0);
+      // Reset input so user can try again
+      if (inputRef.current) inputRef.current.value = '';
     }
   };
 
@@ -110,30 +122,43 @@ export const ProfilePhotoUploader: React.FC<Props> = ({ uid, initialUrl, onUploa
           )}
 
           {uploading && (
-            <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center gap-2 p-2">
+            <div className="absolute inset-0 bg-slate-950/85 flex flex-col items-center justify-center gap-2 p-2">
               <RefreshCw className="w-6 h-6 text-yellow-500 animate-spin" />
               <span className="text-[10px] text-yellow-400 font-bold">{progress}%</span>
+              <div className="w-16 h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-yellow-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+              </div>
             </div>
           )}
         </div>
 
         <label className="absolute -bottom-2 -right-2 bg-yellow-500 hover:bg-yellow-400 text-slate-950 p-2 rounded-xl shadow-lg cursor-pointer transition-transform hover:scale-110 border border-yellow-300">
           <Upload className="w-4 h-4" />
-          <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploading} />
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={uploading}
+          />
         </label>
       </div>
 
       <p className="text-[11px] text-slate-400 font-medium text-center">
-        Mandatory &bull; JPG or PNG format (Max 10MB)
+        JPG or PNG (auto-compressed) — tap the ↑ button
       </p>
 
       {error && (
-        <p className="text-xs text-red-400 font-semibold text-center">{error}</p>
+        <div className="flex items-center gap-2 text-xs text-red-400 font-semibold bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-xl">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          <span>{error}</span>
+        </div>
       )}
 
-      {preview && !uploading && (
+      {preview && !uploading && progress === 100 && (
         <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
-          <CheckCircle className="w-3.5 h-3.5" /> Photo Uploaded
+          <CheckCircle className="w-3.5 h-3.5" /> Photo Saved ✓
         </div>
       )}
     </div>

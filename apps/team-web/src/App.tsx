@@ -37,14 +37,15 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return <Navigate to="/teams/login" replace />;
   }
 
-  // First Login check: if employee profile does not exist or incomplete, force redirect to register
+  // First Login check: if employee profile does not exist in Firestore yet, force redirect to register
   const isRegisterPage = location.pathname === '/teams/register';
-  if ((!profile || !profile.fullName || !profile.employeeId) && !isRegisterPage) {
+  if (!profile && !isRegisterPage) {
     return <Navigate to="/teams/register" replace />;
   }
 
-  if (isRegisterPage) {
-    return <>{children}</>;
+  // If user already has a profile document and visits /teams/register, send them straight to dashboard
+  if (profile && isRegisterPage) {
+    return <Navigate to="/teams/dashboard" replace />;
   }
 
   return (

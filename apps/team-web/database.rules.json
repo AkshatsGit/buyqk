@@ -1,22 +1,6 @@
 {
   "rules": {
     ".read": "auth != null",
-    ".write": "auth != null",
-    "presence": {
-      ".read": "auth != null",
-      ".write": "auth != null"
-    },
-    "typing": {
-      ".read": "auth != null",
-      ".write": "auth != null"
-    },
-    "messages": {
-      ".read": "auth != null",
-      ".write": "auth != null"
-    },
-    "calls": {
-      ".read": "auth != null",
-      ".write": "auth != null"
-    }
+    ".write": "auth != null"
   }
 }

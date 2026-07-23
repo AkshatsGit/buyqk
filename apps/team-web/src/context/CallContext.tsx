@@ -312,6 +312,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const stream = await getStream(type);
+      // Ensure audio track is explicitly enabled when call is initiated
+      stream.getAudioTracks().forEach(t => { t.enabled = true; });
+      if (type === 'video') {
+        stream.getVideoTracks().forEach(t => { t.enabled = true; });
+      }
       setLocalStream(stream);
       localStreamRef.current = stream;
       startAnalyzer(stream);
@@ -401,6 +406,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const stream = await getStream(type);
+      // Ensure audio track is explicitly enabled when call is accepted
+      stream.getAudioTracks().forEach(t => { t.enabled = true; });
+      if (type === 'video') {
+        stream.getVideoTracks().forEach(t => { t.enabled = true; });
+      }
       setLocalStream(stream);
       localStreamRef.current = stream;
       startAnalyzer(stream);
@@ -460,28 +470,64 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ─── Mute / video toggles ─────────────────────────────────────────────────
   const toggleMute = () => {
-    const ls = localStreamRef.current;
-    if (!ls) return;
-    // Read current state from activeCall to derive intended new state
-    const currentlyMuted = activeCallRef.current?.isMuted ?? false;
-    const shouldEnable = currentlyMuted; // unmuting = re-enable tracks
-    ls.getAudioTracks().forEach(t => { t.enabled = shouldEnable; });
-    setActiveCall(prev => prev ? { ...prev, isMuted: !prev.isMuted } : null);
+    setActiveCall(prev => {
+      if (!prev) return null;
+      const nextMuted = !prev.isMuted;
+      const enableAudio = !nextMuted; // unmuting means nextMuted is false -> enableAudio is true!
+
+      const ls = localStreamRef.current;
+      if (ls) {
+        ls.getAudioTracks().forEach(t => {
+          t.enabled = enableAudio;
+        });
+      }
+
+      if (pcRef.current) {
+        pcRef.current.getSenders().forEach(sender => {
+          if (sender.track && sender.track.kind === 'audio') {
+            sender.track.enabled = enableAudio;
+          }
+        });
+      }
+
+      return { ...prev, isMuted: nextMuted };
+    });
   };
 
   const toggleVideo = async () => {
     setPermissionError('');
     const ls = localStreamRef.current;
     if (!ls) return;
+
     const vt = ls.getVideoTracks()[0];
     if (vt) {
-      vt.enabled = !vt.enabled;
-      setActiveCall(prev => prev ? { ...prev, isVideoOff: !vt.enabled } : null);
+      setActiveCall(prev => {
+        if (!prev) return null;
+        const nextVideoOff = !prev.isVideoOff;
+        const enableVideo = !nextVideoOff;
+
+        ls.getVideoTracks().forEach(t => {
+          t.enabled = enableVideo;
+        });
+
+        if (pcRef.current) {
+          pcRef.current.getSenders().forEach(sender => {
+            if (sender.track && sender.track.kind === 'video') {
+              sender.track.enabled = enableVideo;
+            }
+          });
+        }
+
+        return { ...prev, isVideoOff: nextVideoOff };
+      });
     } else {
       try {
-        const vs = await navigator.mediaDevices.getUserMedia({ video: true });
+        const vs = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }
+        });
         const nt = vs.getVideoTracks()[0];
         if (!nt) return;
+        nt.enabled = true;
         ls.addTrack(nt);
         const pc = pcRef.current;
         if (pc) {
@@ -489,7 +535,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (sender) await sender.replaceTrack(nt);
           else pc.addTrack(nt, ls);
         }
-        setLocalStream(ls); // trigger rebind
+        setLocalStream(new MediaStream(ls.getTracks()));
         setActiveCall(prev => prev ? { ...prev, isVideoOff: false } : null);
       } catch (err: any) {
         if (err.name === 'NotAllowedError') {

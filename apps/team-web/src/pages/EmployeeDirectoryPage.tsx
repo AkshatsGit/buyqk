@@ -27,14 +27,22 @@ export const EmployeeDirectoryPage: React.FC = () => {
   const departments = ['ALL', 'Engineering', 'Product', 'Design', 'Operations', 'HR', 'Marketing'];
 
   const filteredEmployees = employees.filter((emp) => {
-    const matchesSearch = 
-      emp.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.designation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (emp.skills && emp.skills.some(sk => sk.toLowerCase().includes(searchQuery.toLowerCase())));
+    if (!emp) return false;
+    const q = searchQuery.toLowerCase().trim();
 
-    const matchesDept = selectedDept === 'ALL' || emp.department === selectedDept;
+    const matchesDept = selectedDept === 'ALL' || (emp.department && emp.department === selectedDept);
+
+    if (!q) return matchesDept;
+
+    const nameMatch = emp.fullName ? emp.fullName.toLowerCase().includes(q) : false;
+    const empIdMatch = emp.employeeId ? emp.employeeId.toLowerCase().includes(q) : false;
+    const desigMatch = emp.designation ? emp.designation.toLowerCase().includes(q) : false;
+    const emailMatch = emp.email ? emp.email.toLowerCase().includes(q) : false;
+    const skillMatch = emp.skills && Array.isArray(emp.skills) 
+      ? emp.skills.some(sk => sk && sk.toLowerCase().includes(q)) 
+      : false;
+
+    const matchesSearch = nameMatch || empIdMatch || desigMatch || emailMatch || skillMatch;
 
     return matchesSearch && matchesDept;
   });

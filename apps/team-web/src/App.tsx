@@ -14,6 +14,9 @@ import { GroupsPage } from './pages/GroupsPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { SettingsPage } from './pages/SettingsPage';
 
+import { CallProvider } from './context/CallContext';
+import { CallModal } from './components/common/CallModal';
+
 const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, profile, loading, isAccessRestricted } = useAuth();
   const location = useLocation();
@@ -45,7 +48,7 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans overflow-hidden select-none">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans overflow-hidden select-none relative">
       <Navbar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
@@ -53,6 +56,7 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           {children}
         </main>
       </div>
+      <CallModal />
     </div>
   );
 };
@@ -60,8 +64,9 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+      <CallProvider>
+        <BrowserRouter>
+          <Routes>
           {/* Public Login Route */}
           <Route path="/teams/login" element={<LoginPage />} />
 
@@ -144,6 +149,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/teams/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+    </CallProvider>
+  </AuthProvider>
   );
 }

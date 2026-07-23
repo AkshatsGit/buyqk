@@ -9,6 +9,8 @@ import {
 import { rtdb, storageService } from '@buyqk/firebase';
 import { ref, push, set, onValue, remove, update } from 'firebase/database';
 
+import { useCall } from '../../context/CallContext';
+
 interface Props {
   chatId: string;
   chatName: string;
@@ -29,6 +31,7 @@ export const ChatWindow: React.FC<Props> = ({
   recipientObj
 }) => {
   const { profile, currentUser } = useAuth();
+  const { startCall } = useCall();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState<string>('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
@@ -278,6 +281,24 @@ export const ChatWindow: React.FC<Props> = ({
               <Search className="w-4 h-4" />
             </button>
           )}
+
+          {/* Audio Call Button */}
+          <button
+            onClick={() => startCall(chatName, chatAvatar || '', 'audio', recipientObj?.designation)}
+            className="p-2 rounded-xl bg-slate-950/60 text-slate-400 hover:text-yellow-500 hover:border-yellow-500/40 border border-slate-800 transition-all"
+            title="Start Audio Call"
+          >
+            <Phone className="w-4 h-4" />
+          </button>
+
+          {/* Video Call Button */}
+          <button
+            onClick={() => startCall(chatName, chatAvatar || '', 'video', recipientObj?.designation)}
+            className="p-2 rounded-xl bg-slate-950/60 text-slate-400 hover:text-yellow-500 hover:border-yellow-500/40 border border-slate-800 transition-all"
+            title="Start Video Call"
+          >
+            <Video className="w-4 h-4" />
+          </button>
         </div>
       </div>
 

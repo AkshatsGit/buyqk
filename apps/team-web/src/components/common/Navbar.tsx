@@ -19,6 +19,12 @@ export const Navbar: React.FC = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState<boolean>(true);
 
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [allEmployees, setAllEmployees] = useState<any[]>([]);
+  const [allGroups, setAllGroups] = useState<any[]>([]);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     // Listen to online users presence count
     const presenceRef = ref(rtdb, 'presence');
@@ -38,9 +44,35 @@ export const Navbar: React.FC = () => {
       setAnnouncements(list);
     });
 
+    // Listen to employees for search
+    const unsubscribeUsers = onSnapshot(collection(db, 'users'), (snap) => {
+      const list: any[] = [];
+      snap.forEach(d => list.push(d.data()));
+      setAllEmployees(list);
+    });
+
+    // Listen to groups for search
+    const unsubscribeGroups = onSnapshot(collection(db, 'groups'), (snap) => {
+      const list: any[] = [];
+      snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+      setAllGroups(list);
+    });
+
+    // Keyboard shortcut Cmd+K / Ctrl+K
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       unsubscribePresence();
       unsubscribeAnnouncements();
+      unsubscribeUsers();
+      unsubscribeGroups();
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -67,16 +99,89 @@ export const Navbar: React.FC = () => {
         </Link>
       </div>
 
-      {/* Center Search Bar */}
-      <div className="hidden md:flex items-center flex-1 max-w-md mx-6">
-        <button 
-          onClick={() => navigate('/teams/employees')}
-          className="w-full flex items-center gap-2.5 bg-slate-900/60 hover:bg-slate-900/90 border border-blue-900/30 px-3.5 py-2 rounded-xl text-slate-400 text-xs transition-all shadow-inner group"
-        >
-          <Search className="w-4 h-4 text-slate-400 group-hover:text-yellow-500 transition-colors" />
-          <span>Search teammates, skills, or departments...</span>
-          <kbd className="ml-auto text-[9px] font-mono font-bold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">⌘K</kbd>
-        </button>
+      {/* Center Interactive Search Bar */}
+      <div className="hidden md:flex items-center flex-1 max-w-md mx-6 relative">
+        <div className="w-full flex items-center gap-2.5 bg-slate-900/80 border border-blue-900/30 px-3.5 py-2 rounded-xl text-slate-400 text-xs transition-all shadow-inner focus-within:border-yellow-500/60 focus-within:bg-slate-950">
+          <Search className="w-4 h-4 text-slate-400 shrink-0" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={globalSearch}
+            onChange={(e) => {
+              setGlobalSearch(e.target.value);
+              setShowSearchResults(true);
+            }}
+            onFocus={() => setShowSearchResults(true)}
+            placeholder="Search teammates, skills, channels..."
+            className="w-full bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none"
+          />
+          {globalSearch ? (
+            <button onClick={() => { setGlobalSearch(''); setShowSearchResults(false); }} className="text-slate-400 hover:text-white">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <kbd className="ml-auto text-[9px] font-mono font-bold bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700 select-none">⌘K</kbd>
+          )}
+        </div>
+
+        {/* Global Live Search Results Dropdown */}
+        {showSearchResults && globalSearch.trim().length > 0 && (
+          <div className="absolute top-12 left-0 right-0 bg-slate-950 border border-yellow-500/30 rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 font-sans max-h-80 overflow-y-auto">
+            
+            {/* Matching Employees */}
+            <div className="flex flex-col gap-1 mb-2">
+              <span className="text-[10px] font-black uppercase text-yellow-500 px-2 tracking-wider">Teammates</span>
+              {allEmployees.filter(emp => 
+                emp?.fullName?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+                emp?.designation?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+                emp?.department?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+                (emp?.skills && emp.skills.some((sk: string) => sk.toLowerCase().includes(globalSearch.toLowerCase())))
+              ).slice(0, 4).map((emp) => (
+                <div
+                  key={emp.uid}
+                  onClick={() => {
+                    setShowSearchResults(false);
+                    setGlobalSearch('');
+                    navigate(`/teams/chat?uid=${emp.uid}`);
+                  }}
+                  className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-900 cursor-pointer text-xs transition-colors"
+                >
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <img src={emp.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} alt={emp.fullName} className="w-7 h-7 rounded-lg object-cover border border-yellow-500/30" />
+                    <div className="flex flex-col overflow-hidden text-left">
+                      <span className="font-bold text-white truncate">{emp.fullName}</span>
+                      <span className="text-[10px] text-yellow-400 truncate">{emp.designation} &bull; {emp.department}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Chat &rarr;</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Matching Groups */}
+            <div className="flex flex-col gap-1 border-t border-slate-800 pt-2">
+              <span className="text-[10px] font-black uppercase text-purple-400 px-2 tracking-wider">Channels</span>
+              {allGroups.filter(grp => 
+                grp?.name?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+                grp?.department?.toLowerCase().includes(globalSearch.toLowerCase())
+              ).slice(0, 3).map((grp) => (
+                <div
+                  key={grp.id}
+                  onClick={() => {
+                    setShowSearchResults(false);
+                    setGlobalSearch('');
+                    navigate(`/teams/chat`);
+                  }}
+                  className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-900 cursor-pointer text-xs transition-colors"
+                >
+                  <span className="font-bold text-purple-300">#{grp.name} ({grp.department})</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Open &rarr;</span>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        )}
       </div>
 
       {/* Right Controls */}

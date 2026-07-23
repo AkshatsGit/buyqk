@@ -81,3 +81,17 @@ export interface Announcement {
   createdAt: number;
   important?: boolean;
 }
+
+export interface ActiveCallState {
+  callId: string;
+  type: 'audio' | 'video';
+  recipientName: string;
+  recipientAvatar: string;
+  recipientRole?: string;
+  status: 'calling' | 'connected' | 'ended';
+  isMuted: boolean;
+  isVideoOff: boolean;
+  isScreenSharing: boolean;
+  durationSeconds: number;
+  isMinimized: boolean;
+}

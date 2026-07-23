@@ -92,6 +92,19 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
 
+  // Protect active calls against accidental browser refresh (Cmd+R / F5 / Tab close)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (activeCallRef.current) {
+        e.preventDefault();
+        e.returnValue = 'You have an active video call in progress. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
   // ─── Incoming call listener ────────────────────────────────────────────────
   useEffect(() => {
     if (!currentUser?.uid) return;

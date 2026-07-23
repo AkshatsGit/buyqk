@@ -28,10 +28,15 @@ export const AdminDashboardPage: React.FC = () => {
       return;
     }
 
-    // Listen to all employees
+    // Listen to all employees (filter out invalid/dummy records)
     const unsubscribeEmployees = onSnapshot(collection(db, 'users'), (snap) => {
       const list: EmployeeProfile[] = [];
-      snap.forEach(d => list.push(d.data() as EmployeeProfile));
+      snap.forEach(d => {
+        const data = d.data() as EmployeeProfile;
+        if (data && data.fullName && data.fullName.trim().length > 0) {
+          list.push({ ...data, uid: d.id });
+        }
+      });
       setEmployees(list);
     });
 

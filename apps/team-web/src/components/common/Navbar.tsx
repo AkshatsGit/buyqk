@@ -82,10 +82,8 @@ export const Navbar: React.FC = () => {
       {/* Brand & Title */}
       <div className="flex items-center gap-3">
         <Link to="/teams/dashboard" className="flex items-center gap-3 group">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-yellow-500 to-amber-300 p-0.5 shadow-gold-glow flex items-center justify-center transition-transform group-hover:scale-105">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-              <span className="font-black text-yellow-500 text-lg tracking-tighter">bQ</span>
-            </div>
+          <div className="h-10 px-2.5 rounded-xl bg-slate-900 border border-yellow-500/40 flex items-center justify-center transition-transform group-hover:scale-105 shadow-gold-glow">
+            <img src="/assets/logo.png" alt="BuyQK Logo" className="h-7 w-auto object-contain" />
           </div>
           <div>
             <div className="flex items-center gap-2">

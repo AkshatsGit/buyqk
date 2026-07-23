@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ShieldAlert, Sparkles, LogOut, ArrowRight, Lock } from 'lucide-react';
+import { ShieldAlert, Sparkles, LogOut, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const LoginPage: React.FC = () => {
   const { loginWithGoogle, isAccessRestricted, unauthorizedEmail, logout, currentUser, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Auto-redirect when already logged in with an authorized account
+  useEffect(() => {
+    if (!loading && currentUser && !isAccessRestricted) {
+      navigate('/teams/dashboard', { replace: true });
+    }
+  }, [currentUser, isAccessRestricted, loading, navigate]);
+
+  // Show full-screen spinner while auth is resolving
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-yellow-500 border-t-transparent" />
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading BuyQK Teams...</span>
+        </div>
+      </div>
+    );
+  }
 
   // If unauthorized email is logged in, show Access Restricted screen
   if (isAccessRestricted) {

@@ -20,22 +20,22 @@ export const CompleteProfilePage: React.FC = () => {
   const [resumeFileName, setResumeFileName] = useState<string>(profile?.resumeFileName || '');
 
   const [fullName, setFullName] = useState<string>(profile?.fullName || currentUser?.displayName || '');
-  const [employeeId, setEmployeeId] = useState<string>(profile?.employeeId || '089');
-  const [designation, setDesignation] = useState<string>(profile?.designation || 'Software Engineer');
+  const [employeeId, setEmployeeId] = useState<string>(profile?.employeeId || '');
+  const [designation, setDesignation] = useState<string>(profile?.designation || '');
   const [department, setDepartment] = useState<string>(profile?.department || 'Engineering');
-  const [phone, setPhone] = useState<string>(profile?.phone || '+91 98765 43210');
-  const [city, setCity] = useState<string>(profile?.city || 'Bengaluru');
-  const [state, setState] = useState<string>(profile?.state || 'Karnataka');
-  const [joiningDate, setJoiningDate] = useState<string>(profile?.joiningDate || '2026-08-01');
+  const [phone, setPhone] = useState<string>(profile?.phone || '');
+  const [city, setCity] = useState<string>(profile?.city || '');
+  const [state, setState] = useState<string>(profile?.state || '');
+  const [joiningDate, setJoiningDate] = useState<string>(profile?.joiningDate || '');
 
   const [linkedin, setLinkedin] = useState<string>(profile?.linkedin || '');
   const [github, setGithub] = useState<string>(profile?.github || '');
   const [portfolio, setPortfolio] = useState<string>(profile?.portfolio || '');
-  const [bio, setBio] = useState<string>(profile?.bio || 'Passionate engineer building next-gen hyperlocal ecommerce architecture at BuyQK.');
-  const [skillsText, setSkillsText] = useState<string>(profile?.skills?.join(', ') || 'React, TypeScript, Node.js, Firebase, TailwindCSS');
-  const [languagesText, setLanguagesText] = useState<string>(profile?.languages?.join(', ') || 'English, Hindi');
-  const [experience, setExperience] = useState<string>(profile?.experience || '2+ years software engineering');
-  const [education, setEducation] = useState<string>(profile?.education || 'B.Tech in Computer Science');
+  const [bio, setBio] = useState<string>(profile?.bio || '');
+  const [skillsText, setSkillsText] = useState<string>(profile?.skills?.join(', ') || '');
+  const [languagesText, setLanguagesText] = useState<string>(profile?.languages?.join(', ') || '');
+  const [experience, setExperience] = useState<string>(profile?.experience || '');
+  const [education, setEducation] = useState<string>(profile?.education || '');
 
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -69,8 +69,8 @@ export const CompleteProfilePage: React.FC = () => {
       return;
     }
 
-    const finalPhotoUrl = photoUrl || currentUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
-    const finalEmployeeId = employeeId && employeeId.trim() ? employeeId.trim() : '089';
+    const finalPhotoUrl = photoUrl || currentUser.photoURL || '';
+    const finalEmployeeId = employeeId && employeeId.trim() ? employeeId.trim() : '';
 
     setError('');
     setSaving(true);

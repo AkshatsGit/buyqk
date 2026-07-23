@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, CheckCircle, RefreshCw, AlertTriangle } from 'lucide-react';
-import { db, storage } from '@buyqk/firebase';
+import { db } from '@buyqk/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface Props {
   uid: string;
@@ -10,34 +9,28 @@ interface Props {
   onUploadSuccess: (url: string) => void;
 }
 
-/** Resize + compress the image to max 400px / 0.82 quality JPEG before uploading */
-const compressImage = (file: File, maxPx = 400, quality = 0.82): Promise<Blob> => {
+/**
+ * Compresses an image to max 120x120px at 0.72 JPEG quality.
+ * Result is ~3-5 KB base64 data URL — safe to store directly in Firestore.
+ * This bypasses Firebase Storage entirely (no CORS or rules needed).
+ */
+const compressToDataUrl = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        let { width, height } = img;
-        if (width > maxPx || height > maxPx) {
-          if (width > height) {
-            height = Math.round((height * maxPx) / width);
-            width = maxPx;
-          } else {
-            width = Math.round((width * maxPx) / height);
-            height = maxPx;
-          }
-        }
+        const MAX = 120;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+        else       { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
         const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('Canvas ctx unavailable')); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => blob ? resolve(blob) : reject(new Error('toBlob failed')),
-          'image/jpeg',
-          quality
-        );
+        if (!ctx) { reject(new Error('No canvas ctx')); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+        resolve(dataUrl);
       };
       img.onerror = () => reject(new Error('Image load error'));
       img.src = e.target?.result as string;
@@ -57,53 +50,33 @@ export const ProfilePhotoUploader: React.FC<Props> = ({ uid, initialUrl, onUploa
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
       setError('Please select a valid image file (PNG, JPG, WEBP).');
       return;
     }
-
     setError('');
     setUploading(true);
-    setProgress(10);
+    setProgress(20);
 
     try {
-      // Step 1: Compress image
-      const blob = await compressImage(file);
-      setProgress(30);
+      // 1. Compress to tiny ~4KB data URL
+      const dataUrl = await compressToDataUrl(file);
+      setPreview(dataUrl);
+      setProgress(60);
 
-      // Step 2: Show local preview immediately
-      const localPreview = URL.createObjectURL(blob);
-      setPreview(localPreview);
-      setProgress(50);
-
-      // Step 3: Upload compressed blob to Firebase Storage using the app's storage instance
-      const filePath = `profile_pictures/${uid}_${Date.now()}.jpg`;
-      const sRef = storageRef(storage, filePath);
-
-      await uploadBytes(sRef, blob, { contentType: 'image/jpeg' });
-      setProgress(80);
-
-      const downloadUrl = await getDownloadURL(sRef);
-      setProgress(95);
-
-      // Step 4: Update Firestore user doc with the real download URL
-      // Use setDoc with merge:true so it works even if the doc doesn't exist yet
+      // 2. Write directly into Firestore (no Firebase Storage needed)
       if (uid && uid !== 'temp') {
-        await setDoc(doc(db, 'users', uid), { photoUrl: downloadUrl }, { merge: true });
+        await setDoc(doc(db, 'users', uid), { photoUrl: dataUrl }, { merge: true });
       }
-
       setProgress(100);
       setUploading(false);
-      setPreview(downloadUrl);
-      onUploadSuccess(downloadUrl);
+      onUploadSuccess(dataUrl);
 
     } catch (err: any) {
-      console.error('Upload photo error:', err);
-      setError('Photo upload failed — check internet connection and try again.');
+      console.error('Photo upload error:', err);
+      setError('Failed to save photo. Please try again.');
       setUploading(false);
       setProgress(0);
-      // Reset input so user can try again
       if (inputRef.current) inputRef.current.value = '';
     }
   };
@@ -126,7 +99,10 @@ export const ProfilePhotoUploader: React.FC<Props> = ({ uid, initialUrl, onUploa
               <RefreshCw className="w-6 h-6 text-yellow-500 animate-spin" />
               <span className="text-[10px] text-yellow-400 font-bold">{progress}%</span>
               <div className="w-16 h-1 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-yellow-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                <div
+                  className="h-full bg-yellow-500 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
             </div>
           )}
@@ -146,7 +122,7 @@ export const ProfilePhotoUploader: React.FC<Props> = ({ uid, initialUrl, onUploa
       </div>
 
       <p className="text-[11px] text-slate-400 font-medium text-center">
-        JPG or PNG (auto-compressed) — tap the ↑ button
+        JPG or PNG — tap ↑ to upload. Auto-compressed.
       </p>
 
       {error && (

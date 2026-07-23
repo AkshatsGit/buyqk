@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { rtdb } from '@buyqk/firebase';
-import { ref, set, onValue, remove, push, onChildAdded } from 'firebase/database';
+import { ref, set, onValue, remove, push, onChildAdded, update } from 'firebase/database';
 import { ActiveCallState } from '../types';
 
 interface IncomingCall {
@@ -20,14 +20,16 @@ interface CallContextType {
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   audioVolume: number;
+  permissionError: string;
   startCall: (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string, chatId?: string) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => void;
-  endCall: () => void;
+  endCall: () => Promise<void>;
   toggleMute: () => void;
-  toggleVideo: () => void;
+  toggleVideo: () => Promise<void>;
   toggleScreenShare: () => void;
   toggleMinimize: () => void;
+  clearPermissionError: () => void;
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -45,6 +47,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null);
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
+  const [permissionError, setPermissionError] = useState<string>('');
   
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -89,7 +92,28 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [currentUser?.uid]);
 
-  // 2. Play soft synthesized ringing chime sound effect for incoming call
+  // 2. Synchronized Call Termination: Listen for signaling status 'ended' or node removal to end call on recipient side
+  useEffect(() => {
+    if (!activeCall?.callId) return;
+
+    const sigRef = ref(rtdb, `calls/signaling/${activeCall.callId}`);
+    const unsubscribe = onValue(sigRef, (snapshot) => {
+      if (!snapshot.exists()) {
+        cleanupStreams();
+        setActiveCall(null);
+      } else {
+        const data = snapshot.val();
+        if (data?.status === 'ended') {
+          cleanupStreams();
+          setActiveCall(null);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [activeCall?.callId]);
+
+  // 3. Play soft synthesized ringing chime sound effect for incoming call
   useEffect(() => {
     if (incomingCall && !activeCall) {
       const playSoftRingtone = () => {
@@ -137,7 +161,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [incomingCall, activeCall]);
 
-  // 3. Increment call duration timer when connected
+  // 4. Increment call duration timer when connected
   useEffect(() => {
     let durationTimer: any = null;
     if (activeCall && activeCall.status === 'connected') {
@@ -196,6 +220,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const startCall = async (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string, chatId?: string) => {
     if (!currentUser) return;
     cleanupStreams();
+    setPermissionError('');
 
     const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
@@ -215,11 +240,23 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     try {
-      // Get real microphone / camera media stream
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: type === 'video'
-      });
+      // Get real microphone / camera media stream with permission handling
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: type === 'video'
+        });
+      } catch (mediaErr: any) {
+        if (type === 'video') {
+          // If video permission fails, fallback to audio-only stream
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          setPermissionError('Camera permission was blocked. Voice call started. You can enable camera in browser settings.');
+        } else {
+          throw mediaErr;
+        }
+      }
+
       setLocalStream(stream);
       setupAudioAnalyzer(stream);
 
@@ -265,8 +302,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         offer: { type: offer.type, sdp: offer.sdp }
       });
 
-      // Write Offer to signaling node
-      await set(ref(rtdb, `calls/signaling/${callId}/offer`), { type: offer.type, sdp: offer.sdp });
+      // Write Offer to signaling node with active status
+      await set(ref(rtdb, `calls/signaling/${callId}`), {
+        status: 'calling',
+        offer: { type: offer.type, sdp: offer.sdp }
+      });
 
       // Listen for recipient SDP Answer
       const answerRef = ref(rtdb, `calls/signaling/${callId}/answer`);
@@ -288,8 +328,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed starting WebRTC call:", err);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setPermissionError('Microphone/Camera permission blocked by browser. Click the lock icon in your URL bar to allow permissions.');
+      }
       setActiveCall(prev => prev ? { ...prev, status: 'connected' } : null);
     }
   };
@@ -302,6 +345,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIncomingCall(null);
     remove(ref(rtdb, `calls/incoming/${currentUser.uid}`));
     remove(ref(rtdb, `calls/incoming/general`));
+    setPermissionError('');
 
     setActiveCall({
       callId,
@@ -319,10 +363,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: type === 'video'
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: type === 'video'
+        });
+      } catch (mediaErr: any) {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setPermissionError('Camera permission blocked by browser. Connected audio-only call.');
+      }
+
       setLocalStream(stream);
       setupAudioAnalyzer(stream);
 
@@ -359,8 +410,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed accepting call:", err);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setPermissionError('Microphone/Camera permission blocked by browser. Please allow audio/video access in browser settings.');
+      }
     }
   };
 
@@ -373,6 +427,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const endCall = async () => {
+    if (activeCall?.callId) {
+      try {
+        await update(ref(rtdb, `calls/signaling/${activeCall.callId}`), { status: 'ended' });
+      } catch (_) {}
+    }
+
     if (activeCall?.chatId && currentUser) {
       try {
         const min = Math.floor((activeCall.durationSeconds || 0) / 60).toString().padStart(2, '0');
@@ -391,12 +451,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (_) {}
     }
 
-    if (activeCall?.callId) {
-      remove(ref(rtdb, `calls/signaling/${activeCall.callId}`));
-    }
+    setTimeout(() => {
+      if (activeCall?.callId) {
+        remove(ref(rtdb, `calls/signaling/${activeCall.callId}`)).catch(() => {});
+      }
+    }, 600);
+
     if (currentUser) {
-      remove(ref(rtdb, `calls/incoming/${currentUser.uid}`));
-      remove(ref(rtdb, `calls/incoming/general`));
+      remove(ref(rtdb, `calls/incoming/${currentUser.uid}`)).catch(() => {});
+      remove(ref(rtdb, `calls/incoming/general`)).catch(() => {});
     }
     cleanupStreams();
     setActiveCall(null);
@@ -411,13 +474,41 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActiveCall(prev => prev ? { ...prev, isMuted: !prev.isMuted } : null);
   };
 
-  const toggleVideo = () => {
+  const toggleVideo = async () => {
+    setPermissionError('');
     if (localStream) {
-      localStream.getVideoTracks().forEach(t => {
-        t.enabled = !t.enabled;
-      });
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setActiveCall(prev => prev ? { ...prev, isVideoOff: !videoTrack.enabled } : null);
+      } else {
+        // Attempt requesting camera permission again
+        try {
+          const vStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const newTrack = vStream.getVideoTracks()[0];
+          if (newTrack) {
+            localStream.addTrack(newTrack);
+            if (pcRef.current) {
+              const senders = pcRef.current.getSenders();
+              const videoSender = senders.find(s => s.track?.kind === 'video');
+              if (videoSender) {
+                videoSender.replaceTrack(newTrack);
+              } else {
+                pcRef.current.addTrack(newTrack, localStream);
+              }
+            }
+            setActiveCall(prev => prev ? { ...prev, isVideoOff: false } : null);
+          }
+        } catch (err: any) {
+          console.warn("Camera permission re-request denied:", err);
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            setPermissionError('Camera access was blocked by your browser. Click the lock icon in your URL bar to allow camera access, then tap Open Camera again.');
+          }
+        }
+      }
+    } else {
+      setActiveCall(prev => prev ? { ...prev, isVideoOff: !prev.isVideoOff } : null);
     }
-    setActiveCall(prev => prev ? { ...prev, isVideoOff: !prev.isVideoOff } : null);
   };
 
   const toggleScreenShare = () => {
@@ -428,6 +519,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActiveCall(prev => prev ? { ...prev, isMinimized: !prev.isMinimized } : null);
   };
 
+  const clearPermissionError = () => {
+    setPermissionError('');
+  };
+
   return (
     <CallContext.Provider value={{
       activeCall,
@@ -435,6 +530,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStream,
       remoteStream,
       audioVolume,
+      permissionError,
       startCall,
       acceptCall,
       declineCall,
@@ -442,7 +538,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toggleMute,
       toggleVideo,
       toggleScreenShare,
-      toggleMinimize
+      toggleMinimize,
+      clearPermissionError
     }}>
       {children}
     </CallContext.Provider>

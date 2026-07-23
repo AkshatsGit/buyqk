@@ -462,7 +462,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const toggleMute = () => {
     const ls = localStreamRef.current;
     if (!ls) return;
-    ls.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
+    // Read current state from activeCall to derive intended new state
+    const currentlyMuted = activeCallRef.current?.isMuted ?? false;
+    const shouldEnable = currentlyMuted; // unmuting = re-enable tracks
+    ls.getAudioTracks().forEach(t => { t.enabled = shouldEnable; });
     setActiveCall(prev => prev ? { ...prev, isMuted: !prev.isMuted } : null);
   };
 

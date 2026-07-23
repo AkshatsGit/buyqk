@@ -188,10 +188,15 @@ export const AdminDashboardPage: React.FC = () => {
               {employees.map(emp => (
                 <div key={emp.uid} className="bg-slate-950/80 p-3.5 rounded-2xl border border-blue-900/20 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 overflow-hidden">
-                    <img src={emp.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} alt={emp.fullName} className="w-10 h-10 rounded-xl object-cover border border-purple-500/30" />
+                    <div className="w-10 h-10 rounded-xl border border-purple-500/30 bg-slate-800 shrink-0 overflow-hidden flex items-center justify-center text-sm font-black text-purple-300">
+                      {emp.photoUrl
+                        ? <img src={emp.photoUrl} alt={emp.fullName} className="w-full h-full object-cover" />
+                        : (emp.fullName || '?').charAt(0).toUpperCase()
+                      }
+                    </div>
                     <div className="overflow-hidden">
                       <p className="text-xs font-extrabold text-white truncate">{emp.fullName}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{emp.email} &bull; <span className="text-yellow-400">ID #{emp.employeeId || '089'}</span></p>
+                      <p className="text-[10px] text-slate-400 truncate">{emp.email} &bull; <span className="text-yellow-400">ID #{emp.employeeId || ''}</span></p>
                     </div>
                   </div>
 

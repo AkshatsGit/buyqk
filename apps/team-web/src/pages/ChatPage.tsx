@@ -152,8 +152,11 @@ export const ChatPage: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center gap-2.5 overflow-hidden">
-                      <div className="w-7 h-7 rounded-lg overflow-hidden border border-purple-500/30 shrink-0 bg-slate-800">
-                        <img src={grp.icon || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150'} alt={grp.name} className="w-full h-full object-cover" />
+                      <div className="w-7 h-7 rounded-lg overflow-hidden border border-purple-500/30 shrink-0 bg-slate-800 flex items-center justify-center text-[10px] font-black text-purple-300">
+                        {grp.icon
+                          ? <span className="text-base leading-none">{grp.icon}</span>
+                          : <span>{grp.name.charAt(0).toUpperCase()}</span>
+                        }
                       </div>
                       <span className="truncate">#{grp.name}</span>
                     </div>
@@ -192,8 +195,11 @@ export const ChatPage: React.FC = () => {
                   >
                     <div className="flex items-center gap-2.5 overflow-hidden">
                       <div className="relative shrink-0">
-                        <div className="w-8 h-8 rounded-xl overflow-hidden border border-yellow-500/30 bg-slate-800">
-                          <img src={emp.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} alt={emp.fullName} className="w-full h-full object-cover" />
+                        <div className="w-8 h-8 rounded-xl overflow-hidden border border-yellow-500/30 bg-slate-800 flex items-center justify-center">
+                          {emp.photoUrl
+                            ? <img src={emp.photoUrl} alt={emp.fullName} className="w-full h-full object-cover" />
+                            : <span className="text-xs font-black text-yellow-400">{(emp.fullName || '?').charAt(0).toUpperCase()}</span>
+                          }
                         </div>
                         <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-slate-950 ${isOnline ? 'bg-emerald-500' : 'bg-slate-600'}`} />
                       </div>

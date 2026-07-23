@@ -115,41 +115,54 @@ export const ChatWindow: React.FC<Props> = ({
 
     if (editingMessage) {
       // Edit mode
-      const msgRef = ref(rtdb, `messages/${chatId}/${editingMessage.id}`);
-      await update(msgRef, {
-        text: textToSend,
-        edited: true
-      });
+      try {
+        const msgRef = ref(rtdb, `messages/${chatId}/${editingMessage.id}`);
+        await update(msgRef, {
+          text: textToSend,
+          edited: true
+        });
+      } catch (err) {
+        console.error("Failed editing message:", err);
+      }
       setEditingMessage(null);
       return;
     }
 
     // New Message
-    const messagesRef = ref(rtdb, `messages/${chatId}`);
-    const newMsgRef = push(messagesRef);
+    try {
+      const messagesRef = ref(rtdb, `messages/${chatId}`);
+      const newMsgRef = push(messagesRef);
 
-    const newMsg: Partial<ChatMessage> = {
-      senderId: currentUser.uid,
-      senderName: profile?.fullName || currentUser.displayName || 'Team Member',
-      senderAvatar: profile?.photoUrl || currentUser.photoURL || '',
-      text: textToSend,
-      timestamp: Date.now()
-    };
+      const senderName = profile?.fullName || currentUser.displayName || 'Team Member';
+      const senderAvatar = profile?.photoUrl || currentUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
 
-    if (replyingTo) {
-      newMsg.replyTo = {
-        id: replyingTo.id,
-        senderName: replyingTo.senderName,
-        text: replyingTo.text
+      const newMsgObj: Record<string, any> = {
+        senderId: currentUser.uid,
+        senderName: senderName,
+        senderAvatar: senderAvatar,
+        text: textToSend,
+        timestamp: Date.now()
       };
-      setReplyingTo(null);
+
+      if (replyingTo) {
+        newMsgObj.replyTo = {
+          id: replyingTo.id || '',
+          senderName: replyingTo.senderName || 'Team Member',
+          text: replyingTo.text || ''
+        };
+        setReplyingTo(null);
+      }
+
+      // Ensure no undefined values are sent to RTDB
+      const sanitized = JSON.parse(JSON.stringify(newMsgObj));
+      await set(newMsgRef, sanitized);
+
+      // Clear typing state
+      const userTypingRef = ref(rtdb, `typing/${chatId}/${currentUser.uid}`);
+      remove(userTypingRef).catch(() => {});
+    } catch (err: any) {
+      console.error("Failed sending message to RTDB:", err);
     }
-
-    await set(newMsgRef, newMsg);
-
-    // Clear typing state
-    const userTypingRef = ref(rtdb, `typing/${chatId}/${currentUser.uid}`);
-    remove(userTypingRef);
   };
 
   // File / Image Attachment Upload

@@ -64,6 +64,8 @@ export const ChatPage: React.FC = () => {
 
   // Handle URL param ?uid=... or default selection
   useEffect(() => {
+    if (!currentUser?.uid) return;
+
     const targetUid = searchParams.get('uid');
     if (targetUid && employees.length > 0) {
       const targetEmp = employees.find(e => e.uid === targetUid);
@@ -73,13 +75,13 @@ export const ChatPage: React.FC = () => {
       }
     }
 
-    if (!activeChatId && employees.length > 0) {
+    if ((!activeChatId || activeChatId.includes('direct__')) && employees.length > 0) {
       selectDirectChat(employees[0]);
     }
-  }, [searchParams, employees]);
+  }, [searchParams, employees, currentUser?.uid, activeChatId]);
 
   const selectDirectChat = (emp: EmployeeProfile) => {
-    if (!currentUser) return;
+    if (!currentUser?.uid || !emp?.uid) return;
     // Standard direct chat ID: sorted combination of 2 UIDs
     const sortedIds = [currentUser.uid, emp.uid].sort();
     const chatId = `direct_${sortedIds.join('_')}`;
@@ -175,8 +177,8 @@ export const ChatPage: React.FC = () => {
             ) : (
               filteredEmployees.map((emp) => {
                 const isOnline = onlineStatusMap[emp.uid] === true;
-                const sortedIds = [currentUser?.uid || '', emp.uid].sort();
-                const isSelected = activeChatId === `direct_${sortedIds.join('_')}`;
+                const sortedIds = currentUser?.uid ? [currentUser.uid, emp.uid].sort() : [];
+                const isSelected = sortedIds.length === 2 && activeChatId === `direct_${sortedIds.join('_')}`;
 
                 return (
                   <button

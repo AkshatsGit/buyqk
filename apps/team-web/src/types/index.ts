@@ -47,6 +47,7 @@ export interface ChatMessage {
   };
   edited?: boolean;
   pinned?: boolean;
+  isCallRecord?: boolean;
   timestamp: number;
 }
 
@@ -85,6 +86,7 @@ export interface Announcement {
 export interface ActiveCallState {
   callId: string;
   type: 'audio' | 'video';
+  chatId?: string;
   recipientName: string;
   recipientAvatar: string;
   recipientRole?: string;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types';
-import { Reply, Edit2, Trash2, Pin, Copy, Check, FileText, Image as ImageIcon } from 'lucide-react';
+import { Reply, Edit2, Trash2, Pin, Copy, Check, FileText, Image as ImageIcon, Phone } from 'lucide-react';
 
 interface Props {
   message: ChatMessage;
@@ -19,6 +19,21 @@ export const MessageBubble: React.FC<Props> = ({ message, isOwn, onReply, onEdit
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Stylized Call Summary Record Badge in Chat Timeline
+  if (message.isCallRecord || message.text?.startsWith('📞') || message.text?.startsWith('📹')) {
+    return (
+      <div className="flex items-center justify-center my-3 w-full font-sans">
+        <div className="bg-slate-900/90 border border-yellow-500/30 px-4 py-2 rounded-2xl flex items-center gap-2.5 shadow-lg">
+          <Phone className="w-4 h-4 text-yellow-500 shrink-0" />
+          <span className="text-xs font-bold text-slate-200">{message.text}</span>
+          <span className="text-[9px] font-mono text-slate-500">
+            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-col gap-1 group font-sans ${isOwn ? 'items-end' : 'items-start'}`}>

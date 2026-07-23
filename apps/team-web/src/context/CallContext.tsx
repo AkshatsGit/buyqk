@@ -10,6 +10,7 @@ interface IncomingCall {
   callerName: string;
   callerAvatar: string;
   type: 'audio' | 'video';
+  chatId?: string;
   offer: any;
 }
 
@@ -19,7 +20,7 @@ interface CallContextType {
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   audioVolume: number;
-  startCall: (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string) => Promise<void>;
+  startCall: (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string, chatId?: string) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => void;
   endCall: () => void;
@@ -53,6 +54,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  const ringtoneTimerRef = useRef<any>(null);
 
   // 1. Listen for incoming calls on Firebase Realtime Database
   useEffect(() => {
@@ -87,7 +89,55 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [currentUser?.uid]);
 
-  // 2. Increment call duration timer when connected
+  // 2. Play soft synthesized ringing chime sound effect for incoming call
+  useEffect(() => {
+    if (incomingCall && !activeCall) {
+      const playSoftRingtone = () => {
+        try {
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          const ctx = new AudioCtx();
+          
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc1.type = 'sine';
+          osc2.type = 'sine';
+          osc1.frequency.setValueAtTime(440, ctx.currentTime);
+          osc2.frequency.setValueAtTime(480, ctx.currentTime);
+
+          gain.gain.setValueAtTime(0.06, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.1);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc1.start();
+          osc2.start();
+          osc1.stop(ctx.currentTime + 1.1);
+          osc2.stop(ctx.currentTime + 1.1);
+        } catch (_) {}
+      };
+
+      playSoftRingtone();
+      ringtoneTimerRef.current = setInterval(playSoftRingtone, 2200);
+    } else {
+      if (ringtoneTimerRef.current) {
+        clearInterval(ringtoneTimerRef.current);
+        ringtoneTimerRef.current = null;
+      }
+    }
+
+    return () => {
+      if (ringtoneTimerRef.current) {
+        clearInterval(ringtoneTimerRef.current);
+        ringtoneTimerRef.current = null;
+      }
+    };
+  }, [incomingCall, activeCall]);
+
+  // 3. Increment call duration timer when connected
   useEffect(() => {
     let durationTimer: any = null;
     if (activeCall && activeCall.status === 'connected') {
@@ -143,7 +193,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Start Outgoing Call (Caller)
-  const startCall = async (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string) => {
+  const startCall = async (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string, chatId?: string) => {
     if (!currentUser) return;
     cleanupStreams();
 
@@ -151,6 +201,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setActiveCall({
       callId,
+      chatId: chatId || `direct_${recipientUid}`,
       type,
       recipientName: name || 'Teammate',
       recipientAvatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
@@ -198,14 +249,19 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // Send incoming call notification to recipient via RTDB
-      const incRef = ref(rtdb, `calls/incoming/${recipientUid}`);
+      // Send incoming call notification to recipient via RTDB (direct or general)
+      const targetIncNode = (recipientUid && recipientUid !== 'general' && !recipientUid.startsWith('group_')) 
+        ? `calls/incoming/${recipientUid}` 
+        : `calls/incoming/general`;
+      
+      const incRef = ref(rtdb, targetIncNode);
       await set(incRef, {
         callId,
         callerUid: currentUser.uid,
         callerName: profile?.fullName || currentUser.displayName || 'Teammate',
         callerAvatar: profile?.photoUrl || currentUser.photoURL || '',
         type,
+        chatId: chatId || `direct_${recipientUid}`,
         offer: { type: offer.type, sdp: offer.sdp }
       });
 
@@ -234,7 +290,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     } catch (err) {
       console.error("Failed starting WebRTC call:", err);
-      // Fallback connected state for local mic voice testing if WebRTC signaling waiting
       setActiveCall(prev => prev ? { ...prev, status: 'connected' } : null);
     }
   };
@@ -242,13 +297,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Accept Incoming Call (Callee)
   const acceptCall = async () => {
     if (!incomingCall || !currentUser) return;
-    const { callId, callerName, callerAvatar, type, offer } = incomingCall;
+    const { callId, callerName, callerAvatar, type, offer, chatId } = incomingCall;
 
     setIncomingCall(null);
     remove(ref(rtdb, `calls/incoming/${currentUser.uid}`));
+    remove(ref(rtdb, `calls/incoming/general`));
 
     setActiveCall({
       callId,
+      chatId: chatId || `direct_${incomingCall.callerUid}`,
       type,
       recipientName: callerName,
       recipientAvatar: callerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
@@ -310,16 +367,36 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const declineCall = () => {
     if (incomingCall && currentUser) {
       remove(ref(rtdb, `calls/incoming/${currentUser.uid}`));
+      remove(ref(rtdb, `calls/incoming/general`));
       setIncomingCall(null);
     }
   };
 
-  const endCall = () => {
+  const endCall = async () => {
+    if (activeCall?.chatId && currentUser) {
+      try {
+        const min = Math.floor((activeCall.durationSeconds || 0) / 60).toString().padStart(2, '0');
+        const sec = ((activeCall.durationSeconds || 0) % 60).toString().padStart(2, '0');
+        const durStr = `${min}:${sec}`;
+
+        const msgRef = push(ref(rtdb, `messages/${activeCall.chatId}`));
+        await set(msgRef, {
+          senderId: currentUser.uid,
+          senderName: profile?.fullName || currentUser.displayName || 'Team Member',
+          senderAvatar: profile?.photoUrl || currentUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          text: `📞 ${activeCall.type === 'video' ? 'Video' : 'Voice'} Call ended • ${durStr}`,
+          timestamp: Date.now(),
+          isCallRecord: true
+        });
+      } catch (_) {}
+    }
+
     if (activeCall?.callId) {
       remove(ref(rtdb, `calls/signaling/${activeCall.callId}`));
     }
     if (currentUser) {
       remove(ref(rtdb, `calls/incoming/${currentUser.uid}`));
+      remove(ref(rtdb, `calls/incoming/general`));
     }
     cleanupStreams();
     setActiveCall(null);

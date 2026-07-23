@@ -58,17 +58,33 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    const incomingCallRef = ref(rtdb, `calls/incoming/${currentUser.uid}`);
-    const unsubscribe = onValue(incomingCallRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        setIncomingCall(data);
+    const userIncRef = ref(rtdb, `calls/incoming/${currentUser.uid}`);
+    const genIncRef = ref(rtdb, `calls/incoming/general`);
+
+    const unsubUser = onValue(userIncRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.val();
+        if (data.callerUid !== currentUser.uid) {
+          setIncomingCall(data);
+        }
       } else {
         setIncomingCall(null);
       }
     });
 
-    return () => unsubscribe();
+    const unsubGen = onValue(genIncRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.val();
+        if (data.callerUid !== currentUser.uid) {
+          setIncomingCall(data);
+        }
+      }
+    });
+
+    return () => {
+      unsubUser();
+      unsubGen();
+    };
   }, [currentUser?.uid]);
 
   // 2. Increment call duration timer when connected

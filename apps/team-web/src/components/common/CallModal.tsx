@@ -53,9 +53,9 @@ export const CallModal: React.FC = () => {
       {/* Invisible HTML5 Audio element for playing live incoming remote voice audio stream */}
       <audio ref={remoteAudioRef} autoPlay playsInline />
 
-      {/* 1. Incoming Call Ringing Banner Popup */}
+      {/* 1. Incoming Call Ringing Banner Popup (Bottom Right) */}
       {incomingCall && !activeCall && (
-        <div className="fixed top-6 right-6 z-50 bg-slate-950/95 border-2 border-yellow-500 rounded-3xl p-4 shadow-2xl backdrop-blur-2xl flex items-center gap-4 animate-in slide-in-from-top duration-300 font-sans max-w-sm">
+        <div className="fixed bottom-6 right-6 z-[100] bg-slate-950/95 border-2 border-yellow-500 rounded-3xl p-4 shadow-2xl backdrop-blur-2xl flex items-center gap-4 animate-in slide-in-from-bottom duration-300 font-sans max-w-sm">
           <div className="relative shrink-0">
             <img src={incomingCall.callerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} alt={incomingCall.callerName} className="w-12 h-12 rounded-2xl object-cover border border-yellow-500/40" />
             <span className="absolute inset-0 rounded-2xl border-2 border-yellow-500 animate-ping opacity-60 pointer-events-none" />

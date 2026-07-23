@@ -1,12 +1,53 @@
 import React, { useState } from 'react';
 import { Upload, Image as ImageIcon, CheckCircle, RefreshCw } from 'lucide-react';
-import { storageService } from '@buyqk/firebase';
+import { storageService, db } from '@buyqk/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 interface Props {
   uid: string;
   initialUrl?: string;
   onUploadSuccess: (url: string) => void;
 }
+
+const compressImage = (file: File): Promise<string> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxSize = 300;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        } else {
+          resolve(e.target?.result as string);
+        }
+      };
+      img.onerror = () => resolve(e.target?.result as string);
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+};
 
 export const ProfilePhotoUploader: React.FC<Props> = ({ uid, initialUrl, onUploadSuccess }) => {
   const [preview, setPreview] = useState<string>(initialUrl || '');
@@ -23,31 +64,31 @@ export const ProfilePhotoUploader: React.FC<Props> = ({ uid, initialUrl, onUploa
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File size must be smaller than 10MB.');
-      return;
-    }
-
     setError('');
     setUploading(true);
-    setProgress(20);
+    setProgress(30);
 
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64 = event.target?.result as string;
-        setPreview(base64);
-        setProgress(60);
+      // 1. Compress image down to ~20KB to avoid Firestore document payload limits
+      const compressedDataUrl = await compressImage(file);
+      setPreview(compressedDataUrl);
+      setProgress(60);
 
-        // Upload to Firebase Storage via storageService
-        const filePath = `profile_pictures/${uid}_${Date.now()}.jpg`;
-        const downloadUrl = await storageService.uploadBase64(filePath, base64);
+      // 2. Upload to Firebase Storage
+      const filePath = `profile_pictures/${uid}_${Date.now()}.jpg`;
+      const downloadUrl = await storageService.uploadBase64(filePath, compressedDataUrl);
+      const finalUrl = downloadUrl || compressedDataUrl;
 
-        setProgress(100);
-        setUploading(false);
-        onUploadSuccess(downloadUrl);
-      };
-      reader.readAsDataURL(file);
+      // 3. Immediately update Firestore user profile if uid exists
+      if (uid && uid !== 'temp') {
+        try {
+          await updateDoc(doc(db, 'users', uid), { photoUrl: finalUrl });
+        } catch (_) {}
+      }
+
+      setProgress(100);
+      setUploading(false);
+      onUploadSuccess(finalUrl);
     } catch (err: any) {
       console.error("Upload photo error:", err);
       setError(err.message || 'Failed uploading photo. Please try again.');

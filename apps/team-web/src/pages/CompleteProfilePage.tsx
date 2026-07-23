@@ -43,17 +43,19 @@ export const CompleteProfilePage: React.FC = () => {
 
   // When AI parses resume, auto-fill form fields if provided
   const handleResumeUploaded = (url: string, fileName: string, parsedData?: any) => {
-    setResumeUrl(url);
-    setResumeFileName(fileName);
+    if (url) setResumeUrl(url);
+    if (fileName) setResumeFileName(fileName);
 
     if (parsedData) {
-      if (parsedData.fullName && !fullName) setFullName(parsedData.fullName);
-      if (parsedData.phone && (!phone || phone === '+91 98765 43210')) setPhone(parsedData.phone);
-      if (parsedData.linkedin && !linkedin) setLinkedin(parsedData.linkedin);
-      if (parsedData.github && !github) setGithub(parsedData.github);
+      if (parsedData.fullName) setFullName(parsedData.fullName);
+      if (parsedData.phone) setPhone(parsedData.phone);
+      if (parsedData.linkedin) setLinkedin(parsedData.linkedin);
+      if (parsedData.github) setGithub(parsedData.github);
       if (parsedData.skills && parsedData.skills.length > 0) {
         setSkillsText(parsedData.skills.join(', '));
       }
+      if (parsedData.experience) setExperience(parsedData.experience);
+      if (parsedData.education) setEducation(parsedData.education);
       setAutoFilled(true);
     }
   };
@@ -62,20 +64,13 @@ export const CompleteProfilePage: React.FC = () => {
     e.preventDefault();
     if (!currentUser) return;
 
-    if (!photoUrl) {
-      setError('Profile photo is mandatory. Please upload a profile photo before submitting.');
+    if (!fullName || fullName.trim().length === 0) {
+      setError('Please provide your Full Name.');
       return;
     }
 
-    if (!resumeUrl) {
-      setError('Resume PDF or Resume Link is mandatory. Please upload a resume before submitting.');
-      return;
-    }
-
-    if (!employeeId || employeeId.length < 3) {
-      setError('Please provide a valid 3-digit Employee ID code from your Offer Letter.');
-      return;
-    }
+    const finalPhotoUrl = photoUrl || currentUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+    const finalEmployeeId = employeeId && employeeId.trim() ? employeeId.trim() : '089';
 
     setError('');
     setSaving(true);
@@ -88,13 +83,13 @@ export const CompleteProfilePage: React.FC = () => {
         uid: currentUser.uid,
         email: currentUser.email || '',
         fullName: fullName.trim() || 'Team Member',
-        employeeId: employeeId.trim(),
-        designation: designation.trim(),
-        department: department.trim(),
-        phone: phone.trim(),
-        city: city.trim(),
-        state: state.trim(),
-        joiningDate: joiningDate,
+        employeeId: finalEmployeeId,
+        designation: designation.trim() || 'Software Engineer',
+        department: department.trim() || 'Engineering',
+        phone: phone.trim() || '+91 98765 43210',
+        city: city.trim() || 'Bengaluru',
+        state: state.trim() || 'Karnataka',
+        joiningDate: joiningDate || '2026-08-01',
         linkedin: linkedin.trim(),
         github: github.trim(),
         portfolio: portfolio.trim(),
@@ -103,9 +98,9 @@ export const CompleteProfilePage: React.FC = () => {
         languages: languagesArray,
         experience: experience.trim(),
         education: education.trim(),
-        photoUrl: photoUrl,
-        resumeUrl: resumeUrl,
-        resumeFileName: resumeFileName || 'Resume.pdf',
+        photoUrl: finalPhotoUrl,
+        resumeUrl: resumeUrl || '',
+        resumeFileName: resumeFileName || (resumeUrl ? 'Resume.pdf' : ''),
         status: 'approved',
         isAdmin: isSuperAdmin,
         isSuperAdmin: isSuperAdmin,
@@ -139,7 +134,7 @@ export const CompleteProfilePage: React.FC = () => {
           </span>
           <h2 className="text-2xl sm:text-3xl font-black text-white">Complete Your Employee Profile</h2>
           <p className="text-xs text-slate-400 max-w-md">
-            Mandatory onboarding step before entering the BuyQK Teams Workspace.
+            Enter your details below to set up your team account.
           </p>
         </div>
 
@@ -155,13 +150,13 @@ export const CompleteProfilePage: React.FC = () => {
 
           {/* Section 1: Profile Photo */}
           <div className="border-b border-slate-800 pb-6 flex flex-col items-center">
-            <h3 className="text-xs font-extrabold uppercase text-slate-300 tracking-wider mb-4">1. Mandatory Profile Picture</h3>
+            <h3 className="text-xs font-extrabold uppercase text-slate-300 tracking-wider mb-4">1. Profile Picture (Optional)</h3>
             <ProfilePhotoUploader uid={currentUser?.uid || 'temp'} initialUrl={photoUrl} onUploadSuccess={setPhotoUrl} />
           </div>
 
           {/* Section 2: Resume Document */}
           <div className="border-b border-slate-800 pb-6">
-            <h3 className="text-xs font-extrabold uppercase text-slate-300 tracking-wider mb-3">2. Mandatory Resume Document & AI Parsing</h3>
+            <h3 className="text-xs font-extrabold uppercase text-slate-300 tracking-wider mb-3">2. Resume Document & AI Parsing (Optional)</h3>
             <ResumeUploader uid={currentUser?.uid || 'temp'} initialResumeUrl={resumeUrl} onResumeUploaded={handleResumeUploaded} />
           </div>
 

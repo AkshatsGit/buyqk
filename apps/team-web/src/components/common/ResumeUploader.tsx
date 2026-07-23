@@ -89,7 +89,7 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     });
   };
 
-  // Client-side PDF text extraction via PDF.js worker
+  // Client-side PDF text extraction via PDF.js worker preserving line structure
   const parsePdfText = async (file: File): Promise<string> => {
     try {
       const pdfjsLib = await ensurePdfJsLoaded();
@@ -103,8 +103,33 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        const pageText = content.items.map((item: any) => item.str).join(' ');
-        fullText += pageText + '\n';
+        
+        let lastY: number | null = null;
+        let pageLines: string[] = [];
+        let currentLine = '';
+
+        for (const item of content.items) {
+          if ('str' in item) {
+            const itemStr = (item as any).str;
+            const transform = (item as any).transform;
+            const y = transform ? transform[5] : null;
+            const hasEOL = (item as any).hasEOL;
+
+            if (hasEOL || (lastY !== null && y !== null && Math.abs(y - lastY) > 5)) {
+              if (currentLine.trim()) {
+                pageLines.push(currentLine.trim());
+              }
+              currentLine = itemStr;
+            } else {
+              currentLine += (currentLine && !currentLine.endsWith(' ') && !itemStr.startsWith(' ') ? ' ' : '') + itemStr;
+            }
+            if (y !== null) lastY = y;
+          }
+        }
+        if (currentLine.trim()) {
+          pageLines.push(currentLine.trim());
+        }
+        fullText += pageLines.join('\n') + '\n';
       }
       return fullText;
     } catch (err) {
@@ -117,8 +142,9 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     if (!text) return {};
     const extracted: ExtractedData = {};
 
-    // 1. Name Extraction
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    // 1. Name Extraction
     for (const line of lines) {
       const match = line.match(/^(?:Name|Candidate Name|Full Name)\s*:\s*(.+)$/i);
       if (match) {
@@ -126,14 +152,20 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
         break;
       }
     }
+
     if (!extracted.fullName) {
-      for (const line of lines) {
-        const val = line.toLowerCase();
-        if (val.includes('@') || val.includes('/') || val.includes(':') || /\d{5,}/.test(line)) continue;
-        if (val.includes('resume') || val.includes('curriculum') || val.includes('experience') || val.includes('education') || val.includes('skills')) continue;
-        if (line.length > 3 && line.length < 32 && /^[a-zA-Z\s]{4,30}$/.test(line)) {
-          extracted.fullName = line;
-          break;
+      const ignoreWords = ['resume', 'curriculum', 'vitae', 'cv', 'page', 'email', 'phone', 'contact', 'summary', 'profile', 'experience', 'education', 'skills', 'projects', 'about'];
+      for (const line of lines.slice(0, 10)) {
+        const lower = line.toLowerCase();
+        if (lower.includes('@') || lower.includes('http') || lower.includes('.com') || lower.includes(':') || /\d/.test(line)) continue;
+        if (ignoreWords.some(w => lower.includes(w))) continue;
+        
+        if (line.length >= 3 && line.length <= 35 && /^[a-zA-Z\s\.\-]{3,35}$/.test(line)) {
+          const wordCount = line.trim().split(/\s+/).length;
+          if (wordCount >= 2 && wordCount <= 4) {
+            extracted.fullName = line.trim();
+            break;
+          }
         }
       }
     }
@@ -142,22 +174,23 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     if (emailMatch) extracted.email = emailMatch[0];
 
-    const phoneMatch = text.match(/(?:\+?\d{1,3}[- ]?)?\(?\d{3,4}\)?[- ]?\d{3,4}[- ]?\d{3,4}/);
-    if (phoneMatch) extracted.phone = phoneMatch[0];
+    const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}/);
+    if (phoneMatch) extracted.phone = phoneMatch[0].trim();
 
     // 3. Socials
-    const ghMatch = text.match(/(?:github\.com)\/([a-zA-Z0-9_\-\.]+)/i);
-    if (ghMatch) extracted.github = `https://github.com/${ghMatch[1]}`;
+    const liMatch = text.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_\-\.]+)/i);
+    if (liMatch) extracted.linkedin = liMatch[0].startsWith('http') ? liMatch[0] : `https://${liMatch[0]}`;
 
-    const liMatch = text.match(/(?:linkedin\.com\/in)\/([a-zA-Z0-9_\-\.]+)/i);
-    if (liMatch) extracted.linkedin = `https://linkedin.com/in/${liMatch[1]}`;
+    const ghMatch = text.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_\-\.]+)/i);
+    if (ghMatch) extracted.github = ghMatch[0].startsWith('http') ? ghMatch[0] : `https://${ghMatch[0]}`;
 
     // 4. Skills Tags
     const knownSkills = [
       'React', 'React.js', 'TypeScript', 'JavaScript', 'Node.js', 'Express',
-      'Python', 'Java', 'C++', 'C#', 'TailwindCSS', 'Firebase', 'Next.js', 'SQL',
-      'MongoDB', 'Docker', 'Kubernetes', 'AWS', 'Git', 'Redux', 'GraphQL',
-      'HTML', 'CSS', 'Figma', 'Go', 'Rust', 'Flutter', 'REST API', 'Vite'
+      'Python', 'Java', 'C++', 'C#', 'TailwindCSS', 'Tailwind', 'Firebase', 'Next.js', 'SQL',
+      'MySQL', 'PostgreSQL', 'MongoDB', 'Docker', 'Kubernetes', 'AWS', 'Git', 'Redux', 'GraphQL',
+      'HTML', 'CSS', 'Figma', 'Go', 'Golang', 'Rust', 'Flutter', 'REST API', 'Vite', 'Django', 'Flask',
+      'Spring Boot', 'Android', 'iOS', 'Swift', 'Kotlin'
     ];
     const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const foundSkills = knownSkills.filter(sk => {
@@ -171,13 +204,14 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     if (foundSkills.length > 0) extracted.skills = foundSkills;
 
     // 5. Education & Experience excerpts
-    if (text.toLowerCase().includes('education')) {
-      const eduIdx = text.toLowerCase().indexOf('education');
-      extracted.education = text.substring(eduIdx, eduIdx + 150).replace(/\s+/g, ' ').trim();
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes('education')) {
+      const idx = lowerText.indexOf('education');
+      extracted.education = text.substring(idx, idx + 160).replace(/\s+/g, ' ').trim();
     }
-    if (text.toLowerCase().includes('experience')) {
-      const expIdx = text.toLowerCase().indexOf('experience');
-      extracted.experience = text.substring(expIdx, expIdx + 180).replace(/\s+/g, ' ').trim();
+    if (lowerText.includes('experience')) {
+      const idx = lowerText.indexOf('experience');
+      extracted.experience = text.substring(idx, idx + 180).replace(/\s+/g, ' ').trim();
     }
 
     return extracted;
@@ -195,7 +229,7 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
     setError('');
     setFile(selectedFile);
     setUploading(true);
-    setStatusText('Extracting PDF text & auto-filling profile...');
+    setStatusText('Scanning & Extracting PDF text...');
 
     try {
       // 1. Extract text via pdf.js
@@ -203,11 +237,11 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
       const parsedData = extractDataFromText(rawText);
 
       // 2. Smoothen PDF text into lightweight clean text format
-      setStatusText('Smoothening & Compressing PDF Text Document...');
+      setStatusText('Compressing & Storing Resume...');
       const smoothedText = smoothAndCleanResumeText(rawText, selectedFile.name);
 
       // 3. Upload lightweight text file (.txt) to Firebase Storage
-      setStatusText('Storing Smoothened Text File into Firebase Storage...');
+      setStatusText('Storing Resume File in Storage...');
       const txtFileName = selectedFile.name.replace(/\.pdf$/i, '') + '_resume.txt';
       const filePath = `resumes/${uid}_${Date.now()}_${txtFileName}`;
       
@@ -238,7 +272,7 @@ export const ResumeUploader: React.FC<Props> = ({ uid, initialResumeUrl, onResum
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-yellow-500" />
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">Mandatory Resume Document</h4>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">Resume Document & Auto-Fill (Optional)</h4>
         </div>
         
         {/* Toggle Mode */}

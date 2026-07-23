@@ -1,17 +1,23 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, {
+  createContext, useContext, useState, useEffect, useRef, useCallback
+} from 'react';
 import { useAuth } from './AuthContext';
 import { rtdb } from '@buyqk/firebase';
-import { ref, set, onValue, remove, push, onChildAdded, update } from 'firebase/database';
+import {
+  ref, set, onValue, off, remove, push, onChildAdded
+} from 'firebase/database';
 import { ActiveCallState } from '../types';
 
-interface IncomingCall {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface IncomingCall {
   callId: string;
   callerUid: string;
   callerName: string;
   callerAvatar: string;
   type: 'audio' | 'video';
   chatId?: string;
-  offer: any;
+  offer: RTCSessionDescriptionInit;
 }
 
 interface CallContextType {
@@ -21,39 +27,32 @@ interface CallContextType {
   remoteStream: MediaStream | null;
   audioVolume: number;
   permissionError: string;
-  startCall: (recipientUid: string, name: string, avatar: string, type: 'audio' | 'video', role?: string, chatId?: string) => Promise<void>;
+  startCall: (
+    recipientUid: string, name: string, avatar: string,
+    type: 'audio' | 'video', role?: string, chatId?: string
+  ) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => void;
-  endCall: () => Promise<void>;
+  endCall: () => void;
   toggleMute: () => void;
   toggleVideo: () => Promise<void>;
-  toggleScreenShare: () => void;
   toggleMinimize: () => void;
   clearPermissionError: () => void;
 }
 
-const CallContext = createContext<CallContextType | undefined>(undefined);
+// ─── ICE config: STUN + free TURN for cross-network NAT ──────────────────────
 
-// Free ICE servers — STUN for same-network, metered TURN for cross-network/NAT
-const rtcConfig: RTCConfiguration = {
+const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-    // Free TURN relay from open-relay.metered.ca
     {
-      urls: 'turn:a.relay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
-    },
-    {
-      urls: 'turn:a.relay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
-    },
-    {
-      urls: 'turn:a.relay.metered.ca:443?transport=tcp',
+      urls: [
+        'turn:a.relay.metered.ca:80',
+        'turn:a.relay.metered.ca:443',
+        'turn:a.relay.metered.ca:443?transport=tcp'
+      ],
       username: 'openrelayproject',
       credential: 'openrelayproject'
     }
@@ -61,153 +60,149 @@ const rtcConfig: RTCConfiguration = {
   iceCandidatePoolSize: 10
 };
 
+// ─── Context ──────────────────────────────────────────────────────────────────
+
+const CallContext = createContext<CallContextType | undefined>(undefined);
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, profile } = useAuth();
 
-  const [activeCall, setActiveCall] = useState<ActiveCallState | null>(null);
-  const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
-  const [permissionError, setPermissionError] = useState<string>('');
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [audioVolume, setAudioVolume] = useState<number>(0);
+  const [activeCall, setActiveCall]       = useState<ActiveCallState | null>(null);
+  const [incomingCall, setIncomingCall]   = useState<IncomingCall | null>(null);
+  const [localStream, setLocalStream]     = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream]   = useState<MediaStream | null>(null);
+  const [audioVolume, setAudioVolume]     = useState(0);
+  const [permissionError, setPermissionError] = useState('');
 
-  // Refs for stable closure access
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  // IMPORTANT: remoteStreamObj is a STABLE object — we mutate its tracks in place
-  // so that the <audio>/<video> srcObject reference never goes stale
-  const remoteStreamObj = useRef<MediaStream>(new MediaStream());
-  const activeCallRef = useRef<ActiveCallState | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const ringtoneTimerRef = useRef<any>(null);
+  // ── Refs (never trigger re-renders, safe in closures) ──
+  const pcRef            = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef   = useRef<MediaStream | null>(null);
+  // Stable MediaStream object — we add/remove tracks in-place
+  // so any <video>/<audio> with srcObject pointing to this never goes stale
+  const remoteStreamRef  = useRef<MediaStream>(new MediaStream());
+  const activeCallRef    = useRef<ActiveCallState | null>(null);
+  const audioCtxRef      = useRef<AudioContext | null>(null);
+  const rafRef           = useRef<number>(0);
+  const ringerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
+  const durationRef      = useRef<ReturnType<typeof setInterval> | null>(null);
+  const answeredRef      = useRef(false); // guard double-fire of onValue answer listener
+  const endedRef         = useRef(false); // guard double call-end
 
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
-  useEffect(() => { localStreamRef.current = localStream; }, [localStream]);
 
-  // ─── 1. Incoming call listener ────────────────────────────────────────────
+  // ─── Incoming call listener ────────────────────────────────────────────────
   useEffect(() => {
     if (!currentUser?.uid) return;
     const incRef = ref(rtdb, `calls/incoming/${currentUser.uid}`);
-    return onValue(incRef, (snap) => {
+    const handler = onValue(incRef, snap => {
       if (snap.exists()) {
-        const data = snap.val();
-        if (data.callerUid !== currentUser.uid) setIncomingCall(data);
+        const d = snap.val() as IncomingCall;
+        if (d.callerUid !== currentUser.uid) setIncomingCall(d);
       } else {
         setIncomingCall(null);
       }
     });
+    return () => off(incRef, 'value', handler);
   }, [currentUser?.uid]);
 
-  // ─── 2. Remote call-ended listener ────────────────────────────────────────
+  // ─── Ringtone ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!activeCall?.callId) return;
-    const statusRef = ref(rtdb, `calls/signaling/${activeCall.callId}/status`);
-    return onValue(statusRef, (snap) => {
-      if (!snap.exists() || snap.val() === 'ended') {
-        doCleanup();
-        setActiveCall(null);
-      }
-    });
-  }, [activeCall?.callId]);
-
-  // ─── 3. Ringtone ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    const ringing = !!incomingCall && !activeCall;
-    if (ringing) {
-      const chime = () => {
-        try {
-          const AC = window.AudioContext || (window as any).webkitAudioContext;
-          const ctx = new AC();
-          [440, 480].forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.07, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.1);
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.start(); osc.stop(ctx.currentTime + 1.1);
-          });
-        } catch (_) {}
-      };
-      chime();
-      ringtoneTimerRef.current = setInterval(chime, 2200);
-    }
-    return () => { clearInterval(ringtoneTimerRef.current); ringtoneTimerRef.current = null; };
+    if (!incomingCall || activeCall) return;
+    const beep = () => {
+      try {
+        const AC = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AC();
+        const now = ctx.currentTime;
+        [440, 520].forEach(freq => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.value = freq;
+          g.gain.setValueAtTime(0.06, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+          o.connect(g); g.connect(ctx.destination);
+          o.start(now); o.stop(now + 1.0);
+        });
+      } catch (_) {}
+    };
+    beep();
+    ringerRef.current = setInterval(beep, 2500);
+    return () => { clearInterval(ringerRef.current!); ringerRef.current = null; };
   }, [!!incomingCall, !!activeCall]);
 
-  // ─── 4. Duration timer ────────────────────────────────────────────────────
-  useEffect(() => {
-    if (activeCall?.status !== 'connected') return;
-    const t = setInterval(() => {
-      setActiveCall(prev => prev ? { ...prev, durationSeconds: prev.durationSeconds + 1 } : null);
-    }, 1000);
-    return () => clearInterval(t);
-  }, [activeCall?.status]);
-
   // ─── Audio analyzer ───────────────────────────────────────────────────────
-  const setupAudioAnalyzer = (stream: MediaStream) => {
+  const startAnalyzer = (stream: MediaStream) => {
     try {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AC();
       const src = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 64;
-      src.connect(analyser);
-      audioContextRef.current = ctx;
-      analyserRef.current = analyser;
-      const buf = new Uint8Array(analyser.frequencyBinCount);
+      const an  = ctx.createAnalyser();
+      an.fftSize = 64;
+      src.connect(an);
+      audioCtxRef.current = ctx;
+      const buf = new Uint8Array(an.frequencyBinCount);
       const tick = () => {
-        analyser.getByteFrequencyData(buf);
+        an.getByteFrequencyData(buf);
         const avg = buf.reduce((a, v) => a + v, 0) / buf.length;
-        setAudioVolume(Math.min(100, Math.round(avg / 128 * 100)));
-        animFrameRef.current = requestAnimationFrame(tick);
+        setAudioVolume(Math.round(Math.min(100, avg / 128 * 100)));
+        rafRef.current = requestAnimationFrame(tick);
       };
       tick();
     } catch (_) {}
   };
 
-  const doCleanup = () => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    try { audioContextRef.current?.close(); } catch (_) {}
-    audioContextRef.current = null;
+  // ─── Full cleanup ─────────────────────────────────────────────────────────
+  const cleanup = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    clearInterval(durationRef.current!); durationRef.current = null;
+    try { audioCtxRef.current?.close(); } catch (_) {}
+    audioCtxRef.current = null;
     if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
     const ls = localStreamRef.current;
     if (ls) { ls.getTracks().forEach(t => t.stop()); }
     localStreamRef.current = null;
     setLocalStream(null);
-    // Clear the stable remote stream's tracks
-    remoteStreamObj.current.getTracks().forEach(t => remoteStreamObj.current.removeTrack(t));
+    // Clear stable remote stream tracks
+    remoteStreamRef.current.getTracks().forEach(t => remoteStreamRef.current.removeTrack(t));
     setRemoteStream(null);
     setAudioVolume(0);
+    answeredRef.current = false;
+    endedRef.current = false;
+  }, []);
+
+  // ─── Duration ticker ──────────────────────────────────────────────────────
+  const startTimer = () => {
+    clearInterval(durationRef.current!);
+    durationRef.current = setInterval(() => {
+      setActiveCall(prev => prev ? { ...prev, durationSeconds: prev.durationSeconds + 1 } : null);
+    }, 1000);
   };
 
   // ─── Build RTCPeerConnection ───────────────────────────────────────────────
-  const buildPC = (callId: string, role: 'caller' | 'callee'): RTCPeerConnection => {
-    const pc = new RTCPeerConnection(rtcConfig);
+  const buildPC = (callId: string, role: 'caller' | 'callee') => {
+    const pc = new RTCPeerConnection(RTC_CONFIG);
     pcRef.current = pc;
 
-    // Expose the STABLE remoteStreamObj — MediaStream identity never changes
-    // so srcObject in <audio>/<video> remains valid forever
-    setRemoteStream(remoteStreamObj.current);
+    // Expose the STABLE remote stream immediately so <audio> srcObject is set
+    setRemoteStream(remoteStreamRef.current);
 
-    pc.ontrack = (event) => {
-      // Add every incoming track to our stable MediaStream
-      const track = event.track;
-      const existing = remoteStreamObj.current.getTrackById(track.id);
-      if (!existing) {
-        remoteStreamObj.current.addTrack(track);
-        // Force React to re-render so the video element picks up the stream
-        setRemoteStream(new MediaStream(remoteStreamObj.current.getTracks()));
+    pc.ontrack = ev => {
+      const track = ev.track;
+      if (!remoteStreamRef.current.getTrackById(track.id)) {
+        remoteStreamRef.current.addTrack(track);
+        // Clone to trigger React state update while keeping same underlying tracks
+        setRemoteStream(
+          new MediaStream(remoteStreamRef.current.getTracks())
+        );
       }
     };
 
-    const myPath = role === 'caller' ? 'callerCandidates' : 'calleeCandidates';
+    const candPath = role === 'caller' ? 'callerCandidates' : 'calleeCandidates';
     pc.onicecandidate = ({ candidate }) => {
       if (candidate) {
-        const r = push(ref(rtdb, `calls/signaling/${callId}/${myPath}`));
+        const r = push(ref(rtdb, `calls/signaling/${callId}/${candPath}`));
         set(r, candidate.toJSON());
       }
     };
@@ -215,107 +210,159 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === 'connected') {
         setActiveCall(prev => prev ? { ...prev, status: 'connected' } : null);
+        startTimer();
       }
-      if (pc.connectionState === 'failed') {
-        setPermissionError('Connection failed. Both users must allow mic/camera, and be online.');
+      if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+        doEndCall();
       }
     };
 
     return pc;
   };
 
-  // ─── Start call (Caller) ──────────────────────────────────────────────────
+  // ─── Watch for remote call-end ─────────────────────────────────────────────
+  const watchCallEnd = (callId: string) => {
+    const statusRef = ref(rtdb, `calls/signaling/${callId}/status`);
+    onValue(statusRef, snap => {
+      if (!snap.exists() || snap.val() === 'ended') {
+        doEndCall();
+      }
+    });
+  };
+
+  // ─── Internal end (no signaling write — used when remote ends) ────────────
+  const doEndCall = useCallback(() => {
+    if (endedRef.current) return;
+    endedRef.current = true;
+    const call = activeCallRef.current;
+    cleanup();
+    setActiveCall(null);
+
+    // Post call-ended message in chat
+    if (call?.chatId && currentUser) {
+      const dur = call.durationSeconds || 0;
+      const ds  = `${Math.floor(dur / 60).toString().padStart(2, '0')}:${(dur % 60).toString().padStart(2, '0')}`;
+      const msgRef = push(ref(rtdb, `messages/${call.chatId}`));
+      set(msgRef, {
+        senderId:    currentUser.uid,
+        senderName:  profile?.fullName || currentUser.displayName || 'Team Member',
+        senderAvatar: profile?.photoUrl || currentUser.photoURL || '',
+        text:        `📞 ${call.type === 'video' ? 'Video' : 'Voice'} Call ended • ${ds}`,
+        timestamp:   Date.now(),
+        isCallRecord: true
+      }).catch(() => {});
+    }
+  }, [cleanup, currentUser, profile]);
+
+  // ─── Get media stream ─────────────────────────────────────────────────────
+  const getStream = async (type: 'audio' | 'video') => {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 },
+        video: type === 'video' ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' } : false
+      });
+    } catch (err: any) {
+      if (type === 'video' && err.name !== 'NotAllowedError') {
+        // Camera unavailable but mic is ok — fall back to audio-only
+        const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setPermissionError('Camera blocked — joined audio-only. Tap the 📷 button to retry.');
+        return s;
+      }
+      throw err;
+    }
+  };
+
+  // ─── Start outgoing call ──────────────────────────────────────────────────
   const startCall = async (
     recipientUid: string, name: string, avatar: string,
     type: 'audio' | 'video', role?: string, chatId?: string
   ) => {
     if (!currentUser) return;
-    doCleanup();
+    cleanup();
     setPermissionError('');
 
-    const callId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const callId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
     setActiveCall({
       callId,
       chatId: chatId || `direct_${recipientUid}`,
       type,
-      recipientName: name || 'Teammate',
-      recipientAvatar: avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      recipientRole: role || 'BuyQK Employee',
-      status: 'calling',
-      isMuted: false,
-      isVideoOff: type === 'audio',
+      recipientName:   name   || 'Teammate',
+      recipientAvatar: avatar || '',
+      recipientRole:   role   || 'BuyQK Employee',
+      status:          'calling',
+      isMuted:         false,
+      isVideoOff:      type === 'audio',
       isScreenSharing: false,
       durationSeconds: 0,
-      isMinimized: false
+      isMinimized:     false
     });
 
     try {
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === 'video' });
-      } catch (e: any) {
-        if (type === 'video') {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          setPermissionError('Camera blocked — audio-only call started. Tap Open Camera to retry.');
-        } else throw e;
-      }
+      const stream = await getStream(type);
       setLocalStream(stream);
       localStreamRef.current = stream;
-      setupAudioAnalyzer(stream);
+      startAnalyzer(stream);
 
       const pc = buildPC(callId, 'caller');
       stream.getTracks().forEach(t => pc.addTrack(t, stream));
 
-      const offer = await pc.createOffer();
+      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: type === 'video' });
       await pc.setLocalDescription(offer);
 
-      // Write offer and status separately so we don't clobber ICE candidates
-      await set(ref(rtdb, `calls/signaling/${callId}/offer`), { type: offer.type, sdp: offer.sdp });
+      // Write offer + status (children of signaling node, never overwrites candidates)
+      await set(ref(rtdb, `calls/signaling/${callId}/offer`),  { type: offer.type, sdp: offer.sdp });
       await set(ref(rtdb, `calls/signaling/${callId}/status`), 'calling');
 
-      // Send notification to recipient
-      const incNode = (recipientUid && recipientUid !== 'general')
+      // Notify recipient
+      const incPath = recipientUid && recipientUid !== 'general'
         ? `calls/incoming/${recipientUid}`
         : `calls/incoming/general`;
-      await set(ref(rtdb, incNode), {
+      await set(ref(rtdb, incPath), {
         callId,
-        callerUid: currentUser.uid,
-        callerName: profile?.fullName || currentUser.displayName || 'Teammate',
-        callerAvatar: profile?.photoUrl || currentUser.photoURL || '',
+        callerUid:    currentUser.uid,
+        callerName:   profile?.fullName  || currentUser.displayName || 'Teammate',
+        callerAvatar: profile?.photoUrl  || currentUser.photoURL    || '',
         type,
         chatId: chatId || `direct_${recipientUid}`,
-        offer: { type: offer.type, sdp: offer.sdp }
+        offer:  { type: offer.type, sdp: offer.sdp }
       });
 
-      // Listen for SDP answer
-      onValue(ref(rtdb, `calls/signaling/${callId}/answer`), async (snap) => {
-        if (!snap.exists()) return;
-        const pc = pcRef.current;
-        if (!pc || pc.signalingState === 'closed') return;
-        if (!pc.currentRemoteDescription) {
-          const answer = snap.val();
-          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      // Listen for SDP answer from callee
+      answeredRef.current = false;
+      onValue(ref(rtdb, `calls/signaling/${callId}/answer`), async snap => {
+        if (!snap.exists() || answeredRef.current) return;
+        const cur = pcRef.current;
+        if (!cur || cur.signalingState === 'closed') return;
+        if (cur.currentRemoteDescription) return;
+        answeredRef.current = true;
+        try {
+          await cur.setRemoteDescription(new RTCSessionDescription(snap.val()));
           setActiveCall(prev => prev ? { ...prev, status: 'connected' } : null);
-        }
+          startTimer();
+        } catch (_) {}
       });
 
       // Listen for callee ICE candidates
-      onChildAdded(ref(rtdb, `calls/signaling/${callId}/calleeCandidates`), (snap) => {
+      onChildAdded(ref(rtdb, `calls/signaling/${callId}/calleeCandidates`), snap => {
         if (snap.exists() && pcRef.current) {
           pcRef.current.addIceCandidate(new RTCIceCandidate(snap.val())).catch(() => {});
         }
       });
 
+      watchCallEnd(callId);
+
     } catch (err: any) {
-      console.error('startCall error:', err);
+      console.error('[startCall]', err);
       if (err.name === 'NotAllowedError') {
-        setPermissionError('Mic/Camera permission blocked. Click the 🔒 lock in the URL bar to allow, then try again.');
+        setPermissionError('Mic/Camera permission blocked. Click the 🔒 lock icon in your URL bar to allow, then try again.');
       }
+      cleanup();
+      setActiveCall(null);
     }
   };
 
-  // ─── Accept call (Callee) ─────────────────────────────────────────────────
+  // ─── Accept incoming call ─────────────────────────────────────────────────
   const acceptCall = async () => {
     if (!incomingCall || !currentUser) return;
     const { callId, callerName, callerAvatar, type, offer, chatId } = incomingCall;
@@ -329,28 +376,22 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       callId,
       chatId: chatId || `direct_${incomingCall.callerUid}`,
       type,
-      recipientName: callerName,
-      recipientAvatar: callerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-      recipientRole: 'BuyQK Employee',
-      status: 'connected',
-      isMuted: false,
-      isVideoOff: type === 'audio',
+      recipientName:   callerName   || 'Teammate',
+      recipientAvatar: callerAvatar || '',
+      recipientRole:   'BuyQK Employee',
+      status:          'connected',
+      isMuted:         false,
+      isVideoOff:      type === 'audio',
       isScreenSharing: false,
       durationSeconds: 0,
-      isMinimized: false
+      isMinimized:     false
     });
 
     try {
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === 'video' });
-      } catch {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        setPermissionError('Camera blocked — audio-only call accepted.');
-      }
+      const stream = await getStream(type);
       setLocalStream(stream);
       localStreamRef.current = stream;
-      setupAudioAnalyzer(stream);
+      startAnalyzer(stream);
 
       const pc = buildPC(callId, 'callee');
       stream.getTracks().forEach(t => pc.addTrack(t, stream));
@@ -362,18 +403,24 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await set(ref(rtdb, `calls/signaling/${callId}/answer`), { type: answer.type, sdp: answer.sdp });
       await set(ref(rtdb, `calls/signaling/${callId}/status`), 'connected');
 
+      startTimer();
+
       // Listen for caller ICE candidates
-      onChildAdded(ref(rtdb, `calls/signaling/${callId}/callerCandidates`), (snap) => {
+      onChildAdded(ref(rtdb, `calls/signaling/${callId}/callerCandidates`), snap => {
         if (snap.exists() && pcRef.current) {
           pcRef.current.addIceCandidate(new RTCIceCandidate(snap.val())).catch(() => {});
         }
       });
 
+      watchCallEnd(callId);
+
     } catch (err: any) {
-      console.error('acceptCall error:', err);
+      console.error('[acceptCall]', err);
       if (err.name === 'NotAllowedError') {
-        setPermissionError('Mic/Camera permission blocked. Allow access in browser settings.');
+        setPermissionError('Mic/Camera permission blocked. Allow access in browser settings to join the call.');
       }
+      cleanup();
+      setActiveCall(null);
     }
   };
 
@@ -384,48 +431,26 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIncomingCall(null);
   };
 
-  const endCall = async () => {
+  // ─── End call (local action) ───────────────────────────────────────────────
+  const endCall = () => {
     const call = activeCallRef.current;
-
-    // 1. Signal 'ended' first so remote side terminates immediately
+    // Signal ended BEFORE cleanup so remote sees it
     if (call?.callId) {
-      try { await set(ref(rtdb, `calls/signaling/${call.callId}/status`), 'ended'); } catch (_) {}
+      set(ref(rtdb, `calls/signaling/${call.callId}/status`), 'ended').catch(() => {});
+      setTimeout(() => remove(ref(rtdb, `calls/signaling/${call.callId}`)).catch(() => {}), 1200);
     }
-
-    // 2. Post call duration badge in chat
-    if (call?.chatId && currentUser) {
-      try {
-        const dur = call.durationSeconds || 0;
-        const ds = `${Math.floor(dur / 60).toString().padStart(2, '0')}:${(dur % 60).toString().padStart(2, '0')}`;
-        const msgRef = push(ref(rtdb, `messages/${call.chatId}`));
-        await set(msgRef, {
-          senderId: currentUser.uid,
-          senderName: profile?.fullName || currentUser.displayName || 'Team Member',
-          senderAvatar: profile?.photoUrl || currentUser.photoURL || '',
-          text: `📞 ${call.type === 'video' ? 'Video' : 'Voice'} Call ended • ${ds}`,
-          timestamp: Date.now(),
-          isCallRecord: true
-        });
-      } catch (_) {}
-    }
-
-    // 3. Delete signaling node after delay
-    setTimeout(() => {
-      if (call?.callId) remove(ref(rtdb, `calls/signaling/${call.callId}`)).catch(() => {});
-    }, 1000);
-
     if (currentUser) {
       remove(ref(rtdb, `calls/incoming/${currentUser.uid}`)).catch(() => {});
       remove(ref(rtdb, `calls/incoming/general`)).catch(() => {});
     }
-
-    doCleanup();
-    setActiveCall(null);
+    doEndCall();
   };
 
+  // ─── Mute / video toggles ─────────────────────────────────────────────────
   const toggleMute = () => {
     const ls = localStreamRef.current;
-    if (ls) ls.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
+    if (!ls) return;
+    ls.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
     setActiveCall(prev => prev ? { ...prev, isMuted: !prev.isMuted } : null);
   };
 
@@ -438,35 +463,29 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       vt.enabled = !vt.enabled;
       setActiveCall(prev => prev ? { ...prev, isVideoOff: !vt.enabled } : null);
     } else {
-      // Re-request camera
       try {
         const vs = await navigator.mediaDevices.getUserMedia({ video: true });
         const nt = vs.getVideoTracks()[0];
-        if (nt) {
-          ls.addTrack(nt);
-          const pc = pcRef.current;
-          if (pc) {
-            const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-            if (sender) sender.replaceTrack(nt);
-            else pc.addTrack(nt, ls);
-          }
-          setActiveCall(prev => prev ? { ...prev, isVideoOff: false } : null);
+        if (!nt) return;
+        ls.addTrack(nt);
+        const pc = pcRef.current;
+        if (pc) {
+          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+          if (sender) await sender.replaceTrack(nt);
+          else pc.addTrack(nt, ls);
         }
+        setLocalStream(ls); // trigger rebind
+        setActiveCall(prev => prev ? { ...prev, isVideoOff: false } : null);
       } catch (err: any) {
         if (err.name === 'NotAllowedError') {
-          setPermissionError('Camera blocked. Click the 🔒 lock icon in your URL bar → allow Camera → tap again.');
+          setPermissionError('Camera blocked. Click 🔒 in your browser URL bar → Allow Camera → tap again.');
         }
       }
     }
   };
 
-  const toggleScreenShare = () => {
-    setActiveCall(prev => prev ? { ...prev, isScreenSharing: !prev.isScreenSharing } : null);
-  };
-
-  const toggleMinimize = () => {
+  const toggleMinimize = () =>
     setActiveCall(prev => prev ? { ...prev, isMinimized: !prev.isMinimized } : null);
-  };
 
   const clearPermissionError = () => setPermissionError('');
 
@@ -475,7 +494,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       activeCall, incomingCall, localStream, remoteStream,
       audioVolume, permissionError,
       startCall, acceptCall, declineCall, endCall,
-      toggleMute, toggleVideo, toggleScreenShare, toggleMinimize,
+      toggleMute, toggleVideo, toggleMinimize,
       clearPermissionError
     }}>
       {children}

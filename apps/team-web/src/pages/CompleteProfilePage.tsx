@@ -41,6 +41,31 @@ export const CompleteProfilePage: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [autoFilled, setAutoFilled] = useState<boolean>(false);
 
+  // Sync state if profile prop arrives after mount
+  useEffect(() => {
+    if (profile) {
+      if (profile.fullName) setFullName(profile.fullName);
+      if (profile.employeeId) setEmployeeId(profile.employeeId);
+      if (profile.designation) setDesignation(profile.designation);
+      if (profile.department) setDepartment(profile.department);
+      if (profile.phone) setPhone(profile.phone);
+      if (profile.city) setCity(profile.city);
+      if (profile.state) setState(profile.state);
+      if (profile.joiningDate) setJoiningDate(profile.joiningDate);
+      if (profile.linkedin) setLinkedin(profile.linkedin);
+      if (profile.github) setGithub(profile.github);
+      if (profile.portfolio) setPortfolio(profile.portfolio);
+      if (profile.bio) setBio(profile.bio);
+      if (profile.skills) setSkillsText(profile.skills.join(', '));
+      if (profile.languages) setLanguagesText(profile.languages.join(', '));
+      if (profile.experience) setExperience(profile.experience);
+      if (profile.education) setEducation(profile.education);
+      if (profile.photoUrl) setPhotoUrl(profile.photoUrl);
+      if (profile.resumeUrl) setResumeUrl(profile.resumeUrl);
+      if (profile.resumeFileName) setResumeFileName(profile.resumeFileName);
+    }
+  }, [profile]);
+
   // When AI parses resume, auto-fill form fields if provided
   const handleResumeUploaded = (url: string, fileName: string, parsedData?: any) => {
     if (url) setResumeUrl(url);
@@ -110,7 +135,7 @@ export const CompleteProfilePage: React.FC = () => {
 
       await setDoc(doc(db, 'users', currentUser.uid), userProfile, { merge: true });
       await refreshProfile();
-      navigate('/teams/dashboard');
+      navigate('/teams/profile');
     } catch (err: any) {
       console.error("Save profile error:", err);
       setError(err.message || 'Failed saving profile. Please check fields and try again.');
@@ -130,11 +155,13 @@ export const CompleteProfilePage: React.FC = () => {
         {/* Header */}
         <div className="text-center flex flex-col items-center gap-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 rounded-full flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> First Login Profile Setup
+            <Sparkles className="w-3.5 h-3.5" /> {profile ? 'Edit Employee Profile' : 'First Login Profile Setup'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-white">Complete Your Employee Profile</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-white">
+            {profile ? 'Edit Your Employee Profile' : 'Complete Your Employee Profile'}
+          </h2>
           <p className="text-xs text-slate-400 max-w-md">
-            Enter your details below to set up your team account.
+            {profile ? 'Update your personal, contact, and professional details below.' : 'Enter your details below to set up your team account.'}
           </p>
         </div>
 
@@ -358,7 +385,7 @@ export const CompleteProfilePage: React.FC = () => {
               <span>Saving Employee Profile...</span>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5" /> Save Profile & Enter Teams Panel
+                <CheckCircle2 className="w-5 h-5" /> {profile ? 'Save & Update Profile' : 'Save Profile & Enter Teams Panel'}
               </>
             )}
           </button>

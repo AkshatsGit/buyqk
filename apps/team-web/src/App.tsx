@@ -43,11 +43,6 @@ const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return <Navigate to="/teams/register" replace />;
   }
 
-  // If user already has a profile document and visits /teams/register, send them straight to dashboard
-  if (profile && isRegisterPage) {
-    return <Navigate to="/teams/dashboard" replace />;
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans overflow-hidden select-none relative">
       <Navbar />

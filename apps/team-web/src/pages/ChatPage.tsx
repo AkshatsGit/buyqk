@@ -112,10 +112,10 @@ export const ChatPage: React.FC = () => {
     : groups;
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-4rem)] p-4 sm:p-6 gap-4 font-sans overflow-hidden">
+    <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-4rem)] p-3 sm:p-4 lg:p-5 gap-3 lg:gap-4 font-sans overflow-hidden max-w-[1920px] mx-auto w-full">
       
       {/* Left Chat Channels Sidebar */}
-      <aside className="w-full md:w-80 bg-slate-950/60 border border-blue-900/20 rounded-2xl flex flex-col p-4 gap-4 shrink-0 shadow-2xl overflow-y-auto scrollbar-thin">
+      <aside className="w-full md:w-72 lg:w-80 xl:w-96 bg-slate-950/60 border border-blue-900/20 rounded-2xl flex flex-col p-3.5 sm:p-4 gap-4 shrink-0 shadow-2xl overflow-y-auto scrollbar-thin">
         
         {/* Search */}
         <div className="relative">
@@ -125,17 +125,17 @@ export const ChatPage: React.FC = () => {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search channels & teammates..."
-            className="w-full bg-slate-900 border border-blue-900/30 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500"
+            className="w-full bg-slate-900 border border-blue-900/30 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500 font-sans"
           />
         </div>
 
         {/* Group Channels Section */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 shrink-0">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5">
             <FolderKanban className="w-3.5 h-3.5 text-purple-400" /> Group Channels ({groups.length})
           </span>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
             {filteredGroups.length === 0 ? (
               <p className="text-[11px] text-slate-500 italic px-3 py-2">No group channels available.</p>
             ) : (
@@ -169,12 +169,12 @@ export const ChatPage: React.FC = () => {
         </div>
 
         {/* Direct Messages Section */}
-        <div className="flex flex-col gap-1.5 mt-2">
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5">
+        <div className="flex-1 flex flex-col gap-1.5 mt-1 min-h-0">
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-2 flex items-center gap-1.5 shrink-0">
             <MessageSquare className="w-3.5 h-3.5 text-yellow-500" /> Direct Messages ({employees.length})
           </span>
 
-          <div className="flex flex-col gap-1 max-h-[350px] overflow-y-auto pr-1">
+          <div className="flex-1 flex flex-col gap-1 overflow-y-auto pr-1 scrollbar-thin min-h-0">
             {filteredEmployees.length === 0 ? (
               <p className="text-[11px] text-slate-500 italic px-3 py-2">No teammates found.</p>
             ) : (

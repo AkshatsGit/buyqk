@@ -11,7 +11,7 @@ import { collection, onSnapshot, doc, updateDoc, setDoc, deleteDoc } from 'fireb
 import { ref, onValue } from 'firebase/database';
 
 export const AdminDashboardPage: React.FC = () => {
-  const { isSuperAdmin, currentUser } = useAuth();
+  const { isAdmin, isSuperAdmin, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
@@ -23,7 +23,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [annContent, setAnnContent] = useState<string>('');
 
   useEffect(() => {
-    if (!isSuperAdmin) {
+    if (!isAdmin) {
       navigate('/teams/dashboard');
       return;
     }
@@ -115,7 +115,7 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  if (!isSuperAdmin) return null;
+  if (!isAdmin) return null;
 
   return (
     <div className="flex-1 flex flex-col gap-6 p-6 font-sans overflow-y-auto">
@@ -125,13 +125,19 @@ export const AdminDashboardPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-purple-400" />
-            <h1 className="text-xl sm:text-2xl font-black text-white">Super Admin Control Center</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-white">
+              {isSuperAdmin ? 'Super Admin Control Center' : 'Admin Control Center'}
+            </h1>
           </div>
-          <p className="text-xs text-purple-300">Exclusive privileges for akshat.srivastava098@gmail.com</p>
+          <p className="text-xs text-purple-300">
+            {isSuperAdmin
+              ? 'Super Admin Privileges — Manage employee roles, status & broadcasts'
+              : 'Admin Privileges — Promote team members & post broadcasts'}
+          </p>
         </div>
 
         <span className="text-xs font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl">
-          Super Admin Privileges Active
+          {isSuperAdmin ? 'Super Admin Active' : 'Admin Active'}
         </span>
       </div>
 

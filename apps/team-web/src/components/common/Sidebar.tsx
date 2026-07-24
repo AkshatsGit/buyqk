@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { isSuperAdmin, profile } = useAuth();
+  const { isAdmin, isSuperAdmin, profile } = useAuth();
 
   const navItems = [
     { label: 'Dashboard', path: '/teams/dashboard', icon: LayoutDashboard },
@@ -17,7 +17,7 @@ export const Sidebar: React.FC = () => {
     { label: 'My Profile', path: '/teams/profile', icon: UserCircle },
   ];
 
-  if (isSuperAdmin) {
+  if (isAdmin) {
     navItems.push({ label: 'Admin Panel', path: '/teams/admin', icon: ShieldCheck });
   }
 
@@ -29,16 +29,20 @@ export const Sidebar: React.FC = () => {
         
         {/* User Quick Info */}
         <div className="bg-slate-900/60 border border-blue-900/30 rounded-2xl p-3.5 flex items-center gap-3 shadow-lg">
-          <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/40 shrink-0 bg-slate-800 shadow-md">
-            <img 
-              src={profile?.photoUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} 
-              alt="Profile" 
-              className="w-full h-full object-cover"
-            />
+          <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/40 shrink-0 bg-slate-800 shadow-md flex items-center justify-center font-black text-sm text-yellow-400">
+            {profile?.photoUrl ? (
+              <img 
+                src={profile.photoUrl} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span>{(profile?.fullName || 'User').charAt(0).toUpperCase()}</span>
+            )}
           </div>
           <div className="overflow-hidden">
-            <p className="text-xs font-black text-slate-100 truncate">{profile?.fullName || 'Akshat Srivastava'}</p>
-            <p className="text-[10px] text-yellow-500 font-bold truncate">{profile?.designation || 'CTO'} &bull; {profile?.department || 'Engineering'}</p>
+            <p className="text-xs font-black text-slate-100 truncate">{profile?.fullName || 'Team Member'}</p>
+            <p className="text-[10px] text-yellow-500 font-bold truncate">{profile?.designation || 'Employee'} &bull; {profile?.department || 'Engineering'}</p>
           </div>
         </div>
 

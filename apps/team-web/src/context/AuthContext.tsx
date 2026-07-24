@@ -29,6 +29,7 @@ interface AuthContextType {
   isAccessRestricted: boolean;
   unauthorizedEmail: string;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -44,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [unauthorizedEmail, setUnauthorizedEmail] = useState<string>('');
 
   const isSuperAdmin = currentUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() || profile?.isSuperAdmin === true;
+  const isAdmin = isSuperAdmin || profile?.isAdmin === true;
 
   // Realtime Presence Setup
   const setupPresence = (uid: string) => {
@@ -163,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAccessRestricted,
         unauthorizedEmail,
         isSuperAdmin,
+        isAdmin,
         loginWithGoogle,
         logout,
         refreshProfile

@@ -228,12 +228,16 @@ export const ChatWindow: React.FC<Props> = ({
       {/* Top Header */}
       <div className="bg-slate-900/80 border-b border-blue-900/30 p-3.5 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/40 bg-slate-800 shrink-0">
-            <img 
-              src={chatAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'} 
-              alt={chatName} 
-              className="w-full h-full object-cover"
-            />
+          <div className="w-10 h-10 rounded-xl overflow-hidden border border-yellow-500/40 bg-slate-800 shrink-0 flex items-center justify-center font-black text-sm text-yellow-400">
+            {chatAvatar ? (
+              <img 
+                src={chatAvatar} 
+                alt={chatName} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span>{(chatName || '?').charAt(0).toUpperCase()}</span>
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2">

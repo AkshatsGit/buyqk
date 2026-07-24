@@ -11,7 +11,7 @@ import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestor
 import { Announcement } from '../../types';
 
 export const Navbar: React.FC = () => {
-  const { profile, currentUser, logout, isSuperAdmin } = useAuth();
+  const { profile, currentUser, logout, isAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -82,9 +82,7 @@ export const Navbar: React.FC = () => {
       {/* Brand & Title */}
       <div className="flex items-center gap-3">
         <Link to="/teams/dashboard" className="flex items-center gap-3 group">
-          <div className="h-10 px-2.5 rounded-xl bg-slate-900 border border-yellow-500/40 flex items-center justify-center transition-transform group-hover:scale-105 shadow-gold-glow">
-            <img src="/assets/logo.png" alt="BuyQK Logo" className="h-7 w-auto object-contain" />
-          </div>
+          <img src="/assets/logo.png" alt="BuyQK Logo" className="h-9 sm:h-10 w-auto object-contain shrink-0 transition-transform group-hover:scale-105 drop-shadow-md" />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-extrabold text-white text-sm tracking-wide uppercase">BUYQK TEAMS</h1>
@@ -288,7 +286,7 @@ export const Navbar: React.FC = () => {
                   <UserIcon className="w-4 h-4 text-yellow-500" /> My Profile
                 </Link>
 
-                {isSuperAdmin && (
+                {isAdmin && (
                   <Link 
                     to="/teams/admin" 
                     onClick={() => setShowProfileMenu(false)}
